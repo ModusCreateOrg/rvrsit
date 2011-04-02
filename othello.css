@@ -1,0 +1,106 @@
+.othello-gameboard {
+
+}
+
+/**
+  game piece
+**/
+
+.othello-gamepiece-square {
+     border: 1px solid #9E9E9E;
+    -webkit-backface-visibility : visibile;
+    padding : 5px;
+    -webkit-transform-style: preserve-3d;
+    -webkit-perspective: 400;
+}
+
+.othello-gamepiece {
+
+     border: 2px solid #777777;
+    -webkit-border-radius: 99px;
+    -webkit-backface-visibility : visibile;
+    /*-webkit-animation-iteration-count: 1;*/
+    /*-webkit-transform-style: preserve-3d;*/
+}
+
+.ogp-white {
+    background-color: #FFF;
+}
+
+.ogp-black {
+    background-color: #000;
+}
+
+
+
+
+@-webkit-keyframes flip-gamepiece-white {
+    0% {
+        -webkit-transform: rotateY(0);
+        -webkit-transform: rotateY(0);
+        background-color: #000;
+        -webkit-animation-timing-function: ease-out;
+    }
+    100%   {
+        -webkit-transform: rotateY(180deg);
+        background-color: #FFF;
+    }
+}
+
+
+
+.flip-white {
+    -webkit-animation-name: flip-gamepiece-white;
+    -webkit-animation-duration: 1s;
+    -webkit-iteration-count: 1;
+}
+
+@-webkit-keyframes flip-gamepiece-white2{
+    from {
+        -webkit-transform: rotateY(0);
+        -webkit-transform: rotateY(0);
+        background-color: #000;
+        -webkit-animation-timing-function: ease-out;
+    }
+    to   {
+        -webkit-transform: rotateY(180deg);
+        background-color: #FFF;
+    }
+}
+
+@-webkit-keyframes flip-gamepiece-black2{
+    from {
+        -webkit-transform: rotateY(180deg);
+        background-color: #FFF;
+        -webkit-animation-timing-function: ease-out;
+    }
+    to {
+        -webkit-transform: rotateY(0deg);
+        background-color: #000;
+    }
+}
+
+/**
+    Score card
+**/
+.othello-scorecard-player {
+    height : 50px;
+    border : 1px solid #000;
+    -webkit-border-radius: 10px;
+    margin : 2px 0 2px 5px;
+    background-color: #1A2735;
+    font-weight: bold;
+    text-align: center;
+    color: #FFF;
+    padding: 10px;
+}
+
+.othello-scorecard-score-keeper {
+    height : 80px;
+    border : 1px solid #9E9E9E;
+    font-size: 1.25em;
+    -webkit-border-radius: 10px;
+    margin : 5px 0px 2px 5px;
+    /*text-align: center;*/
+    padding: 10px;
+}
