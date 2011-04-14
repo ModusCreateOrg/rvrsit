@@ -32,13 +32,20 @@ Othello.ScoreCardPanel = Ext.extend(Ext.Panel, {
         return {
             xtype       : 'container',
             dock        : 'bottom',
-            height      : 50,
+            height      : 100,
             defaultType : 'button',
             layout      : {
-                type  : 'hbox',
+                type  : 'vbox',
                 pack  : 'center'
             },
             items : [
+                {
+                    text    : 'test',
+                    scope   : this,
+                    handler : function() {
+                        Ext.get(Ext.get('ext-comp-1038').dom.childNodes[0]).addCls('flip-white')
+                    }
+                },
                 {
                     text    : 'New Game',
                     scope   : this,

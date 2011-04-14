@@ -20,7 +20,7 @@
     -webkit-border-radius: 99px;
     -webkit-backface-visibility : visibile;
     /*-webkit-animation-iteration-count: 1;*/
-    /*-webkit-transform-style: preserve-3d;*/
+    -webkit-transform-style: preserve-3d;
 }
 
 .ogp-white {
@@ -36,14 +36,13 @@
 
 @-webkit-keyframes flip-gamepiece-white {
     0% {
-        -webkit-transform: rotateY(0);
-        -webkit-transform: rotateY(0);
         background-color: #000;
+        -webkit-transform: rotateY(0) translateZ(0px);
         -webkit-animation-timing-function: ease-out;
     }
     100%   {
-        -webkit-transform: rotateY(180deg);
         background-color: #FFF;
+        -webkit-transform: rotateY(180deg) translateZ(99px);
     }
 }
 
@@ -53,6 +52,9 @@
     -webkit-animation-name: flip-gamepiece-white;
     -webkit-animation-duration: 1s;
     -webkit-iteration-count: 1;
+    -webkit-animation-timing-function: ease-out;
+    -webkit-animation-fill-mode: forwards;
+    -webkit-transform-style: preserve-3d;
 }
 
 @-webkit-keyframes flip-gamepiece-white2{
