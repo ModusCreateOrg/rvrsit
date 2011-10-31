@@ -1,8 +1,7 @@
 var app = require('express').createServer()
   , io = require('socket.io').listen(app)
-  , mongoose = require('mongoose');
-
-
+  , mongoose = require('mongoose')
+  , Othello = require('./Othello/Othello').Othello;
 
 /**
  * Listen on port 3000
@@ -48,6 +47,8 @@ instance.save();
 
 
 
+
+
 /**
  * Setup socket listener
  */
@@ -58,7 +59,11 @@ io.sockets.on('connection', function (socket) {
 		socket.emit('hi back', data + ', bitch');
 		
 		socket.emit('hi back', instance);
-	})
+	});
+
+    socket.on('move', function() {
+
+    })
 });
 
 
