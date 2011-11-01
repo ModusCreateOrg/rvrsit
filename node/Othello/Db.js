@@ -18,8 +18,8 @@ var Db = {
 
 Db.schema.Log = new Schema({
 	player	: Number, // should become objectId
-    from    : String,
-  	to    	: String,
+    x       : String,
+  	z    	: String,
     board   : Array,
     ts    	: Date,
     session : ObjectId
