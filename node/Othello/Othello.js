@@ -72,6 +72,9 @@ Othello.apply(Othello,{
         PATHS: ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw']
     },
 
+    /**
+     * Init Othello
+     */
     init: function() {
         var i, j, len, board, constants = this.constants;
 
@@ -89,7 +92,12 @@ Othello.apply(Othello,{
 
         console.log("Othello instantiated");
     },
-    
+
+    /**
+     * Saves db instance
+     * Used in app.js
+     * @param database
+     */
     setDb: function(database) {
         this.db = database;
     },
@@ -116,9 +124,13 @@ Othello.apply(Othello,{
 
         socket.on('hi', me.bind(me.hi,me));
 
-        socket.on('move', this.doMove);
+        socket.on('move', me.bind(me.doMove,me));
     },
 
+    /**
+     * Test method
+     * @param data
+     */
     hi: function(data) {
         var me = this;
 
@@ -132,11 +144,17 @@ Othello.apply(Othello,{
  /**
   * Movements
   */
-
 Othello.apply(Othello, {
-     doMove: function(x, y, player) {
-        var success, message;
+     doMove: function(data) {
+        var db      = this.getDb(),
+            success = false,
+            x       = data.x,
+            y       = data.y,
+            player  = data.player,
+            message,
+            record;
 
+        console.log(data);
         message = this.validateMove(x, y, player);
         if (message === true) {
             success = this.checkPaths(this.constants.PATHS, x, y, player);
@@ -146,18 +164,36 @@ Othello.apply(Othello, {
             this.setPosition(x, y, player);
         }
 
+         // save to db
+         record = new db.Log({
+            ts      : new Date(),
+            player	: player,
+            x       : String,
+            y    	: String,
+            board   : this.board
+        });
+
+        record.save();
+
+        this.getSocket().emit('moveConfirmation', {
+            board   : this.board,
+            success : success,
+            message : message
+        });
+
         return {
-            board: this.board,
-            success: true,
-            message: message
+            board   : this.board,
+            success : success,
+            message : message,
+            record  : record
         };
     },
 
     validateMove: function(i, j, player) {
         if (i > this.boardSize || j > this.boardSize || i < 0 || j < 0) {
             return "Invalid position: position must be less than board size and greater than zero";
-        } else if (player !== this.constants.BLACK || player !== this.constants.WHITE) {
-            return "Invalid player: must be either "+this.constants.WHITE+" (WHITE) or "+this.constants.BLACK+" (BLACK).";
+        } else if (player !== this.constants.BLACK && player !== this.constants.WHITE) {
+            return "Invalid player: must be either "+this.constants.WHITE+" (WHITE) or "+this.constants.BLACK+" (BLACK), current value is " + player;
         } else if (this.board[i][j] !== this.constants.FREE) {
             return "Invalid position: position is already taken.";
         }
@@ -187,11 +223,11 @@ Othello.apply(Othello, {
         if (!count) {
             nextPosition = this.getNextPosition(direction, x, y);
             if (nextPosition !== null) {
-                nextState = this.board[next[0], next[1]];
+                nextState = this.board[nextPosition[0], nextPosition[1]];
                 if (nextState !== this.constants.FREE && nextState !== player) {
                     // It's valid so, recurse until it returns true or false
-                    if (this.checkPath(direction, next[0], next[1], player, 1)) {
-                        this.setPosition(next[0], next[1], player);
+                    if (this.checkPath(direction, nextPosition[0], nextPosition[1], player, 1)) {
+                        this.setPosition(nextPosition[0], nextPosition[1], player);
                         return true;
                     }
                 }
@@ -205,13 +241,13 @@ Othello.apply(Othello, {
             if (nextPosition === null) {
                 return false;
             } else {
-                nextState = this.board[next[0], next[1]];
+                nextState = this.board[nextPosition[0], nextPosition[1]];
                 if (nextState === player) {
                     return true;
                 } else if (nextState === this.constants.FREE) {
                     return false;
-                } else if (this.checkPath(direction, next[0], next[1], ++count)) {
-                    this.setPosition(next[0], next[1], player);
+                } else if (this.checkPath(direction, nextPosition[0], nextPosition[1], ++count)) {
+                    this.setPosition(nextPosition[0], nextPosition[1], player);
                     return true;
                 }
             }
