@@ -155,6 +155,7 @@ Othello.apply(Othello, {
             record;
 
         console.log(data);
+
         message = this.validateMove(x, y, player);
         if (message === true) {
             success = this.checkPaths(this.constants.PATHS, x, y, player);
@@ -165,15 +166,17 @@ Othello.apply(Othello, {
         }
 
          // save to db
-         record = new db.Log({
-            ts      : new Date(),
-            player	: player,
-            x       : String,
-            y    	: String,
-            board   : this.board
-        });
+         if (success) {
+             record = new db.Log({
+                ts      : new Date(),
+                player	: player,
+                x       : String,
+                y    	: String,
+                board   : this.board
+            });
 
-        record.save();
+            record.save();
+         }
 
         this.getSocket().emit('moveConfirmation', {
             board   : this.board,
