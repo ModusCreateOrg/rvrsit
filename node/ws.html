@@ -1,13 +1,77 @@
 <!DOCTYPE html>
-<script src="/socket.io/socket.io.js"></script>
+<html>
+<head>
+    <script src="/socket.io/socket.io.js"></script>
+
+    <style>
+        div {
+            cursor: pointer;
+            font-family: "Helvetica Neue";
+            font-size: 12px;
+            color: blue;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="hi">Send Hi</div>
+<div id="regPlayer">Register as player Bruce Willis</div>
+<div id="whoami">Who am I?</div>
+<div id="startSession">Start game</div>
+<div id="sampleMove">Tap position 5,5 as player 1</div>
+<div id="kicker">Be a bastard that deserves getting his ass kicked</div>
+
 
 <script>
 var socket = io.connect('http://localhost:3000');
 
 socket.on('connected', function() {
-	socket.on('hi back', function() {console.log(arguments);});
-    socket.on('moveConfirmation', function() {console.log(arguments);});
-	socket.emit('hi', 'Hello mofo');
+    console.info('You are connected. Nice!')
 });
 
+socket.on('hi back', function() {console.log(arguments);});
+socket.on('moveConfirmation', function() {console.log(arguments);});
+socket.on('playerRegistered', function(user) {console.log('Hello, ' + user.name, arguments);});
+
+socket.on('disconnect', function() {
+    console.log(arguments);
+});
+
+socket.on('error', function(msg) {
+    console.error(msg);
+});
+
+socket.on('whour', function(data) {
+    if (!data) console.warn('You are NOBODY!');
+    else console.log('It\'s you, '+data.name+', good to see you again.');
+});
+
+
+var hi = document.getElementById("hi");
+    hi.addEventListener('click', function() {
+        socket.emit('hi', 'Hello mofo');
+    });
+
+var whoami = document.getElementById("whoami");
+    whoami.addEventListener('click', function() {
+        socket.emit('whoami');
+    });
+
+var kicker = document.getElementById("kicker");
+    kicker.addEventListener('click', function() {
+        socket.emit('yell', 'Fucking fucker fuck fuck');
+    });
+
+var regPlayer = document.getElementById("regPlayer");
+    regPlayer.addEventListener('click', function() {
+        socket.emit('registerPlayer', {
+            name    : 'Bruce Willis',
+            email   : 'bruce@willis.us'
+        });
+    });
 </script>
+
+
+</body>
+</html>
