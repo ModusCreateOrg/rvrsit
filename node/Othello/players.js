@@ -1,12 +1,11 @@
 exports.players = {
-    addPlayer: function(data, cb, scope, safe) {
+    addPlayer: function(socket, data, cb, scope, safe) {
         if (data.existingPlayer) {
             return cb.call(scope, null, data.existingPlayer);
         }
 
         var me      = this,
             db      = me.getDb(),
-            socket  = me.getSocket(),
             player;
 
         scope = scope || me;
@@ -18,9 +17,9 @@ exports.players = {
 
             this.getPlayerByEmail(data.email, function(err, doc) {
                 if (doc)
-                    me.addPlayer({existingPlayer: doc}, cb, scope);
+                    me.addPlayer(socket, {existingPlayer: doc}, cb, scope);
                 else
-                    me.addPlayer(data, cb, scope, true);
+                    me.addPlayer(socket, data, cb, scope, true);
             });
         }
         else {

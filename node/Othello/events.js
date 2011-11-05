@@ -18,6 +18,12 @@ exports.events = {
         return hs.sessionID;
     },
 
+    /**
+     * Only a safety mechanism on global app level
+     * Will tell user to restart browser on exception
+     * TODO: automatically restart socket conn or browser (on client side)
+     * @param socket
+     */
     catchUncaughtExceptions: function(socket) {
         process.on('uncaughtException', function (err) {
             if (socket) {
@@ -31,52 +37,46 @@ exports.events = {
         var me  = this,
             sid = me.sessionKA(socket); // browser session id
 
-        me.socket = socket;
-
         me.catchUncaughtExceptions(socket);
         
+        // register socket instance to the current user and browser session
         me.userReg(socket, sid);
 
         socket.emit('connected', true);
 
-        socket.on('hi', me.bind(me.hi,me));
+        this.applyEvents(socket, {
+            'hi'    : function(data) {me.hi(socket, data)},
+            'move'  : me.bind(me.doMove,me),
+            'registerPlayer'    : function(data) {
+                                    me.addPlayer(socket, data, function(err, doc) {
+                                        socket.emit('playerRegistered', doc);
+                                        me.userToPlayer(socket, doc, sid);
+                                    })
+                                  },
+            'whoami'            : function() {
+                                        var user = me.getUser(socket.id);
+                                        socket.emit('whour',user.player);
+                                  },
+            'yell'              : function() {
+                                        socket.emit('disconnect', 'You just got disconnected for having such an attitude. Cool down and come back again.');
+                                        me.userDisconnect(socket);
+                                  },
+            'startNewSession'   : function(data) {me.sessionCreate(data, socket);},
 
-        socket.on('move', me.bind(me.doMove,me));
-
-        socket.on('registerPlayer', function(data) {
-            me.addPlayer(data, function(err, doc) {
-                socket.emit('playerRegistered', doc);
-                me.userToPlayer(socket, doc, sid);
-            })
-        });
-
-        socket.on('whoami', function() {
-            var user = me.getUser(socket.id);
-            socket.emit('whour',user.player);
-        });
-
-        socket.on('yell', function() {
-            socket.emit('disconnect', 'You just got disconnected for having such an attitude. Cool down and come back again.');
-            me.userDisconnect(socket);
-        });
-
-        socket.on('startNewSession', function(data) {
-            me.sessionCreate(data, socket);
-        });
-
-        /**
-         * Whose turn is it?
-         * Which color is the player making move?
-         * Validate move
-         * Execute move
-         * Return new board layout or just success?
-         */
-        socket.on('tapBoard', function(data) {
-            //data.player = me.getCurrentPlayer(socket);
-            //force this to white for now
-            data.player = 1;
-            var result = me.doMove(data);
-            socket.emit('moveResult', result);
+            /**
+             * Whose turn is it?
+             * Which color is the player making move?
+             * Validate move
+             * Execute move
+             * Return new board layout or just success?
+             */
+            'tapBoard'          : function(data) {
+                                    //data.player = me.getCurrentPlayer(socket);
+                                    //force this to white for now
+                                    data.player = 1;
+                                    var result = me.doMove(data);
+                                    socket.emit('moveResult', result);
+                                }
         });
     },
 
@@ -84,11 +84,11 @@ exports.events = {
      * Test method
      * @param data
      */
-    hi: function(data) {
+    hi: function(socket, data) {
         var me = this;
 
-        me.socket.emit('hi back', data + ', bitch');
+        socket.emit('hi back', data + ', bitch');
 
-        me.socket.emit('hi back', me.getDb());
+        socket.emit('hi back', me.getDb());
     }
 };
