@@ -39,6 +39,7 @@ exports.users = {
      * Assign player to active user
      * @param socket
      * @param player {Object} Player object as in db
+     * @param sid {Object} Browser session id
      */
     userToPlayer: function(socket, player, sid) {
         if (sid) {
@@ -87,9 +88,21 @@ exports.users = {
         // older than 48 hrs
     },
 
+    httpSessionGetSocket: function(sessionId) {
+        var sid = this.httpSessions[sessionId];
+        return sid?this.getUser(sid.socketId):false;
+    },
+
     httpSessionsGetPlayer: function(sid) {
         var session = this.httpSessions[sid];
         return session ? session.playerId : null;
+    },
+
+    /**
+     * Get player data from the user in session/socket (socket right now)
+     */
+    getCurrentPlayer: function(socket) {
+        return this.users[socket.id] .player;
     }
 };
 

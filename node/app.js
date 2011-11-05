@@ -21,6 +21,13 @@ app.listen(3000);
  */
 app.get('/', function (req, res) {
     res.sendfile(__dirname + '/ws.html');
+
+    /*var sid = req.cookies["connect.sid"];
+    if (sid) {
+        var socket = O.httpSessionGetSocket(data.sessionID);
+        if (socket)
+    }*/
+
 });
 
 /**
@@ -33,20 +40,18 @@ O.setDb(db);
  * Setup socket listener
  */
 
-/*io.enable('browser client minification');  // send minified client
-io.enable('browser client etag');          // apply etag caching logic based on version number
-io.enable('browser client gzip');          // gzip the file
-io.set('log level', 1);                    // reduce logging
-io.set('transports', [                     // enable all transports (optional if you want flashsocket)
+io.enable('browser client minification');
+//io.enable('browser client etag');             //turn on in production
+io.enable('browser client gzip');
+io.set('log level', 1);
+io.set('transports', [
     'websocket'
-  , 'flashsocket'
   , 'htmlfile'
   , 'xhr-polling'
   , 'jsonp-polling'
-]);*/
+]);
 
 
-io.set('log level', 1);
 
 io.set('authorization', function (data, accept) {
     if (data.headers.cookie) {
@@ -68,3 +73,12 @@ io.set('authorization', function (data, accept) {
 
 io.sockets.on('connection', O.bind(O.registerSocketEvents, O));
 
+
+/**
+ * Don't die on uncaught exception
+ * TODO: get socket per current session ID
+ */
+
+process.on('uncaughtException', function (err) {
+  console.log('Caught exception: ' + err);
+});
