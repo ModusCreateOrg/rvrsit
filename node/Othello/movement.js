@@ -39,7 +39,7 @@ exports.movement = {
             message : message
         };
 
-        this.getSocket().emit('moveConfirmation', result);
+        //this.getSocket().emit('moveConfirmation', result);
 
         return this.apply(result,{record: record});
     },
