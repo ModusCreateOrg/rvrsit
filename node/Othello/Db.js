@@ -44,9 +44,11 @@ Db.model.Player = mongoose.model('players', Db.schema.Player);
  */
 Db.schema.Session = new Schema({
 	started	    : Date,
+    lastMove    : Date,
     white       : ObjectId, // player
     black       : ObjectId, // player
-  	state       : Number    // 0 finished, 1 playing, 2 waiting for player, 3 paused
+  	state       : Number,   // 0 finished, 1 playing, 2 waiting for player, 3 paused,
+    next        : Number    // next player to play. 0 or 1 (0 = white)
 });
 
 Db.model.Session = mongoose.model('sessions', Db.schema.Session);

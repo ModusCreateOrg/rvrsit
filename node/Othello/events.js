@@ -18,12 +18,23 @@ exports.events = {
         return hs.sessionID;
     },
 
+    catchUncaughtExceptions: function(socket) {
+        process.on('uncaughtException', function (err) {
+            if (socket) {
+                //socket.emit('restart', true);
+                socket.emit('error', {msg:'Uncaught exception. Please restart!', error: err});
+            }
+        });
+    },
+
     registerSocketEvents : function(socket) {
         var me  = this,
-            sid = me.sessionKA(socket);
+            sid = me.sessionKA(socket); // browser session id
 
         me.socket = socket;
 
+        me.catchUncaughtExceptions(socket);
+        
         me.userReg(socket, sid);
 
         socket.emit('connected', true);
@@ -47,6 +58,25 @@ exports.events = {
         socket.on('yell', function() {
             socket.emit('disconnect', 'You just got disconnected for having such an attitude. Cool down and come back again.');
             me.userDisconnect(socket);
+        });
+
+        socket.on('startNewSession', function(data) {
+            me.sessionCreate(data, socket);
+        });
+
+        /**
+         * Whose turn is it?
+         * Which color is the player making move?
+         * Validate move
+         * Execute move
+         * Return new board layout or just success?
+         */
+        socket.on('tapBoard', function(data) {
+            //data.player = me.getCurrentPlayer(socket);
+            //force this to white for now
+            data.player = 1;
+            var result = me.doMove(data);
+            socket.emit('moveResult', result);
         });
     },
 
