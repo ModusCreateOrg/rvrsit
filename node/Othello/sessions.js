@@ -97,13 +97,13 @@ exports.session = {
             player      = Othello.user.getCurrentPlayer(socket),
             playerId    = player ? player._id : false;
 
-        if (!playerId) return  Othello.reportError(socket, 'E10100');
+        if (!playerId) return Othello.reportError(socket, 'E10100'); //not logged in
 
         scope = scope || this;
 
         db.Session
             .where({or: {white: playerId, black: playerId}})
-            .where({state: state})                          // non-finished sessions only
+            .where({state: state})
             .limit(1)
             .asc('lastMove')
             .run(Othello.bind(cb, scope));

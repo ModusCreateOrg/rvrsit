@@ -1,21 +1,30 @@
 exports.movement = {
-     doMove: function(data) {
+     doMove: function(socket, data) {
         var db      = this.getDb(),
             success = false,
             x       = data.x,
             y       = data.y,
             player  = data.player,
+            Othello = this,//this.getParent(),
+            regPlyr = Othello.user.getCurrentPlayer(socket),
             message,
             record,
             result;
 
-        console.log(data);
+
+        if (!regPlyr) {
+            // not logged in
+            return this.reportError(socket, 'E10100');
+        }
+
+         console.log(data);
 
         message = this.validateMove(x, y, player);
         if (message === true) {
             success = this.checkPaths(this.constants.PATHS, x, y, player);
         }
 
+         // this is not working properly right here
         if (success) {
             this.setPosition(x, y, player);
         }
@@ -39,6 +48,7 @@ exports.movement = {
             message : message
         };
 
+         console.log(this.board);
         //this.getSocket().emit('moveConfirmation', result);
 
         return this.apply(result,{record: record});
@@ -125,6 +135,7 @@ exports.movement = {
     },
 
     setPosition: function(x, y, player) {
+        console.log('setting postiion');
         this.board[x][y] = player;
         this.freeSpaces--;
     }

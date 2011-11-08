@@ -5,11 +5,12 @@ exports.user = {
 
     reg: function(socket, sid) {
         var me          = this,
+            Othello     = me.getParent(),
             playerId    = me.httpSessionsGetPlayer(sid);
 
         me.users[socket.id] = socket;
         if (playerId) {
-            me.get(playerId, function(err, player) {
+            Othello.player.get(playerId, function(err, player) {
                 me.bindToPlayer(socket, player);
             });
         }
@@ -73,7 +74,7 @@ exports.user = {
         var users = this.users,
             id;
         for (id in users) {
-            if (users[id].player._id == playerId) return id;
+            if (users[id].player && users[id].player._id == playerId) return id;
         }
 
         return false;
@@ -85,7 +86,7 @@ exports.user = {
      */
     getFromPlayerId: function(playerId) {
         var userId = this.getIdFromPlayerId(playerId);
-        return userId ? this.user[userId] : false;
+        return userId ? this.users[userId] : false;
     },
 
     /**
