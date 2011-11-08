@@ -8,7 +8,7 @@ exports.events = {
         // setup an interval that will keep our session fresh
         var intervalID = setInterval(function () {
             hs.session.reload( function () {
-                hs.session.touch().save();
+                try {hs.session.touch().save();} catch (e) {} //sometimes it fails. What then? the originalMaxAge of undefined bug
             });
         }, 60 * 1000);
         socket.on('disconnect', function () {
@@ -26,8 +26,9 @@ exports.events = {
      */
     catchUncaughtExceptions: function(socket) {
         process.on('uncaughtException', function (err) {
+            console.log('Uncaught!', err.stack);
             if (socket) {
-                socket.emit('respawn', true);
+                // temporarily disabled socket.emit('respawn', true);
                 // only for dev debugging, does not go through this.errorReport right now
                 socket.emit('error', {msg:'Uncaught exception. Please restart!', error: err});
             }
@@ -47,7 +48,7 @@ exports.events = {
 
         this.applyEvents(socket, {
             'hi'                : function(data) {me.hi(socket, data)},
-            'move'              : me.bind(me.doMove,me),
+            'move'              : function(data) {me.doMove(socket, data); xxx();},
             'registerPlayer'    : function(data) {
                                     me.player.add(socket, data, function(err, doc) {
                                         socket.emit('playerRegistered', doc);
@@ -77,7 +78,7 @@ exports.events = {
                                     //data.player = me.getCurrentPlayer(socket);
                                     //force this to white for now
                                     data.player = 1;
-                                    var result = me.doMove(data);
+                                    var result = me.doMove(socket,data);
                                     socket.emit('moveResult', result);
                                 }
         });
