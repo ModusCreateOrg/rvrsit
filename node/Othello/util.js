@@ -61,6 +61,31 @@ exports.util = {
     },
 
     /**
+     * Unified error reporting method
+     * @param socket {Object} User's socket instance
+     * @param code {String} Error code (listed in codes {Object})
+     * @param callbackFn {Function} client-side callback function
+     * @param params {Array} params to apply to callback function
+     */
+    reportError: function(socket, code, callbackFn, params) {
+        var codes = {
+                // disconnected
+                E10001: 'Disconnected due to inactivity, or cookie has expired.',
+                E10002: 'Disconnected for not behaving.',
+                E10003: 'Disconnected for cheating.',
+                // session related
+                E10100: 'You are not logged in. Hacker fucker!',
+                // game related
+                E11000: 'Dude, finish your game first.',
+                // registration
+                E12000: 'User is missing email address.'
+            },
+            error = codes[code] || 'Unknown error';
+
+        socket.emit('error', {msg: error, code: code, callbackFn: callbackFn, params: params});
+    },
+
+    /**
      * Saves db instance
      * Used in app.js
      * @param database

@@ -27,9 +27,22 @@
 <script>
 var socket = io.connect('http://localhost:3000');
 
+var reportError = function(error) {
+    if (error && typeof error === 'string') return console.error(error);
+    console.error (error.msg || 'Unknown error');
+    if (error.callbackFn && window[error.callbackFn]) {
+        try {
+            window[error.callbackFn].apply(window,error.params || []);
+        } catch (e) {
+            console.error('Unable to execute callback function');
+        }
+    }
+};
+
 /**
  * Event listeners
  */
+
 
 socket.on('restart', function() {
     socket = io.connect('http://localhost:3000');
@@ -40,7 +53,7 @@ socket.on('hi back', function() {console.log(arguments);});
 socket.on('moveConfirmation', function() {console.log(arguments);});
 socket.on('playerRegistered', function(user) {console.log('Hello, ' + user.name, arguments);});
 socket.on('disconnect', function() {console.log(arguments);});
-socket.on('error', function(msg) {console.error(msg);});
+socket.on('error', reportError);
 socket.on('moveResult', function(msg) {console.log(msg);});
 socket.on('playSession', function(msg) {console.log(msg);});
 
@@ -59,6 +72,7 @@ socket.on('respawn', function(data) {
     socket.disconnect();
     socket.socket.connect();
 });
+
 
 /**
  * Event emitters

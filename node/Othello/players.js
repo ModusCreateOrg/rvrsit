@@ -13,7 +13,7 @@ exports.player = {
 
         if (!safe) {
             if (!data.email) {
-                return socket.emit('error', 'User is missing email address');
+                return Othello.reportError(socket, 'E12000');
             }
 
             this.getByEmail(data.email, function(err, doc) {
