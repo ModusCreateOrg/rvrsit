@@ -44,7 +44,8 @@ exports.session = {
             player  = Othello.user.getCurrentPlayer(socket);
 
         if (!player) {
-            return socket.emit('error', 'You are not logged in. Hacker fucker!');
+            // not logged in
+            return Othello.reportError(socket, 'E10100');
         }
 
         me.getActive(socket, function(err,doc) {
@@ -57,7 +58,8 @@ exports.session = {
                     socket.emit('sessionCreated', doc);
                 })
             } else {
-                socket.emit('error', 'Dude, finish your game, first');
+                // already playing a game
+                Othello.reportError(socket,'E11000');
             }
         })
     },
@@ -95,7 +97,7 @@ exports.session = {
             player      = Othello.user.getCurrentPlayer(socket),
             playerId    = player ? player._id : false;
 
-        if (!playerId) return socket.emit('error', 'You are not logged in');
+        if (!playerId) return  Othello.reportError(socket, 'E10100');
 
         scope = scope || this;
 

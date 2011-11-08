@@ -28,6 +28,7 @@ exports.events = {
         process.on('uncaughtException', function (err) {
             if (socket) {
                 socket.emit('respawn', true);
+                // only for dev debugging, does not go through this.errorReport right now
                 socket.emit('error', {msg:'Uncaught exception. Please restart!', error: err});
             }
         });
