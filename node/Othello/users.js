@@ -1,26 +1,27 @@
-exports.users = {
+exports.user = {
     users: {},
 
     httpSessions: {},
 
-    userReg: function(socket, sid) {
+    reg: function(socket, sid) {
         var me          = this,
             playerId    = me.httpSessionsGetPlayer(sid);
 
         me.users[socket.id] = socket;
         if (playerId) {
-            me.getPlayer(playerId, function(err, player) {
-                me.userToPlayer(socket, player);
+            me.get(playerId, function(err, player) {
+                me.bindToPlayer(socket, player);
             });
         }
     },
 
-    userUpdate: function(socket, data) {
-        var id = socket.id || socket;
-        return this.apply(this.users[id], data);
+    update: function(socket, data) {
+        var id      = socket.id || socket,
+            Othello = this.getParent();
+        return Othello.apply(this.users[id], data);
     },
 
-    userFlush: function(socket) {
+    flush: function(socket) {
         var id = socket.id || socket;
         delete this.users[id];
     },
@@ -32,7 +33,7 @@ exports.users = {
     userDisconnect: function(socket) {
         var id = socket.id;
         socket.disconnect();
-        this.userFlush(id);
+        this.flush(id);
     },
 
     /**
@@ -41,7 +42,7 @@ exports.users = {
      * @param player {Object} Player object as in db
      * @param sid {Object} Browser session id
      */
-    userToPlayer: function(socket, player, sid) {
+    bindToPlayer: function(socket, player, sid) {
         if (sid) {
             this.httpSessions[sid] = {
                 playerId    : player._id,
@@ -49,22 +50,26 @@ exports.users = {
                 created     : new Date()
             };
         }
-        return this.userUpdate(socket, {player: player});
+        return this.update(socket, {player: player});
     },
 
     /**
      * Return user's socket instance from various references
      * @param id
      */
-    getUser: function(id) {
-        return this.getUserFromSessionId(id) || this.getUserFromPlayerId(id) || this.getUserFromPlayer(id) || false;
+    get: function(id) {
+        return this.getFromSessionId(id) || this.getFromPlayerId(id) || this.getFromPlayer(id) || false;
     },
 
-    getUserFromSessionId: function(sessionId) {
+    getFromSessionId: function(sessionId) {
         return this.users[sessionId];
     },
 
-    getUserIdFromPlayerId: function(playerId) {
+    /**
+     * Get just user ID from player ID
+     * @param playerId {String} MongoDB ID of the user
+     */
+    getIdFromPlayerId: function(playerId) {
         var users = this.users,
             id;
         for (id in users) {
@@ -74,13 +79,21 @@ exports.users = {
         return false;
     },
 
-    getUserFromPlayerId: function(playerId) {
-        var userId = this.getUserIdFromPlayerId(playerId);
+    /**
+     * Get Socket reference of player by id
+     * @param playerId
+     */
+    getFromPlayerId: function(playerId) {
+        var userId = this.getIdFromPlayerId(playerId);
         return userId ? this.user[userId] : false;
     },
 
-    getUserFromPlayer: function(player) {
-        return player._id ? this.getUserFromPlayerId(player._id) : false;
+    /**
+     * Get Socket reference of player object
+     * @param player
+     */
+    getFromPlayer: function(player) {
+        return player._id ? this.getFromPlayerId(player._id) : false;
     },
 
     httpSessionsCleanup: function() {
@@ -90,7 +103,7 @@ exports.users = {
 
     httpSessionGetSocket: function(sessionId) {
         var sid = this.httpSessions[sessionId];
-        return sid?this.getUser(sid.socketId):false;
+        return sid?this.get(sid.socketId):false;
     },
 
     httpSessionsGetPlayer: function(sid) {

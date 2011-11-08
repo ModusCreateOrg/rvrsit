@@ -19,6 +19,7 @@
 <div id="regPlayer">Register as player Bruce Willis</div>
 <div id="whoami">Who am I?</div>
 <div id="startNewSession">Start game</div>
+<div id="continueSession">Continue game</div>
 <div id="tapBoard">Tap position 5,5 as current player (white)</div>
 <div id="kicker">Be a bastard that deserves getting his ass kicked</div>
 
@@ -41,6 +42,7 @@ socket.on('playerRegistered', function(user) {console.log('Hello, ' + user.name,
 socket.on('disconnect', function() {console.log(arguments);});
 socket.on('error', function(msg) {console.error(msg);});
 socket.on('moveResult', function(msg) {console.log(msg);});
+socket.on('playSession', function(msg) {console.log(msg);});
 
 socket.on('whour', function(data) {
     if (!data) console.warn('You are NOBODY!');
@@ -50,6 +52,12 @@ socket.on('whour', function(data) {
 socket.on('sessionCreated', function(data) {
     var state = data.state == 2 ? 'waiting for another player' : 'game ready, play!';
     console.log('Created session', 'Status: ' + state, data);
+});
+
+socket.on('respawn', function(data) {
+    console.info('reconnecting');
+    socket.disconnect();
+    socket.socket.connect();
 });
 
 /**
@@ -82,6 +90,11 @@ var regPlayer = document.getElementById("regPlayer");
 var startNewSession = document.getElementById("startNewSession");
     startNewSession.addEventListener('click', function() {
         socket.emit('startNewSession', {});
+    });
+
+var continueSession = document.getElementById("continueSession");
+    continueSession.addEventListener('click', function() {
+        socket.emit('continueSession', {});
     });
 
 var tapBoard = document.getElementById("tapBoard");

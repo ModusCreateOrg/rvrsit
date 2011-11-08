@@ -27,7 +27,7 @@ exports.events = {
     catchUncaughtExceptions: function(socket) {
         process.on('uncaughtException', function (err) {
             if (socket) {
-                //socket.emit('restart', true);
+                socket.emit('respawn', true);
                 socket.emit('error', {msg:'Uncaught exception. Please restart!', error: err});
             }
         });
@@ -40,28 +40,31 @@ exports.events = {
         me.catchUncaughtExceptions(socket);
         
         // register socket instance to the current user and browser session
-        me.userReg(socket, sid);
+        me.user.reg(socket, sid);
 
         socket.emit('connected', true);
 
         this.applyEvents(socket, {
-            'hi'    : function(data) {me.hi(socket, data)},
-            'move'  : me.bind(me.doMove,me),
+            'hi'                : function(data) {me.hi(socket, data)},
+            'move'              : me.bind(me.doMove,me),
             'registerPlayer'    : function(data) {
-                                    me.addPlayer(socket, data, function(err, doc) {
+                                    me.player.add(socket, data, function(err, doc) {
                                         socket.emit('playerRegistered', doc);
-                                        me.userToPlayer(socket, doc, sid);
+                                        me.user.bindToPlayer(socket, doc, sid);
                                     })
                                   },
             'whoami'            : function() {
-                                        var user = me.getUser(socket.id);
+                                        buuh();
+                                        var user = me.user.get(socket.id);
                                         socket.emit('whour',user.player);
                                   },
             'yell'              : function() {
                                         socket.emit('disconnect', 'You just got disconnected for having such an attitude. Cool down and come back again.');
                                         me.userDisconnect(socket);
                                   },
-            'startNewSession'   : function(data) {me.sessionCreate(data, socket);},
+            'startNewSession'   : function(data) {me.session.create(data, socket);},
+
+            'continueSession'   : function(data) {me.session.resume(data, socket);},
 
             /**
              * Whose turn is it?
