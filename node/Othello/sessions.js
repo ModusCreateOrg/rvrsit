@@ -1,33 +1,36 @@
-exports.sessions = {
-    sessionAdd: function(data, cb, scope) {
-        var db = this.getDb(),
+exports.session = {
+    add: function(data, cb, scope) {
+        var Othello = this.getParent,
+            db      = Othello.getDb(),
             session;
 
         scope = scope || this;
         
-        session = new db.Session(this.apply({
+        session = new db.Session(Othello.apply({
             state : 2
         }, data));
 
-        session.save(this.bind(cb, scope));
+        session.save(Othello.bind(cb, scope));
     },
 
-    sessionGet: function(id, cb, scope) {
-        var db      = this.getDb(),
-            session  = db.Session;
+    get: function(id, cb, scope) {
+        var Othello = this.getParent,
+            db      = Othello.getDb(),
+            session = db.Session;
 
         scope = scope || this;
 
-        session.findById(id, this.bind(cb, scope));
+        session.findById(id, Othello.bind(cb, scope));
     },
 
-    sessionsList: function(query, cb, scope) {
-        var db      = this.getDb(),
-            session  = db.Session;
+    list: function(query, cb, scope) {
+        var Othello = this.getParent,
+            db      = Othello.getDb(),
+            session = db.Session;
 
         scope = scope || this;
 
-        session.find(query, this.bind(cb, scope));
+        session.find(query, Othello.bind(cb, scope));
     },
 
     /**
@@ -35,17 +38,18 @@ exports.sessions = {
      * @param data
      * @param socket
      */
-    sessionCreate: function(data, socket, safe) {
+    create: function(data, socket) {
         var me      = this,
-            player  = me.getCurrentPlayer(socket);
+            Othello = me.getParent(),
+            player  = Othello.user.getCurrentPlayer(socket);
 
         if (!player) {
             return socket.emit('error', 'You are not logged in. Hacker fucker!');
         }
 
-        me.sessionGetActive(socket, function(err,doc) {
+        me.getActive(socket, function(err,doc) {
             if (!doc) {
-                me.sessionAdd({
+                me.add({
                     started : new Date(),
                     white   : player,
                     next    : 0                                     // white starts first
@@ -58,6 +62,20 @@ exports.sessions = {
         })
     },
 
+    resume: function(data, socket) {
+        var me      = this,
+            db      = me.getParent().getDb();
+
+        me.getActive(socket, function(err, docs) {
+            var session = docs[0] || false;
+            if (session) {
+                session.state = 1;
+                session.save();
+                socket.emit('playSession', session);
+            }
+        });
+    },
+
     // TODO: Who's next to play?
 
     /**
@@ -66,15 +84,16 @@ exports.sessions = {
      * @param cb
      * @param scope
      */
-    sessionGetActive: function(socket, cb, scope) {
-        this.sessionGetByStatus({$gt: 0}, socket, cb, scope);
+    getActive: function(socket, cb, scope) {
+        this.getByStatus({$gt: 0}, socket, cb, scope);
     },
 
-    sessionGetByStatus: function(state, socket, cb, scope) {
+    getByStatus: function(state, socket, cb, scope) {
         var me          = this,
-            db          = me.getDb(),
-            player      = this.getCurrentPlayer(socket),
-           playerId    = player ? player._id : false;
+            Othello     = me.getParent(),
+            db          = Othello.getDb(),
+            player      = Othello.user.getCurrentPlayer(socket),
+            playerId    = player ? player._id : false;
 
         if (!playerId) return socket.emit('error', 'You are not logged in');
 
@@ -85,7 +104,7 @@ exports.sessions = {
             .where({state: state})                          // non-finished sessions only
             .limit(1)
             .asc('lastMove')
-            .run(me.bind(cb, scope));
+            .run(Othello.bind(cb, scope));
 
         
     }

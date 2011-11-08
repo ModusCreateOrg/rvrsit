@@ -29,10 +29,14 @@ exports.util = {
          }
 
          if (object && config && typeof config === 'object') {
-             var i;
+             var i, param;
 
              for (i in config) {
-                 object[i] = config[i];
+                 param = config[i];
+                 if (param && typeof param === 'object') {
+                     param.getParent = function() {return object;}
+                 }
+                 object[i] = param;
              }
          }
          return object;

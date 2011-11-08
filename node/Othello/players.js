@@ -1,11 +1,12 @@
-exports.players = {
-    addPlayer: function(socket, data, cb, scope, safe) {
+exports.player = {
+    add: function(socket, data, cb, scope, safe) {
         if (data.existingPlayer) {
             return cb.call(scope, null, data.existingPlayer);
         }
 
         var me      = this,
-            db      = me.getDb(),
+            Othello = me.getParent(),
+            db      = Othello.getDb(),
             player;
 
         scope = scope || me;
@@ -15,11 +16,11 @@ exports.players = {
                 return socket.emit('error', 'User is missing email address');
             }
 
-            this.getPlayerByEmail(data.email, function(err, doc) {
+            this.getByEmail(data.email, function(err, doc) {
                 if (doc)
-                    me.addPlayer(socket, {existingPlayer: doc}, cb, scope);
+                    me.add(socket, {existingPlayer: doc}, cb, scope);
                 else
-                    me.addPlayer(socket, data, cb, scope, true);
+                    me.add(socket, data, cb, scope, true);
             });
         }
         else {
@@ -28,34 +29,37 @@ exports.players = {
                 gamesPlayed : 0
             }));
 
-            player.save(this.bind(cb, scope));
+            player.save(Othello.bind(cb, scope));
         }
     },
 
-    getPlayer: function(id, cb, scope) {
-        var db      = this.getDb(),
+    get: function(id, cb, scope) {
+        var Othello = this.getParent(),
+            db      = Othello.getDb(),
             player  = db.Player;
 
         scope = scope || this;
 
-        player.findById(id, this.bind(cb, scope));
+        player.findById(id, Othello.bind(cb, scope));
     },
 
-    getPlayerByEmail: function(email, cb, scope) {
-        var db      = this.getDb(),
+    getByEmail: function(email, cb, scope) {
+        var Othello = this.getParent(),
+            db      = Othello.getDb(),
             player  = db.Player;
 
         scope = scope || this;
 
-        player.findOne({email: email}, this.bind(cb, scope));
+        player.findOne({email: email}, Othello.bind(cb, scope));
     },
 
-    listPlayers: function(query, cb, scope) {
-        var db      = this.getDb(),
+    list: function(query, cb, scope) {
+        var Othello = this.getParent(),
+            db      = Othello.getDb(),
             players  = db.Player;
 
         scope = scope || this;
 
-        players.find(query, this.bind(cb, scope));
+        players.find(query, Othello.bind(cb, scope));
     }
 };
