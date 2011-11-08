@@ -54,7 +54,6 @@ exports.events = {
                                     })
                                   },
             'whoami'            : function() {
-                                        buuh();
                                         var user = me.user.get(socket.id);
                                         socket.emit('whour',user.player);
                                   },
