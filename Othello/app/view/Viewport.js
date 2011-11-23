@@ -4,6 +4,7 @@ Ext.define('Othello.view.Viewport', {
         'Othello.view.GamePiece'
     ],
 
+    xtype : 'othelloviewport',
     config : {
         boardSize  : 8,
         turn       : 'white',
@@ -27,12 +28,12 @@ Ext.define('Othello.view.Viewport', {
         // TODO: push to CSS somehow
 //        this.setHeight(this.getBoardSize() * this.getTileSize());
 
+        Ext.each(this.query('gamepiece'), function(item) {
+//            console.log(item);
+            item.initPositionalAwareness();
+        });
 
         this.callParent();
-//        this.on({
-//            scope       : this,
-//            afterrender : this.onAfterRenderInitGamePcs
-//        });
     },
 
     buildDockedItems : function() {
@@ -42,7 +43,6 @@ Ext.define('Othello.view.Viewport', {
             style  : 'background-color: #9E9E9E;',
             height : 50,
             html   : '<img src="resources/img/modus_logo_small.gif" style="-webkit-border-radius: 5px; position: relative; top: 7px;"/> <span>Othello</span>'
-
         };
     },
 

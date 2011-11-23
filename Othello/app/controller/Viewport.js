@@ -4,49 +4,58 @@ Ext.define('Othello.controller.Viewport', {
     views : [
         'Viewport'
     ],
+    turn : 'white',
 
     refs : [
         {
             ref      : 'titlebar',
             selector : '#titlebar'
+        },
+        {
+            ref      : 'viewport',
+            selector : 'othellowviewport'
         }
     ],
+    init : function() {
+        console.log(this.$className, 'init');
 
-    launch : function() {
-        console.log(this.$className);
-        this.application.on({
-            newgame : this.onNewGame
+        this.getView('Viewport').create({
+            fullscreen : true
         });
+
+
+        this.application.on({
+            scope    : this,
+            newgame  : this.onNewGame,
+            swapturn : this.onSwapTurn
+        });
+
+        this.turn = 'white';
+        this.tallyScore();
+
+
     },
 
     onNewGame : function() {
         Ext.each(this.gamePieces, function(gp) {
             gp.reset();
         });
-        this.turn = 'white';
-        this.tallyScore();
 
     },
-    onAfterRenderInitGamePcs :function() {
-        var gamePcs = this.gamePieces = this.query('Othello_GamePiece');
 
-        Ext.each(gamePcs, function(item) {
-            item.initPositionalAwareness();
-        });
-
-        this.tallyScore();
-    },
     setTitle : function(title) {
         this.getDockedItems()[0].setTitle(title);
     },
-    swapTurn : function() {
+    onSwapTurn : function() {
         this.turn = (this.turn === 'white') ? 'black' : 'white';
+        console.info(this.turn);
         this.tallyScore();
     },
     getTurn : function() {
         return this.turn;
     },
     tallyScore : function() {
+        return;
         var i          = 0,
             gamePieces = this.gamePieces,
             len        = gamePieces.length,
@@ -67,8 +76,5 @@ Ext.define('Othello.controller.Viewport', {
 
 
         this.application.fireEvent('scoreupdate', scores)
-
     }
-
-
 });

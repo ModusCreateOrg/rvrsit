@@ -5,9 +5,9 @@ Ext.Loader.setConfig({
 
 Ext.application({
     name : 'Othello',
-    autoCreateViewport : true,
+//    autoCreateViewport : true,
     appFolder : 'Othello/app',
-    views : [
+    controllers : [
         'GamePiece',
         'Viewport'
     ],
