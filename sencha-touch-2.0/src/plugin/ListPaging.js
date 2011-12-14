@@ -2,7 +2,7 @@
  * Adds a Load More button at the bottom of the list. When the user presses this button,
  * the next page of data will be loaded into the store and appended to the List.
  */
-Ext.define('Ext.plugins.ListPagingPlugin', {
+Ext.define('Ext.plugin.ListPaging', {
     requires: 'Ext.PluginManager',
     extend: 'Ext.util.Observable',
     alternateClassName: 'Ext.plugins.ListPagingPlugin',
