@@ -12,7 +12,7 @@ exports.util = {
 
           return function() {
                 var args = Array.prototype.slice.call(arguments);
-                fn.apply(scope, bindArgs.concat(args));
+                fn && fn.apply(scope, bindArgs.concat(args));
           };
     },
 
@@ -77,6 +77,7 @@ exports.util = {
                 E10100: 'You are not logged in. Hacker fucker!',
                 // game related
                 E11000: 'Dude, finish your game first.',
+                E11001: 'You should start a game before making a move.',
                 // registration
                 E12000: 'User is missing email address.'
             },

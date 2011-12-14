@@ -6,52 +6,48 @@ exports.movement = {
             y       = data.y,
             player  = data.player,
             Othello = this,//this.getParent(),
+            me      = this,
             regPlyr = Othello.user.getCurrentPlayer(socket),
             message,
             record,
-            result;
+            result,
+            spacesChanged;
 
+        if (!regPlyr) {return me.reportError(socket, 'E10100');}
+        Othello.session.getActive(socket, function(err, game) {
+            if (!game) {return me.reportError(socket, 'E11001');}
 
-        if (!regPlyr) {
-            // not logged in
-            return this.reportError(socket, 'E10100');
-        }
+            console.log(data, me.board[x][y], me.validateMove(x, y, player));
 
-         console.log(data);
+            success = me.validateMove(x, y, player);
+            if (success === true) {
+                me.setPosition(x, y, player);
+                spacesChanged = me.checkPaths(Othello.constants.PATHS, x, y, player, data.simulate);
 
-        message = this.validateMove(x, y, player);
-        if (message === true) {
-            success = this.checkPaths(this.constants.PATHS, x, y, player);
-        }
+                record = new db.Log({
+                    ts      : new Date(),
+                    player	: player,
+                    x       : String,
+                    y    	: String,
+                    board   : me.board
+                });
 
-         // this is not working properly right here
-        if (success) {
-            this.setPosition(x, y, player);
-        }
+                record.save();
+                console.log(me.board);
+             }
 
-         // save to db
-         if (success) {
-             record = new db.Log({
-                ts      : new Date(),
-                player	: player,
-                x       : String,
-                y    	: String,
-                board   : this.board
-            });
+            result = {
+                board   : me.board,
+                success : success,
+                message : message
+            };
 
-            record.save();
-         }
+            socket.emit('moveConfirmation', result);
+        });
 
-        result = {
-            board   : this.board,
-            success : success,
-            message : message
-        };
-
-         console.log(this.board);
         //this.getSocket().emit('moveConfirmation', result);
 
-        return this.apply(result,{record: record});
+       // return this.apply(result,{record: record});
     },
 
     validateMove: function(i, j, player) {
@@ -71,52 +67,47 @@ exports.movement = {
      */
     undoMove: function() {},
 
-    checkPaths: function(directions, x, y, player) {
-        var i, len, valid = false;
+    checkPaths: function(directions, x, y, player, simulate) {
+        var i, len, spacesChanged = 0;
         for (i=0, len=directions.length; i<len; i++) {
-            if (this.checkPath(directions[i], x, y, player)) {
-                valid = true;
-            }
+			spacesChanged += this.checkPath(directions[i], x, y, player, simulate);
         }
-        return valid;
+        return spacesChanged;
     },
 
-    checkPath: function(direction, x, y, player, count) {
-        var nextPosition, nextState;
+    checkPath: function(direction, x, y, player, count, simulate) {
+        var next, nextState, spacesChanged = 0;
 
-        // If this is the first space to check, it must be the opposite color to be valid
-        if (!count) {
-            nextPosition = this.getNextPosition(direction, x, y);
-            if (nextPosition !== null) {
-                nextState = this.board[nextPosition[0], nextPosition[1]];
+        next = this.getNextPosition(direction, x, y);
+
+        if (next !== null) {
+            nextState = this.board[next[0], next[1]];
+
+			// If this is the first space to check, it must be the opposite color to be valid
+        	if (!count) {
                 if (nextState !== this.constants.FREE && nextState !== player) {
                     // It's valid so, recurse until it returns true or false
-                    if (this.checkPath(direction, nextPosition[0], nextPosition[1], player, 1)) {
-                        this.setPosition(nextPosition[0], nextPosition[1], player);
-                        return true;
+                    spacesChanged = this.checkPath(direction, next[0], next[1], player, 1);
+                    if (spacesChanged !== 0) {
+                        this.setPosition(next[0], next[1], player, simulate);
+                        spacesChanged++;
+                    }
+                }
+        	// If it's not, the next space cannot be free. If it's the opposite color, we
+        	// continue checking until we find a matching color. If it's the matching color,
+        	// we are done and it's valid.
+        	} else {
+                if (nextState !== player && nextState !== this.constants.FREE) {
+                    spacesChanged = this.checkPath(direction, next[0], next[1], simulate);
+                    if (spacesChanged !== 0) {
+                        this.setPosition(next[0], next[1], player, simulate);
+                        spacesChanged++;
                     }
                 }
             }
-            return false;
-        // If it's not, the next space cannot be free. If it's the opposite color, we
-        // continue checking until we find a matching color. If it's the matching color,
-        // we are done and it's valid.
-        } else {
-            nextPosition = this.getNextPosition(direction, x, y);
-            if (nextPosition === null) {
-                return false;
-            } else {
-                nextState = this.board[nextPosition[0], nextPosition[1]];
-                if (nextState === player) {
-                    return true;
-                } else if (nextState === this.constants.FREE) {
-                    return false;
-                } else if (this.checkPath(direction, nextPosition[0], nextPosition[1], ++count)) {
-                    this.setPosition(nextPosition[0], nextPosition[1], player);
-                    return true;
-                }
-            }
         }
+
+        return spacesChanged;
     },
 
     getNextPosition: function(direction, x, y) {
@@ -134,9 +125,10 @@ exports.movement = {
         }
     },
 
-    setPosition: function(x, y, player) {
-        console.log('setting postiion');
-        this.board[x][y] = player;
-        this.freeSpaces--;
+    setPosition: function(x, y, player, simulate) {
+        if (!simulate) {
+            this.board[x][y] = player;
+            this.freeSpaces--;
+        }
     }
 };

@@ -21,6 +21,7 @@
 <div id="startNewSession">Start game</div>
 <div id="continueSession">Continue game</div>
 <div id="tapBoard">Tap position 5,5 as current player (white)</div>
+<div id="tapBoard2">Tap position 5,5 as opponent (black)</div>
 <div id="kicker">Be a bastard that deserves getting his ass kicked</div>
 
 
@@ -54,7 +55,7 @@ socket.on('moveConfirmation', function() {console.log(arguments);});
 socket.on('playerRegistered', function(user) {console.log('Hello, ' + user.name, arguments);});
 socket.on('disconnect', function() {console.log(arguments);});
 socket.on('error', reportError);
-socket.on('moveResult', function(msg) {console.log(msg);});
+socket.on('moveResult', function(msg) {console.log(msg); if (msg && typeof msg == 'object' && msg.success !== true) console.error(msg.success);});
 socket.on('playSession', function(msg) {console.log(msg);});
 
 socket.on('whour', function(data) {
@@ -114,6 +115,11 @@ var continueSession = document.getElementById("continueSession");
 var tapBoard = document.getElementById("tapBoard");
     tapBoard.addEventListener('click', function() {
         socket.emit('tapBoard', {x:5,y:5});
+    });
+
+var tapBoard2 = document.getElementById("tapBoard2");
+    tapBoard2.addEventListener('click', function() {
+        socket.emit('tapBoard', {x:5,y:5, player:0});
     });
 </script>
 

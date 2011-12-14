@@ -48,6 +48,7 @@ Db.schema.Session = new Schema({
     white       : ObjectId, // player
     black       : ObjectId, // player
   	state       : Number,   // 0 finished, 1 playing, 2 waiting for player, 3 paused,
+    board       : Array,
     next        : Number    // next player to play. 0 or 1 (0 = white)
 });
 
