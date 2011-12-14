@@ -48,7 +48,7 @@ exports.events = {
 
         this.applyEvents(socket, {
             'hi'                : function(data) {me.hi(socket, data)},
-            'move'              : function(data) {me.doMove(socket, data); xxx();},
+            'move'              : function(data) {me.doMove(socket, data);},
             'registerPlayer'    : function(data) {
                                     me.player.add(socket, data, function(err, doc) {
                                         socket.emit('playerRegistered', doc);
@@ -61,7 +61,7 @@ exports.events = {
                                   },
             'yell'              : function() {
                                         socket.emit('disconnect', 'You just got disconnected for having such an attitude. Cool down and come back again.');
-                                        me.userDisconnect(socket);
+                                        me.user.disconnect(socket);
                                   },
             'startNewSession'   : function(data) {me.session.create(data, socket);},
 
@@ -77,7 +77,7 @@ exports.events = {
             'tapBoard'          : function(data) {
                                     //data.player = me.getCurrentPlayer(socket);
                                     //force this to white for now
-                                    data.player = 1;
+                                    if (data.player==undefined) data.player = 1;
                                     var result = me.doMove(socket,data);
                                     socket.emit('moveResult', result);
                                 }

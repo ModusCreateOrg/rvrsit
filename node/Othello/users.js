@@ -31,7 +31,7 @@ exports.user = {
      * Kick that bastard out
      * @param socket
      */
-    userDisconnect: function(socket) {
+    disconnect: function(socket) {
         var id = socket.id;
         socket.disconnect();
         this.flush(id);
