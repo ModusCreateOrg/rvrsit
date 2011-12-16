@@ -14,20 +14,21 @@ var express         = require('express'),
  */
 app.use(express.cookieParser());
 app.use(express.session({ secret: "othelloking", store: sessionStore }));
+app.use(express.static(__dirname + '/public'));
 app.listen(3000);
 
 /**
  * Read the html file
  */
 app.get('/', function (req, res) {
-    res.sendfile(__dirname + '/ws.html');
+    res.sendfile(__dirname + '/public/debug.html');
+    //res.sendfile(__dirname + '/ws.html');
 
     /*var sid = req.cookies["connect.sid"];
     if (sid) {
         var socket = O.httpSessionGetSocket(data.sessionID);
         if (socket)
     }*/
-
 });
 
 /**
