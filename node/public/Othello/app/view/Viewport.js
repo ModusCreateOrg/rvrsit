@@ -1,5 +1,5 @@
 Ext.define('Othello.view.Viewport', {
-    extend : 'Ext.Panel',
+    extend : 'Ext.Container',
     requires : [
         'Othello.view.GamePiece'
     ],
@@ -11,6 +11,7 @@ Ext.define('Othello.view.Viewport', {
         fullscreen : true,
         cls        : 'othello-gameboard',
         tileSize   : 70, // px
+        title      : 'Othello Game',
 
         bodyStyle  : 'padding: 10px; background-color: #FEFEFE',
         layout     : {
@@ -21,8 +22,8 @@ Ext.define('Othello.view.Viewport', {
     },
     initialize : function() {
         this.setItems([
-            this.buildItems(),
-            this.buildDockedItems()
+            this.buildItems()
+            //,this.buildDockedItems()
         ]);
 
         // TODO: push to CSS somehow

@@ -50,6 +50,8 @@ socket.on('respawn', function(data) {
 /**
  * Event emitters
  */
+/*
+
 Ext.onReady(function() {
     var hi = document.getElementById("hi");
         hi.addEventListener('click', function() {
@@ -93,4 +95,4 @@ Ext.onReady(function() {
         tapBoard2.addEventListener('click', function() {
             socket.emit('tapBoard', {x:5,y:5, player:0});
         });
-});
+});*/

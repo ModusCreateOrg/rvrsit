@@ -2,7 +2,9 @@ Ext.define('Othello.controller.Viewport', {
     extend : 'Ext.app.Controller',
 
     views : [
-        'Viewport'
+        'Viewport',
+        'Navigation',
+        'SocketDebug'
     ],
     turn : 'white',
 
@@ -13,34 +15,64 @@ Ext.define('Othello.controller.Viewport', {
         },
         {
             ref      : 'viewport',
-            selector : 'othellowviewport'
+            selector : 'othelloNavigation',
+            xtype    : 'othelloNavigation',
+            autoCreate: true
+            //selector : 'othelloviewport'
+        },
+        {
+            ref      : 'gamePanel',
+            xtype    : 'othelloviewport',
+            selector : 'othelloviewport',
+            autoCreate: true
+        },
+        {
+            ref      : 'socketDebug',
+            xtype    : 'socketDebug',
+            selector : 'socketDebug',
+            autoCreate: true
         }
     ],
     init : function() {
         console.log(this.$className, 'init');
 
-        this.getView('Viewport').create({
-            fullscreen : true
+        var me = this;
+
+        Ext.Viewport.add(me.getViewport());
+
+        me.getViewport().add([
+            me.getGamePanel(),
+            me.getSocketDebug()
+        ]);
+
+        me.application.on({
+            scope    : me,
+            newgame  : me.onNewGame,
+            swapturn : me.onSwapTurn
         });
 
+        me.turn = 'white';
+        me.tallyScore();
 
-        this.application.on({
-            scope    : this,
-            newgame  : this.onNewGame,
-            swapturn : this.onSwapTurn
+        me.control({
+            // intentionally long
+            'othelloNavigation > toolbar[docked=bottom] > button[action=socketDebug]': {
+                tap: me.showSocketDebug,
+                scope: me
+            }
         });
 
-        this.turn = 'white';
-        this.tallyScore();
+        me.callParent();
+    },
 
-
+    showSocketDebug: function() {
+        this.getViewport().push(this.getSocketDebug());
     },
 
     onNewGame : function() {
         Ext.each(this.gamePieces, function(gp) {
             gp.reset();
         });
-
     },
 
     setTitle : function(title) {
