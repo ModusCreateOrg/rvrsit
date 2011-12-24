@@ -10,7 +10,8 @@ Ext.application({
     controllers : [
         'GamePiece',
         'Viewport',
-        'Messaging'
+        'Messaging',
+        'Login'
     ],
     init : function() {
 

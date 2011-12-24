@@ -1,102 +1,59 @@
-Ext.define('Othello.controller.Messaging', {
+Ext.define('Othello.controller.Login', {
     extend : 'Ext.app.Controller',
 
-    models: [
-        'Message'
-    ],
-
-    stores: [
-        'Messages'
-    ],
-
     views : [
-        'Messaging'
+        'LoginWindow'
     ],
 
     refs : [
         {
-            ref      : 'messaging',
-            selector : 'messaging'
+            ref      : 'loginWindow',
+            selector : 'loginWindow'
         }
     ],
 
     config: {
-        unreadMsgs: 0
+        loggedIn: false
     },
-    
+
     init : function() {
         var me = this;
         
         me.control({
-            'button[action=messaging]': {
-                tap: me.showMsgBox,
+            'button[action=play]': {
+                tap: me.showLoginWindow,
                 scope: me
             },
-            'button[action=closeMsgPanel]': {
-                tap: me.closeMsgBox,
+            'button[action=login]': {
+                tap: me.logIn,
                 scope: me
             }
         });
 
-        socket.on('receiveMsg', Ext.callback(me.receiveMsg, me));
+        //socket.on('receiveMsg', Ext.callback(me.receiveMsg, me));
 
         me.callParent();
     },
 
+    showLoginWindow: function() {
+        var me = this,
+            loginWin = me.getLoginWindow();
 
-    /**
-     * create, show, hide as needed.
-     * Maybe remove entirely instead of hide?
-     */
-    showMsgBox: function() {
-        var msgBox = this.getMessaging();
-        if (!msgBox) {
-            msgBox = this.getView('Messaging').create({store: this.getMessagesStore()});
-            Ext.Viewport.add([
-                msgBox
-            ]);
+        // if already logged, show different window
+        if (me.getLoggedIn()) return;
+
+        //if login window already created, show it
+        if (!loginWin) {
+            loginWin = me.getView('LoginWindow').create();
+            Ext.Viewport.add(loginWin);
         } else {
-            msgBox.show();
+            loginWin.show();
         }
 
-        this.setUnreadMsgs(0);
-
     },
 
-    sendMsg: function(msg) {
-        socket.emit('sendMsg', {text: msg});
-    },
-
-    /**
-     * Add msg to the store and display it in the list
-     * @param msg {Object} msg object received from the server (model)
-     */
-    receiveMsg: function(msg) {
-        var me      = this,
-            store   = me.getMessagesStore(),
-            model   = me.getMessageModel(),
-            msgBox  = this.getMessaging(),
-            msgBtn,
-            rec;
-
-        rec = new model(msg);
-        store.add(rec);
-
-        //add badge
-        if (!msgBox || msgBox.isHidden()) {
-            me.setUnreadMsgs(++me.unreadMsgs);
-        }
-    },
-
-    closeMsgBox: function() {
-        this.getMessaging().hide();
-    },
-
-    applyUnreadMsgs: function(number) {
-        var msgBtns = Ext.ComponentQuery.query('button[action=messaging]');
-        Ext.each(msgBtns, function(btn) {
-            btn.setBadge(number);
-        });
-        return number;
+    logIn: function() {
+        
     }
+
 });

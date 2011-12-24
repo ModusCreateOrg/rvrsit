@@ -18,15 +18,12 @@ Ext.define('Othello.view.Messaging', {
 
     initialize : function() {
         var me = this;
-        //console.log('store',me.getStore());
-        me.callParent();
         me.setItems([
             me.getTitle(),
             me.createList(),
             me.getSendMsgBar()
         ]);
-
-
+        me.callParent();
     },
 
     applyTitle: function(title) {

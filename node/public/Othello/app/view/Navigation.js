@@ -39,6 +39,7 @@ Ext.define('Othello.view.Navigation', {
                 },
                 {
                     text    : 'Play',
+                    action  : 'play',
                     ui      : 'action',
                     align   : 'right'
                 }
