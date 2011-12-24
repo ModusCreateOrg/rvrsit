@@ -54,6 +54,19 @@ Db.schema.Session = new Schema({
 
 Db.model.Session = mongoose.model('sessions', Db.schema.Session);
 
+/**
+ * Messaging
+ */
+Db.schema.Messaging = new Schema({
+	timestamp   : Date,
+    session     : ObjectId, // game
+    sent        : ObjectId, // player
+  	text        : String
+});
+
+Db.model.Messaging = mongoose.model('messaging', Db.schema.Messaging);
+
+
 
 /**
  * Testing models

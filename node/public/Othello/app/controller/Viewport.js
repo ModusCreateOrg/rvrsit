@@ -4,7 +4,8 @@ Ext.define('Othello.controller.Viewport', {
     views : [
         'Viewport',
         'Navigation',
-        'SocketDebug'
+        'SocketDebug',
+        'Messaging'
     ],
     turn : 'white',
 
@@ -31,6 +32,12 @@ Ext.define('Othello.controller.Viewport', {
             xtype    : 'socketDebug',
             selector : 'socketDebug',
             autoCreate: true
+        },
+        {
+            ref      : 'messaging',
+            xtype    : 'messaging',
+            selector : 'messaging',
+            autoCreate: true
         }
     ],
     init : function() {
@@ -41,10 +48,12 @@ Ext.define('Othello.controller.Viewport', {
         Ext.Viewport.add(me.getViewport());
 
         me.getViewport().add([
+            //me.getMessaging(),
             me.getGamePanel(),
             me.getSocketDebug()
         ]);
 
+        
         me.application.on({
             scope    : me,
             newgame  : me.onNewGame,
@@ -63,6 +72,10 @@ Ext.define('Othello.controller.Viewport', {
         });
 
         me.callParent();
+    },
+
+    showMessagingWindow: function() {
+
     },
 
     showSocketDebug: function() {

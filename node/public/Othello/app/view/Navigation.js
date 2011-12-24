@@ -21,6 +21,29 @@ Ext.define('Othello.view.Navigation', {
         ]);
 
         me.callParent();
+
+        me.getNavigationBar().add(
+            [
+                {
+                    //iconCls   : 'compose',
+                    text        : 'Msg',
+                    align       : 'right',
+                    action      : 'messaging',
+                    badgeText   : '2'
+                },
+                {
+                    text    : 'Stats',
+                    action  : 'stats',
+                    ui      : 'normal',
+                    align   : 'right'
+                },
+                {
+                    text    : 'Play',
+                    ui      : 'action',
+                    align   : 'right'
+                }
+            ]
+        );
     },
 
     applyBottomToolbar: function(config) {

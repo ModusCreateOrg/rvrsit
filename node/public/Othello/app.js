@@ -9,7 +9,8 @@ Ext.application({
     appFolder : 'Othello/app',
     controllers : [
         'GamePiece',
-        'Viewport'
+        'Viewport',
+        'Messaging'
     ],
     init : function() {
 
