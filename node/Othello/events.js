@@ -80,7 +80,9 @@ exports.events = {
                                     if (data.player==undefined) data.player = 1;
                                     var result = me.doMove(socket,data);
                                     socket.emit('moveResult', result);
-                                }
+                                  },
+
+            'auth'              : function(data) {me.auth(socket,data)}
         });
     },
 
@@ -94,5 +96,9 @@ exports.events = {
         socket.emit('hi back', data + ', bitch');
 
         socket.emit('hi back', me.getDb());
+    },
+
+    auth: function(socket,data) {
+        socket.emit('auth', {success: true, player: {}});
     }
 };

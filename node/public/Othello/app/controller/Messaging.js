@@ -38,7 +38,7 @@ Ext.define('Othello.controller.Messaging', {
             }
         });
 
-        socket.on('receiveMsg', Ext.callback(me.receiveMsg, me));
+        socket.on('receiveMsg', Ext.bind(me.receiveMsg, me));
 
         me.callParent();
     },

@@ -48,7 +48,9 @@ Ext.define('Othello.view.LoginWindow', {
                     text    : 'Play skirmish',
                     action  : 'skirmish'
                 },
-                { xtype: 'spacer' },
+                {
+                    xtype   : 'spacer'
+                },
                 {
                     text    : 'Login',
                     action  : 'login',

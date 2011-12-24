@@ -30,7 +30,7 @@ Ext.define('Othello.controller.Login', {
             }
         });
 
-        //socket.on('receiveMsg', Ext.callback(me.receiveMsg, me));
+        socket.on('auth', Ext.bind(me.validateAuth, me));
 
         me.callParent();
     },
@@ -52,8 +52,26 @@ Ext.define('Othello.controller.Login', {
 
     },
 
-    logIn: function() {
-        
+    logIn: function(btn) {
+        var form    = btn.up('formpanel'),
+            values  = form.getValues();
+
+        socket.emit('auth', values)
+    },
+
+    validateAuth: function(data) {
+        var me = this;
+        if (!data || data.success !== true) return me.authFailed();
+
+        console.log('login successful');
+
+        me.getLoginWindow().hide();
+
+        //TODO: open playWindow
+    },
+
+    authFailed: function() {
+        console.log('auth failed');
     }
 
 });
