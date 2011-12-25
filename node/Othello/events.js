@@ -82,7 +82,9 @@ exports.events = {
                                     socket.emit('moveResult', result);
                                   },
 
-            'auth'              : function(data) {me.auth(socket,data)}
+            'auth'              : function(data) {me.auth(socket,data)},
+
+            'registerUser'      : function(data) {me.player.add(socket,data)}
         });
     },
 

@@ -33,7 +33,9 @@ Db.model.Log = mongoose.model('log', Db.schema.Log);
 Db.schema.Player = new Schema({
 	name	    : String,
     email       : String,
-  	registered 	: Date,
+    password    : String,
+    gameName    : String,
+    registered 	: Date,
     gamesPlayed : Number
 });
 

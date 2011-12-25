@@ -1,19 +1,25 @@
-Ext.define('Othello.view.LoginWindow', {
+Ext.define('Othello.view.RegisterWindow', {
     extend : 'Ext.form.Panel',
 
-    xtype : 'loginWindow',
+    xtype : 'registerWindow',
 
     config : {
-        title   : 'Login',
-        floating: true,
-        modal: true,
-        width   : 360,
-        height  : 240,
-        centered: true
+        title       : 'Register',
+        floating    : true,
+        modal       : true,
+        width       : 380,
+        height      : 335,
+        centered    : true,
+        scrollable  : false,
+
+        defaults    : {
+            labelWidth: "40%"
+        }
     },
 
     initialize : function() {
         var me = this;
+
         me.setItems([
             me.getTitle(),
             me.createBottomTbar()
@@ -27,13 +33,28 @@ Ext.define('Othello.view.LoginWindow', {
         return [
             {
                 xtype   : 'textfield',
+                name    : 'name',
+                label   : 'Name'
+            },
+            {
+                xtype   : 'emailfield',
                 name    : 'email',
                 label   : 'E-mail'
+            },
+            {
+                xtype   : 'textfield',
+                name    : 'gameName',
+                label   : 'Game name'
             },
             {
                 xtype   : 'passwordfield',
                 name    : 'password',
                 label   : 'Password'
+            },
+            {
+                xtype   : 'passwordfield',
+                name    : 'password2',
+                label   : 'Repeat pwd'
             }
         ]
     },
@@ -44,19 +65,16 @@ Ext.define('Othello.view.LoginWindow', {
             xtype   : 'toolbar',
             items   : [
                 {
-                    text    : 'Register',
-                    action  : 'showRegWin'
-                },
-                {
-                    text    : 'Forgot password',
-                    action  : 'forgotpassword'
+                    text    : 'Skirmish',
+                    action  : 'skirmish',
+                    ui      : 'decline'
                 },
                 {
                     xtype   : 'spacer'
                 },
                 {
-                    text    : 'Login',
-                    action  : 'login',
+                    text    : 'Register',
+                    action  : 'register',
                     ui      : 'confirm'
                 }
             ]
@@ -66,14 +84,7 @@ Ext.define('Othello.view.LoginWindow', {
     applyTitle: function(title) {
         var config = {
             docked  : 'top',
-            title   : title,
-            items   : [
-                {
-                    text    : 'Skirmish',
-                    action  : 'skirmish',
-                    ui      : 'decline'
-                }
-            ]
+            title   : title
         };
 
         return new Ext.factory(config, Ext.Toolbar, this.getTitle());

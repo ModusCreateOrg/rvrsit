@@ -79,7 +79,9 @@ exports.util = {
                 E11000: 'Dude, finish your game first.',
                 E11001: 'You should start a game before making a move.',
                 // registration
-                E12000: 'User is missing email address.'
+                E12000: 'User is missing email address.',
+                E12001: 'User is missing password.',
+                E12002: 'Passwords do not match.'
             },
             error = codes[code] || 'Unknown error';
 
