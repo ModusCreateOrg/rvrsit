@@ -109,6 +109,9 @@ exports.events = {
         this.player.register(socket,data.data);
     },
 
+    testEvents: function(socket, data) {
+        socket.emit('othello', 'testEvents', {gay: 'Fucker'});
+    },
     /**
      * Test method
      * @param data

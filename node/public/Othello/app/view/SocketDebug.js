@@ -22,6 +22,15 @@ Ext.define('Othello.view.SocketDebug', {
     initialize : function() {
         this.setItems([
             {
+                text: 'Test new socket eventa',
+                handler: function() {
+                    Othello.socket.emit('testEvents', 'Hello mofo', function() {
+                        console.log(arguments);
+                    });
+                }
+            },
+
+            {
                 text: 'Send Hi',
                 handler: function() {
                     socket.emit('hi', 'Hello mofo');

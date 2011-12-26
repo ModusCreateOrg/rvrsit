@@ -1,3 +1,66 @@
+Ext.define('Othello.socket', {
+    singleton: true,
+    mixins: ['Ext.mixin.Observable'],
+
+    config: {
+        socket: true
+    },
+
+    constructor: function() {
+        this.callParent();
+        this.initialize();
+    },
+
+    initialize: function() {
+        var me = this;
+
+        socket.on('restart', function() {
+            socket = io.connect('http://localhost:3000');
+            console.info('restarting');
+        });
+
+        socket.on('othello', function(event, data) {
+            me.fireEvent(event, data);
+        })
+    },
+
+    emit: function(event, data, callback, scope) {
+        var socket=this.getSocket(),
+            data;
+
+        if (!socket) socket = this.setSocket(true);
+
+        data = {
+            event: event,
+            data: data
+        };
+
+        if (callback && Ext.isFunction(callback)) {
+            this.on(event, callback, scope, {single: true});
+        }
+
+        socket.emit('othello', data);
+    },
+
+    reportError: function(error) {
+        if (error && typeof error === 'string') return console.error(error);
+        console.error (error.msg || 'Unknown error');
+        if (error.callbackFn && window[error.callbackFn]) {
+            try {
+                window[error.callbackFn].apply(window,error.params || []);
+            } catch (e) {
+                console.error('Unable to execute callback function');
+            }
+        }
+    },
+
+    applySocket: function() {
+        var socket = io.connect(window.location.origin);
+        socket.socket.reconnectionDelay = 2000;
+        return socket;
+    }
+});
+
 var socket = io.connect(window.location.origin);
 
 var reportError = function(error) {
