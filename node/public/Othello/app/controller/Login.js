@@ -141,7 +141,7 @@ Ext.define('Othello.controller.Login', {
      * @param data
      */
     onUserRegistered: function(data) {
-        
+        console.log('registered', data);
     }
 
 });

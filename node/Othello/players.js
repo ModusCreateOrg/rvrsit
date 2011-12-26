@@ -1,15 +1,18 @@
 exports.player = {
     register: function(socket, data) {
-        this.add(socket, data, this.onRegistered, this);
+        var cb = function() {
+            this.onRegistered.call(this,socket, arguments);
+        };
+        this.add(socket, data, cb, this);
     },
 
-    onRegistered: function(socket) {
-        socket.emit('registerUser', {success: true});
+    onRegistered: function(socket, args) {
+        socket.emit('registerUser', {success: true, data: args});
     },
 
     add: function(socket, data, cb, scope, safe) {
         if (data.existingPlayer) {
-            return cb.call(scope, null, data.existingPlayer);
+            return (typeof cb == "function") ? cb.call(scope, null, data.existingPlayer) : false;
         }
 
         var me      = this,
@@ -40,7 +43,11 @@ exports.player = {
             });
         }
         else {
-            player = new db.Player(this.apply(data, {
+            console.log(Othello.apply(data, {
+                            registered  : new Date(),
+                            gamesPlayed : 0
+                        }));
+            player = new db.Player(Othello.apply(data, {
                 registered  : new Date(),
                 gamesPlayed : 0
             }));

@@ -84,7 +84,7 @@ exports.events = {
 
             'auth'              : function(data) {me.auth(socket,data)},
 
-            'registerUser'      : function(data) {me.player.add(socket,data)}
+            'registerUser'      : function(data) {me.player.register(socket,data)}
         });
     },
 
