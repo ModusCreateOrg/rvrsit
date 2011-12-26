@@ -84,8 +84,29 @@ exports.events = {
 
             'auth'              : function(data) {me.auth(socket,data)},
 
-            'registerUser'      : function(data) {me.player.register(socket,data)}
+            'registerUser'      : function(data) {me.player.register(socket,data)},
+
+            /**
+             * Main socket listener
+             */
+            'othello'           : function(data) {me.parseCall(socket,data)}
         });
+    },
+
+    parseCall: function(socket,data) {
+        var me      = this,
+            event   = data.event;
+
+        // if no event property or function with event name does not exist
+        if (!event || !this[event]) {
+            return Othello.reportError(socket, 'E13000');
+        }
+
+        this[event].call(this, socket, data);
+    },
+
+    registerUser: function(socket, data) {
+        this.player.register(socket,data.data);
     },
 
     /**

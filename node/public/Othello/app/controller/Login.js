@@ -111,7 +111,7 @@ Ext.define('Othello.controller.Login', {
         var form    = btn.up('formpanel'),
             values  = form.getValues();
 
-        socket.emit('registerUser', values)
+        socket.emit('othello', {event: 'registerUser', data: values});
     },
 
     /**

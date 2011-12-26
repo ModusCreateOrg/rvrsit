@@ -81,7 +81,10 @@ exports.util = {
                 // registration
                 E12000: 'User is missing email address.',
                 E12001: 'User is missing password.',
-                E12002: 'Passwords do not match.'
+                E12002: 'Passwords do not match.',
+
+                // Event (socket) related
+                E13000: 'Invalid event call. Method does not exist.'
             },
             error = codes[code] || 'Unknown error';
 
