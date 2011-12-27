@@ -70,7 +70,28 @@ Function.prototype.bind = function(bind) {
 
 (function(window){
 
+var scripts = document.getElementsByTagName('script'),
+    matchRe = /impact\.js$/,
+    match,
+    scriptSrc,
+    i,
+    ln,
+    scriptPath;
+
+for (i = 0, ln = scripts.length; i < ln; i++) {
+    scriptSrc = scripts[i].src;
+
+    match = scriptSrc.match(matchRe);
+
+    if (match) {
+        scriptPath = scriptSrc.substring(0, scriptSrc.length - match[0].length);
+        scriptPath = scriptPath.replace('lib/impact/','','');
+        break;
+    }
+}
+
 window.ig = {
+    scriptPath: scriptPath,
 	game: null,
 	debug: null,
 	version: '1.19',
@@ -147,17 +168,19 @@ window.ig = {
 	
 	
 	ksort: function( obj ) {
+        var i;
+
 		if( !obj || typeof(obj) != 'object' ) {
 			return [];
 		}
 		
 		var keys = [], values = [];
-		for( var i in obj ) {
+		for(i in obj ) {
 			keys.push(i);
 		}
 		
 		keys.sort();
-		for( var i = 0; i < keys.length; i++ ) {
+		for(i = 0; i < keys.length; i++ ) {
 			values.push( obj[keys[i]] );
 		}
 		
@@ -195,7 +218,8 @@ window.ig = {
 	},
 	
 	
-	addResource: function( resource ) {
+    addResource: function( resource ) {
+        resource.path = ig.scriptPath + resource.path;
 		ig.resources.push( resource );
 	},
 	
@@ -217,10 +241,11 @@ window.ig = {
 		ig.modules[name] = {name: name, requires:[], loaded: false, body: null};
 		ig._waitForOnload++;
 		
-		var path = ig.lib + name.replace(/\./g, '/') + '.js' + ig.nocache;
-		var script = ig.$new('script');
+        var path = ig.lib + name.replace(/\./g, '/') + '.js' + ig.nocache,
+
+        script = ig.$new('script');
 		script.type = 'text/javascript';
-		script.src = path;
+		script.src = scriptPath + path;
 		script.onload = function() {
 			ig._waitForOnload--;
 			ig._execModules();
@@ -236,12 +261,17 @@ window.ig = {
 
 	
 	_execModules: function() {
-		var modulesLoaded = false;
-		for( var i = 0; i < ig._loadQueue.length; i++ ) {
-			var m = ig._loadQueue[i];
-			var dependenciesLoaded = true;
+		var modulesLoaded = false,
+            dependenciesLoaded,
+            i,
+            j,
+            m;
+
+		for(i = 0; i < ig._loadQueue.length; i++ ) {
+			m = ig._loadQueue[i];
+			dependenciesLoaded = true;
 			
-			for( var j = 0; j < m.requires.length; j++ ) {
+			for( j = 0; j < m.requires.length; j++ ) {
 				var name = m.requires[j];
 				if( !ig.modules[name] ) {
 					dependenciesLoaded = false;
@@ -269,13 +299,13 @@ window.ig = {
 		// Must be some unresolved dependencies!
 		else if( !ig.baked && ig._waitForOnload == 0 && ig._loadQueue.length != 0 ) {
 			var unresolved = [];
-			for( var i = 0; i < ig._loadQueue.length; i++ ) {
+			for( i = 0; i < ig._loadQueue.length; i++ ) {
 				
 				// Which dependencies aren't loaded?
 				var unloaded = [];
 				var requires = ig._loadQueue[i].requires;
-				for( var j = 0; j < requires.length; j++ ) {
-					var m = ig.modules[ requires[j] ];
+				for( j = 0; j < requires.length; j++ ) {
+					m = ig.modules[ requires[j] ];
 					if( !m || !m.loaded ) {
 						unloaded.push( requires[j] );
 					}
@@ -468,6 +498,8 @@ ig.main = function( canvasId, gameClass, fps, width, height, scale, loaderClass 
 	ig.soundManager = new ig.SoundManager();
 	ig.music = new ig.Music();
 	ig.ready = true;
+
+
 	
 	var loader = new (loaderClass || ig.Loader)( gameClass, ig.resources );
 	loader.load();

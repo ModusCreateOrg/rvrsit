@@ -4,8 +4,6 @@ Ext.define('Othello.view.GamePiece', {
 
     config : {
         html      : true,
-        pieceTpl  : '<div style="height: {0}px; width: {1}px; font-size: 12px;" class="othello-gamepiece ogp-{2}"></div>',
-        baseCls   : 'othello-gamepiece-square',
         anims : {
             black : 'flip-black',
             white : 'flip-white'
@@ -16,12 +14,12 @@ Ext.define('Othello.view.GamePiece', {
 
         this.callParent();
 //        debugger;
-        this.renderElement.addCls('othello-gamepiece-square');
-
-        this.renderElement.on({
-            scope : this,
-            tap   : this.onTap
-        });
+//        this.renderElement.addCls('othello-gamepiece-square');
+//
+//        this.renderElement.on({
+//            scope : this,
+//            tap   : this.onTap
+//        });
 
         this.doHide();
 //
@@ -41,62 +39,62 @@ Ext.define('Othello.view.GamePiece', {
         this.fireEvent('gptap', this, el, evtObj);
     },
 
-    applyHtml : function() {
-//        debugger;
-        return Ext.String.format(
-            this.getPieceTpl(),
-            this.getHeight(),
-            this.getWidth(),
-            this.color
-        );
-    },
+//    applyHtml : function() {
+////        debugger;
+//        return Ext.String.format(
+//            this.getPieceTpl(),
+//            this.getHeight(),
+//            this.getWidth(),
+//            this.color
+//        );
+//    },
 
     flipToColor: function(color, duration) {
-        Ext.fly(this.renderElement.dom.childNodes[0]).applyStyles({
-            visibility: 'visible'
-        });
-
-        delete this.hidden;
-        var anims      = this.getAnims(),
-            targetAnim = anims[this.color = color],
-            removeAnim = color == 'white' ? anims['black'] : anims['white'],
-            oldColor   = color == 'white' ? 'black' : 'white',
-            targetEl   = this.renderElement.down('.othello-gamepiece');
-
-        duration = duration / 1000;
-
-//        console.log(targetEl, anim, (duration / 1000) + 's');
-        console.log(anims[color], 'REMOVE', removeAnim)
-        targetEl.removeCls(removeAnim);
-
-        targetEl.applyStyles({'-webkit-animation-duration' : duration + 's'});
-        targetEl.addCls(targetAnim);
-
-        // do some cleanup!
-        Ext.Function.defer(function() {
-            targetEl.applyStyles({'-webkit-animation-duration' : '0s'});
-            targetEl.addCls('ogp-' + color);
-            targetEl.removeCls('ogp-' + oldColor);
-            targetEl.removeCls(targetAnim);
-        }, duration + 1500);
+//        Ext.fly(this.renderElement.dom.childNodes[0]).applyStyles({
+//            visibility: 'visible'
+//        });
+//
+//        delete this.hidden;
+//        var anims      = this.getAnims(),
+//            targetAnim = anims[this.color = color],
+//            removeAnim = color == 'white' ? anims['black'] : anims['white'],
+//            oldColor   = color == 'white' ? 'black' : 'white',
+//            targetEl   = this.renderElement.down('.othello-gamepiece');
+//
+//        duration = duration / 1000;
+//
+////        console.log(targetEl, anim, (duration / 1000) + 's');
+//        console.log(anims[color], 'REMOVE', removeAnim)
+//        targetEl.removeCls(removeAnim);
+//
+//        targetEl.applyStyles({'-webkit-animation-duration' : duration + 's'});
+//        targetEl.addCls(targetAnim);
+//
+//        // do some cleanup!
+//        Ext.Function.defer(function() {
+//            targetEl.applyStyles({'-webkit-animation-duration' : '0s'});
+//            targetEl.addCls('ogp-' + color);
+//            targetEl.removeCls('ogp-' + oldColor);
+//            targetEl.removeCls(targetAnim);
+//        }, duration + 1500);
 //        console.log(targetEl.dom, anim);
 
     },
 
     reset : function() {
-        this.doHide();
-        if (!this.hidden)   {
-            this.anims[this.color = this.origColor].run(this.renderElement.dom.childNodes[0], {duration : 0});
-        }
+//        this.doHide();
+//        if (!this.hidden)   {
+//            this.anims[this.color = this.origColor].run(this.renderElement.dom.childNodes[0], {duration : 0});
+//        }
 
     },
     doHide : function() {
-        if (this.initHidden) {
-            Ext.fly(this.renderElement.dom.childNodes[0]).applyStyles({
-                visibility: 'hidden'
-            });
-            this.hidden = true;
-        }
+//        if (this.initHidden) {
+//            Ext.fly(this.renderElement.dom.childNodes[0]).applyStyles({
+//                visibility: 'hidden'
+//            });
+//            this.hidden = true;
+//        }
     },
     initPositionalAwareness: function() {
         var coords = this.coords,
@@ -181,8 +179,6 @@ Ext.define('Othello.view.GamePiece', {
                 this.setConnections('nw',x,y);
             }
         }
-//        console.info(x + ' ' + y);
-//        console.log(this.connections);
     },
     setConnections : function(coordPosition, x, y) {
         var itemId,

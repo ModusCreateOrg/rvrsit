@@ -35,32 +35,46 @@ Ext.define('Othello.view.Viewport', {
         });
 
         this.callParent();
+        this.on({
+            scope  : this,
+            buffer : 500,
+            painted : function() {
+                ig.main( '#canvas', MyGame, 30, 384, 384, 1 );
+            }
+        })
     },
-
-    buildDockedItems : function() {
-        return {
-            docked : 'top',
-            xtype  : 'component',
-            style  : 'background-color: #9E9E9E;',
-            height : 50,
-            html   : '<img src="resources/img/modus_logo_small.gif" style="-webkit-border-radius: 5px; position: relative; top: 7px;"/> <span>Othello</span>'
-        };
-    },
+//
+//    buildDockedItems : function() {
+//        return {
+//            docked : 'top',
+//            xtype  : 'component',
+//            style  : 'background-color: #9E9E9E;',
+//            height : 50,
+//            html   : '<img src="resources/img/modus_logo_small.gif" style="-webkit-border-radius: 5px; position: relative; top: 7px;"/> <span>Othello</span>'
+//        };
+//    },
 
     buildItems : function() {
-        var size = this.getTileSize() * this.getBoardSize(),
-            chips = this.buildChips();
-        return  {
-            xtype  : 'container',
-            itemId : 'chipsContainer',
-            width  : size,
-            height : size,
-            items  : chips,
-            layout : {
-                type   : 'vbox',
-                align  : 'stretch'
-            }
+        return {
+            xtype     : 'component',
+            height    : 384,
+            width     : 384,
+            tpl       : '<canvas id="{id}">asdfsadf</canvas>',
+            data      : { id : 'canvas'}
         };
+//        var size = this.getTileSize() * this.getBoardSize(),
+//            chips = this.buildChips();
+//        return  {
+//            xtype  : 'container',
+//            itemId : 'chipsContainer',
+//            width  : size,
+//            height : size,
+//            items  : chips,
+//            layout : {
+//                type   : 'vbox',
+//                align  : 'stretch'
+//            }
+//        };
     },
 
     buildScoreCard : function() {

@@ -15,29 +15,29 @@ Ext.define('Othello.controller.Viewport', {
             selector : '#titlebar'
         },
         {
-            ref      : 'viewport',
-            selector : 'othelloNavigation',
-            xtype    : 'othelloNavigation',
-            autoCreate: true
+            ref       : 'viewport',
+            selector  : 'othelloNavigation',
+            xtype     : 'othelloNavigation',
+            autoCreate : true
             //selector : 'othelloviewport'
         },
         {
-            ref      : 'gamePanel',
-            xtype    : 'othelloviewport',
-            selector : 'othelloviewport',
-            autoCreate: true
+            ref        : 'gamePanel',
+            xtype      : 'othelloviewport',
+            selector   : 'othelloviewport',
+            autoCreate : true
         },
         {
-            ref      : 'socketDebug',
-            xtype    : 'socketDebug',
-            selector : 'socketDebug',
-            autoCreate: true
+            ref        : 'socketDebug',
+            xtype      : 'socketDebug',
+            selector   : 'socketDebug',
+            autoCreate : true
         },
         {
-            ref      : 'messaging',
-            xtype    : 'messaging',
-            selector : 'messaging',
-            autoCreate: true
+            ref        : 'messaging',
+            xtype      : 'messaging',
+            selector   : 'messaging',
+            autoCreate : true
         }
     ],
     init : function() {

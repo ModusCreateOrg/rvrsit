@@ -1,20 +1,20 @@
-ig.module( 
-	'game.main' 
+ig.module(
+	'game.main'
 )
 .requires(
 	'impact.game',
 	'impact.font',
 
     'game.entities.chip',
-    'game.levels.test',
-    'impact.debug.debug'
+    'game.levels.test'
+//    'impact.debug.debug'
 )
     .defines(function(){
 
     MyGame = ig.Game.extend({
 
         // Load a font
-        font: new ig.Font( 'media/04b03.font.png' ),
+//        font: new ig.Font( 'media/04b03.font.png' ),
 
 
         init: function() {
@@ -49,6 +49,6 @@ ig.module(
 
     // Start the Game with 60fps, a resolution of 320x240, scaled
     // up by a factor of 2
-    ig.main( '#canvas', MyGame, 30, 384, 384, 1 );
+//    ig.main( '#canvas', MyGame, 30, 384, 384, 1 );
 
 });
