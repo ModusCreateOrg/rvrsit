@@ -34,6 +34,7 @@
             'Login'
         ],
         init : function() {
+            Othello.app = this;
 
         },
         launch : function() {

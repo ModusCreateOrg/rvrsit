@@ -54,7 +54,7 @@ ig.Loader = ig.Class.extend({
 	
 	end: function() {
 		if( this.done ) { return; }
-		
+
 		this.done = true;
 		clearInterval( this._intervalId );
 		ig.system.setGame( this.gameClass );

@@ -22,8 +22,8 @@ ig.module(
             var me = this;
             me.parent(x,y,settings);
 
-            me.addAnim('flip_black', .08, flipBlack, true);
-            me.addAnim('flip_white', .08, flipWhite, true);
+            me.addAnim('flip_black', .03, flipBlack, true);
+            me.addAnim('flip_white', .03, flipWhite, true);
 
             me.currentAnim  = me.anims['flip_' + me.color];
         },
@@ -62,8 +62,8 @@ ig.module(
                 posY     = thisPos.y,
                 sizeY    = thisSize.y,
                 sizeX    = thisSize.x,
-                boundY   = mouseY >= posY && mouseY <= sizeY + posY,
-                boundX   = mouseX >= posX && mouseX <= sizeX + posX;
+                boundY   = mouseY >= ( posY + 5 ) && mouseY <= (sizeY - 5) + posY,
+                boundX   = mouseX >= ( posX + 5 ) && mouseX <= (sizeX - 5) + posX;
 
             return (boundY && boundX)
 

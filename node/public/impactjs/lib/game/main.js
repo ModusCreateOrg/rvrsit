@@ -24,6 +24,9 @@ ig.module(
             ig.input.initMouse();
 
             ig.input.bind(ig.KEY.MOUSE1, 'click');
+
+            //fire sencha touch event
+            Othello.app.fireEvent('gameboardinit');
         },
 
         update: function() {
