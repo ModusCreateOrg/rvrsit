@@ -73,15 +73,21 @@ exports.util = {
                 E10001: 'Disconnected due to inactivity, or cookie has expired.',
                 E10002: 'Disconnected for not behaving.',
                 E10003: 'Disconnected for cheating.',
+
                 // session related
                 E10100: 'You are not logged in. Hacker fucker!',
+
                 // game related
                 E11000: 'Dude, finish your game first.',
                 E11001: 'You should start a game before making a move.',
+
                 // registration
                 E12000: 'User is missing email address.',
                 E12001: 'User is missing password.',
                 E12002: 'Passwords do not match.',
+
+                //auth
+                E12500: 'Invalid credentials.',
 
                 // Event (socket) related
                 E13000: 'Invalid event call. Method does not exist.'

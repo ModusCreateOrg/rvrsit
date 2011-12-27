@@ -76,6 +76,34 @@ exports.player = {
         player.findOne({email: email}, Othello.bind(cb, scope));
     },
 
+    /**
+     * Authorize
+     * @param data - takes email String and password String
+     * @param cb
+     * @param scope
+     */
+    auth: function(data, cb, scope) {
+        var Othello = this.getParent(),
+            db      = Othello.getDb(),
+            player  = db.Player;
+
+        player.findOne({email: data.email, password: data.password}, function(err, result) {
+            if (!result && cb) {
+                cb.call(scope || this, {success: false});
+            } else if (cb && typeof cb=='function') {
+                var data = {
+                    success: true,
+                    player: {
+                        gameName: result.gameName,
+                        gamesPlayed: result.gamesPlayed
+                    }
+                };
+                cb.call(scope || this, data);
+            }
+
+        });
+    },
+
     list: function(query, cb, scope) {
         var Othello = this.getParent(),
             db      = Othello.getDb(),

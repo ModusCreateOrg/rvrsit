@@ -109,6 +109,12 @@ exports.events = {
         this.player.register(socket,data.data);
     },
 
+    auth: function(socket,eventData) {
+        this.player.auth(eventData.data, function(data) {
+            socket.emit('othello', 'auth', data);
+        });
+    },
+
     testEvents: function(socket, data) {
         socket.emit('othello', 'testEvents', {gay: 'Fucker'});
     },
@@ -122,9 +128,7 @@ exports.events = {
         socket.emit('hi back', data + ', bitch');
 
         socket.emit('hi back', me.getDb());
-    },
-
-    auth: function(socket,data) {
-        socket.emit('auth', {success: true, player: {}});
     }
+
+
 };

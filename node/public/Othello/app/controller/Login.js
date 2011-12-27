@@ -43,8 +43,8 @@ Ext.define('Othello.controller.Login', {
             }
         });
 
-        socket.on('auth', Ext.bind(me.onUserAuthenticated, me));
-        socket.on('registerUser', Ext.bind(me.onUserRegistered, me));
+        //socket.on('auth', Ext.bind(me.onUserAuthenticated, me));
+        //socket.on('registerUser', Ext.bind(me.onUserRegistered, me));
 
         me.callParent();
     },
@@ -100,7 +100,7 @@ Ext.define('Othello.controller.Login', {
         var form    = btn.up('formpanel'),
             values  = form.getValues();
 
-        socket.emit('auth', values)
+        Othello.socket.emit('auth', values, this.onUserAuthenticated, this);
     },
 
     /**
@@ -111,7 +111,7 @@ Ext.define('Othello.controller.Login', {
         var form    = btn.up('formpanel'),
             values  = form.getValues();
 
-        socket.emit('othello', {event: 'registerUser', data: values});
+        Othello.socket.emit('registerUser', values, this.onUserRegistered, this);
     },
 
     /**
@@ -121,6 +121,8 @@ Ext.define('Othello.controller.Login', {
      */
     onUserAuthenticated: function(data) {
         var me = this;
+
+        console.log(data);
         if (!data || data.success !== true) return me.authFailed(data);
 
         me.getLoginWindow().hide();
