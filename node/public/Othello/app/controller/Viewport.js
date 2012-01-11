@@ -61,7 +61,6 @@ Ext.define('Othello.controller.Viewport', {
         });
 
         me.turn = 'white';
-        me.tallyScore();
 
         me.control({
             // intentionally long
@@ -70,10 +69,6 @@ Ext.define('Othello.controller.Viewport', {
             }
         });
 
-        this.application.on({
-            scope         : me,
-            gameboardinit : me.onGameboardInit
-        });
 
         me.callParent();
     },
@@ -86,50 +81,8 @@ Ext.define('Othello.controller.Viewport', {
         this.getViewport().push(this.getSocketDebug());
     },
 
-    onNewGame : function() {
-        Ext.each(this.gamePieces, function(gp) {
-            gp.reset();
-        });
-    },
-
     setTitle : function(title) {
         this.getDockedItems()[0].setTitle(title);
-    },
-    onGameboardInit : function() {
-        var chips     = [],
-            yIndex    = 0,
-            boardSize = 8,
-            chipSize  = 48,
-            black     = 'black',
-            white     = 'white',
-            row,
-            color,
-            x,
-            y,
-            itemId,
-            xIndex;
-
-        for (; yIndex < boardSize; ++yIndex) {
-            row   = [];
-
-            for (xIndex = 0; xIndex < boardSize; ++xIndex) {
-                y = chipSize * yIndex;
-                x = chipSize * xIndex;
-                color = ((xIndex + yIndex) % 2)? black : white;
-//                hidden = ((xIndex == 3 || xIndex == 4) && (yIndex == 3 || yIndex == 4)),
-                itemId = 'ogp-' + xIndex + '-' + yIndex;
-
-                ig.game.spawnEntity(EntityChip, x, y, {
-                    color  : color,
-                    itemId : itemId,
-                    row    : xIndex,
-                    col    : yIndex
-                });
-            }
-
-        }
-
-        return chips;
     },
     onSwapTurn : function() {
         this.turn = (this.turn === 'white') ? 'black' : 'white';
@@ -138,28 +91,5 @@ Ext.define('Othello.controller.Viewport', {
     },
     getTurn : function() {
         return this.turn;
-    },
-    tallyScore : function() {
-        return;
-        var i          = 0,
-            gamePieces = this.gamePieces,
-            len        = gamePieces.length,
-            scores     = {
-                turn  : this.turn,
-                white : 0,
-                black : 0
-            },
-            piece;
-
-
-        for (; i < len; i++) {
-            piece = gamePieces[i];
-            if (! piece.hidden) {
-                scores[piece.color]++;
-            }
-        }
-
-
-        this.application.fireEvent('scoreupdate', scores)
     }
 });

@@ -13,89 +13,13 @@ Ext.define('Othello.view.GamePiece', {
         this.origColor = this.color;
 
         this.callParent();
-//        debugger;
-//        this.renderElement.addCls('othello-gamepiece-square');
-//
-//        this.renderElement.on({
-//            scope : this,
-//            tap   : this.onTap
-//        });
-
         this.doHide();
-//
-//        this.droppable = new Ext.util.Droppable(this.renderElement, {
-//            group : 'othello-gamepiece'
-//        });
-//
-//        this.droppable.on({
-//            scope         : this,
-//            validDropMode : 'intersect',
-//            drop          : this.onDrop,
-//            dropenter     : this.onDropEnter
-//        });
 
     },
     onTap  : function(evtObj, el) {
         this.fireEvent('gptap', this, el, evtObj);
     },
 
-//    applyHtml : function() {
-////        debugger;
-//        return Ext.String.format(
-//            this.getPieceTpl(),
-//            this.getHeight(),
-//            this.getWidth(),
-//            this.color
-//        );
-//    },
-
-    flipToColor: function(color, duration) {
-//        Ext.fly(this.renderElement.dom.childNodes[0]).applyStyles({
-//            visibility: 'visible'
-//        });
-//
-//        delete this.hidden;
-//        var anims      = this.getAnims(),
-//            targetAnim = anims[this.color = color],
-//            removeAnim = color == 'white' ? anims['black'] : anims['white'],
-//            oldColor   = color == 'white' ? 'black' : 'white',
-//            targetEl   = this.renderElement.down('.othello-gamepiece');
-//
-//        duration = duration / 1000;
-//
-////        console.log(targetEl, anim, (duration / 1000) + 's');
-//        console.log(anims[color], 'REMOVE', removeAnim)
-//        targetEl.removeCls(removeAnim);
-//
-//        targetEl.applyStyles({'-webkit-animation-duration' : duration + 's'});
-//        targetEl.addCls(targetAnim);
-//
-//        // do some cleanup!
-//        Ext.Function.defer(function() {
-//            targetEl.applyStyles({'-webkit-animation-duration' : '0s'});
-//            targetEl.addCls('ogp-' + color);
-//            targetEl.removeCls('ogp-' + oldColor);
-//            targetEl.removeCls(targetAnim);
-//        }, duration + 1500);
-//        console.log(targetEl.dom, anim);
-
-    },
-
-    reset : function() {
-//        this.doHide();
-//        if (!this.hidden)   {
-//            this.anims[this.color = this.origColor].run(this.renderElement.dom.childNodes[0], {duration : 0});
-//        }
-
-    },
-    doHide : function() {
-//        if (this.initHidden) {
-//            Ext.fly(this.renderElement.dom.childNodes[0]).applyStyles({
-//                visibility: 'hidden'
-//            });
-//            this.hidden = true;
-//        }
-    },
     initPositionalAwareness: function() {
         var coords = this.coords,
             x      = coords.x,
@@ -184,7 +108,7 @@ Ext.define('Othello.view.GamePiece', {
         var itemId,
             topParent = this.parent.parent;
 
-        //TODO:  Clean this up/make more effecient!!
+        //TODO:  Clean this up/make more efficient!!
 
         if (coordPosition === 'e') {
             itemId =  'ogp-' + (x + 1 ) + '-' + y;
