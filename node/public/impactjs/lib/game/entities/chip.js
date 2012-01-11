@@ -42,9 +42,7 @@ ig.module(
 
                 if (me.isItemClicked()) {
                     var adjacentChipStacks =  me.getChipStacks();
-//                    debugger;
-//                    return;
-                    if (! adjacentChipStacks) {
+                    if (adjacentChipStacks.length == 0) {
                         return;
                     }
                     me.adjacentChipStacks = adjacentChipStacks;
@@ -165,7 +163,8 @@ ig.module(
             return chipStacks;
         },
         processChipStacks : function(chipStacks) {
-            var myItemId = this.itemId,
+            var myItemId    = this.itemId,
+                chipsToFlip = [],
                 duration,
                 color,
                 stack;
@@ -179,13 +178,19 @@ ig.module(
                 color = stackObj.turnColor;
 
                 Ext.each(stackObj.chipStack, function(chip) {
-                    color = stackObj.turnColor;
                     if (chip.itemId != myItemId) {
-                        var fn = Ext.Function.bind(chip.startFlip, chip, [color]);
-                        setTimeout(fn, duration);
-                        duration += 200;
+                        chipsToFlip.push(chip);
                     }
                 });
+            });
+
+
+            Ext.each(chipsToFlip, function(chip) {
+                if (chip.itemId != myItemId) {
+                    var fn = Ext.Function.bind(chip.startFlip, chip, [color]);
+                    setTimeout(fn, duration);
+                    duration += 200;
+                }
             });
         }
 
