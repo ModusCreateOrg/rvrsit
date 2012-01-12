@@ -69,7 +69,7 @@ ig.module(
                 me.wasBlank = true;
             }
 
-            me.sounds[newColor].play();
+//            me.sounds[newColor].play();
             me.currentAnim = me.anims['flip_' + newColor];
             me.currentAnim.rewind();
 
