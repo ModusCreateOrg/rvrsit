@@ -28,10 +28,23 @@ ig.module(
 
             //fire sencha touch event
 //            Othello.app.fireEvent('gameboardinit');
-            this.chips = this.buildChips();
-            this.swapTurn();
+            this.newGame();
         },
+        newGame : function() {
+            var me      = this,
+                myChips = this.chips;
 
+
+            if (myChips) {
+                for (var chip in myChips) {
+                    debugger;
+                    me.removeEntity(myChips[chip]);
+                }
+            }
+            me.chips = me.buildChips();
+            me.turn = 'black'; // TODO: fix
+            me.swapTurn();
+        },
         update: function() {
             // Update all entities and backgroundMaps
             this.parent();
@@ -222,13 +235,39 @@ ig.module(
             chip.connections[position] = this.allChips[itemId];
         },
         sayTurn : function() {
-            console.log(this.turn + "'s turn")
+            this.calcScore();
+            console.log(this.turn + "'s turn");
         },
         swapTurn : function() {
             var oldTurn = this.turn;
             this.turn = (oldTurn == 'white') ? 'black' : 'white';
 
             return oldTurn;
+        },
+        calcScore : function() {
+
+            var allChips   = this.allChips,
+                whiteScore = 0,
+                blackScore = 0,
+                color,
+                itemId,
+                chip;
+
+            for (itemId in allChips) {
+                chip = allChips[itemId];
+                color = chip.newColor || chip.color;
+
+                if (color == 'white') {
+                    whiteScore++;
+                }
+                else if (color == 'black') {
+                    blackScore++;
+                }
+
+            }
+
+            console.log('Score: White: ', whiteScore, ' black: ', blackScore)
+
         }
 
     });
