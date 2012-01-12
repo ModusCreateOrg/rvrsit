@@ -57,10 +57,12 @@ ig.module(
             me.parent();
         },
         startFlip : function(color) {
-            var me = this,
+            var me       = this,
+                game     = Othello.app.game,
                 newColor = color || game.swapTurn();
 
 //            console.log(me.itemId, me.color, ' => ', newColor);
+
 
             me.animating = true;
             me.newColor  = newColor;
@@ -80,8 +82,7 @@ ig.module(
 //                console.log('me.adjacentChipStacks = ', stacks);
                 me.processChipStacks(stacks);
             }
-
-
+            game.calcScore();
         },
         endFlip : function() {
             var me = this;
@@ -93,7 +94,7 @@ ig.module(
             me.animating = false;
             if (me.wasClicked) {
                 delete me.wasClicked;
-                game.sayTurn();
+                Othello.app.game.sayTurn();
             }
         },
         isItemClicked : function() {
@@ -136,7 +137,7 @@ ig.module(
         getChipStacks : function() {
 
             var me = this,
-                turnColor  = game.turn,
+                turnColor  = Othello.app.game.turn,
                 chipStacks = [],
                 stackObj,
                 dir,
@@ -174,7 +175,7 @@ ig.module(
              */
             Ext.each(chipStacks, function(stackObj) {
                 stack = stackObj.chipStack;
-                duration = 200;
+                duration = 150;
                 color = stackObj.turnColor;
 
                 Ext.each(stackObj.chipStack, function(chip) {
@@ -189,7 +190,7 @@ ig.module(
                 if (chip.itemId != myItemId) {
                     var fn = Ext.Function.bind(chip.startFlip, chip, [color]);
                     setTimeout(fn, duration);
-                    duration += 200;
+                    duration += 150;
                 }
             });
         }

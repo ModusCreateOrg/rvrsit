@@ -25,10 +25,9 @@
 
     Ext.application({
         name : 'Othello',
-//        autoCreateViewport : true,
         appFolder : scriptPath + '/app',
         controllers : [
-            'GamePiece',
+            'ScoreCard',
             'Viewport',
             'Messaging',
             'Login'

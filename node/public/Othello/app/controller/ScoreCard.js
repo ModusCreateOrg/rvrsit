@@ -1,60 +1,42 @@
 Ext.define('Othello.controller.ScoreCard', {
-    extend : 'Ext.Panel', // TODO : push to container?
+    extend : 'Ext.app.Controller', // TODO : push to container?
 
     views : [
         'ScoreCard'
     ],
     refs : [
         {
-            ref      : '',
-            selector : ''
+            ref      : 'scorecard',
+            selector : '[itemId="scoreCard"]'
         }
     ],
     init : function() {
         this.application.on({
-            scoreupdate : this.onAppScoreUpdate,
-            newgame     : this.onNewGame
-
-        })
-    },
-
-    onAppScoreUpdate : function() {
-
+            scope : this,
+            scoreupdate : this.onAppScoreUpdate
+        });
     },
     onScoreCardPanelNewBtn : function() {
-        Ext.each(this.gamePieces, function(gp) {
-            gp.reset();
-        });
-        this.turn = 'white';
-        this.tallyScore();
+        console.log('new game')
     },
-    onAfterRenderInitGamePcs :function() {
-        var gamePcs = this.gamePieces = this.query('Othello_GamePiece');
-
-        Ext.each(gamePcs, function(item) {
-            item.initPositionalAwareness();
-        });
-
-        this.tallyScore();
-    },
-    setTitle : function(title) {
-        this.getDockedItems()[0].setTitle(title);
-    },
-    swapTurn : function() {
-        this.turn = (this.turn === 'white') ? 'black' : 'white';
-        this.tallyScore();
-    },
-    getTurn : function() {
-        return this.turn;
-    },
-    onAppScoreUpdate : function(scores) {
+    onAppScoreUpdate : function(game, scoreObj) {
+        console.log('onAppScoreUpdate', arguments);
+        var scoreCard = this.getScorecard(),
+            imgLocations = scoreCard.getImgLocations();
 
 
+        if (!scoreCard.playerTurnEl) {
+            var scoreCardEl = scoreCard.el;
+            scoreCard.playerTurnEl       = scoreCardEl.down('.othello-scorecard-player-turn').dom;
+            scoreCard.whitePlayerScoreEl = scoreCardEl.down('.othello-scorecard-score-keeper-white').dom;
+            scoreCard.blackPlayerScoreEl = scoreCardEl.down('.othello-scorecard-score-keeper-black').dom;
+        }
+
+        scoreCard.playerTurnEl.src = imgLocations[scoreObj.turn];
+
+        scoreCard.whitePlayerScoreEl.innerHTML = scoreObj.white;
+        scoreCard.blackPlayerScoreEl.innerHTML = scoreObj.black;
     }
 
-//    getScoreCard : function() {
-//        var scoreCard = this.scoreCard;
-//        return scoreCard ? scoreCard : this.scoreCard = this.query('Othello_ScoreCardPanel')[0];
-//    },
 
 });

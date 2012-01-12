@@ -18,7 +18,7 @@ ig.module(
 
         turn : 'black',
         init: function() {
-            game = this;
+            Othello.app.game = this;
             // Initialize your game here; bind keys etc.
 //            ig.input.bind( ig.KEY.UP_ARROW, 'up' );
             this.loadLevel( LevelTest );
@@ -32,12 +32,11 @@ ig.module(
         },
         newGame : function() {
             var me      = this,
-                myChips = this.chips;
+                myChips = this.allChips;
 
 
             if (myChips) {
                 for (var chip in myChips) {
-                    debugger;
                     me.removeEntity(myChips[chip]);
                 }
             }
@@ -56,12 +55,6 @@ ig.module(
             // Draw all entities and backgroundMaps
             this.parent();
 
-    //
-    //		// Add your own drawing code here
-    //		var x = ig.system.width/2,
-    //			y = ig.system.height/2;
-    //
-    //		this.font.draw( 'It Works!', x, y, ig.Font.ALIGN.CENTER );
         },
         buildChips : function() {
             var blankChips = {},
@@ -266,15 +259,14 @@ ig.module(
 
             }
 
-            console.log('Score: White: ', whiteScore, ' black: ', blackScore)
+            Othello.app.fireEvent('scoreupdate', this,  {
+                turn  : this.turn,
+                white : whiteScore,
+                black : blackScore
+            });
 
+            console.log('Score: White: ', whiteScore, ' black: ', blackScore)
         }
 
     });
-
-
-    // Start the Game with 60fps, a resolution of 320x240, scaled
-    // up by a factor of 2
-//    ig.main( '#canvas', MyGame, 30, 384, 384, 1 );
-
 });
