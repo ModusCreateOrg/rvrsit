@@ -67,6 +67,13 @@ Ext.define('Othello.view.Navigation', {
                         iconMask : true,
                         text     : 'New Game',
                         action   : 'newGame'
+                    },
+                    {
+                        xtype    : 'button',
+                        iconMask : true,
+                        text     : 'Settings',
+//                        iconCls  : 'settings',
+                        action   : 'gameSettings'
                     }
                 ]
             }

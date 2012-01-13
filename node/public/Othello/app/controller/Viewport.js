@@ -53,8 +53,6 @@ Ext.define('Othello.controller.Viewport', {
         ]);
 
         
-        me.turn = 'white';
-
         me.control({
             // intentionally long
             'othelloNavigation > toolbar[docked=bottom] > button[action=socketDebug]': {
@@ -75,13 +73,16 @@ Ext.define('Othello.controller.Viewport', {
         me.callParent();
     },
     onSettingsBtn : function() {
-
+        this.getController('Settings').showSettings();
     },
     onNewGameBtn : function() {
         Othello.game.newGame();
     },
     onSoundCycle : function(btn) {
-        Othello.game.newGame();
+        ig.music.stop();
+
+        localStorage.setItem('music', 'off');
+
     },
     showMessagingWindow: function() {
 

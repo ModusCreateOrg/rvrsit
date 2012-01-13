@@ -18,11 +18,7 @@ ig.module(
             x : 48,
             y : 48
         },
-        sounds : {
-            badMove : new ig.Sound('media/sounds/bad_move.mp3', true),
-            white : new ig.Sound('media/sounds/chip_flip_white.mp3', true),
-            black : new ig.Sound('media/sounds/chip_flip_black.mp3', true)
-        },
+
 
         init : function(x,y,settings) {
             var me = this;
@@ -44,7 +40,9 @@ ig.module(
                 if (me.isItemClicked()) {
                     var adjacentChipStacks =  me.getChipStacks();
                     if (adjacentChipStacks.length == 0) {
-                        this.sounds.badMove.play();
+
+                        Othello.game.playSound('badMove');
+
                         return;
                     }
                     me.adjacentChipStacks = adjacentChipStacks;
@@ -63,9 +61,6 @@ ig.module(
                 game     = Othello.game,
                 newColor = color || game.swapTurn();
 
-//            console.log(me.itemId, me.color, ' => ', newColor);
-
-
             me.animating = true;
             me.newColor  = newColor;
 
@@ -73,7 +68,9 @@ ig.module(
                 me.wasBlank = true;
             }
 
-            me.sounds[newColor].play();
+
+            Othello.game.playSound(newColor);
+
             me.currentAnim = me.anims['flip_' + newColor];
             me.currentAnim.rewind();
 

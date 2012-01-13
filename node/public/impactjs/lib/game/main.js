@@ -12,44 +12,81 @@ ig.module(
     .defines(function(){
 
     MyGame = ig.Game.extend({
+        soundRoot : 'node/public/impactjs/media/',
 
-        // Load a font
-//        font: new ig.Font( 'media/04b03.font.png' ),
 
         turn : 'black',
         sounds : {
-            newGame :  new ig.Sound('media/sounds/new_game.caff', true)
+            badMove : 'bad_move.mp3',
+            white   : 'chip_flip_white.mp3',
+            black   : 'chip_flip_black.mp3',
+            newGame : 'new_game.mp3'
         },
         music : [
             {
                 name : 'Truepianos',
-                song : 'media/music/Truepianos.caff'
+                song : 'Truepianos.caff'
             },
-            {
-                name : 'Sixeco',
-                song : 'media/music/Sixeco.caff'
-            },
+//            {
+//                name : 'Sixeco',
+//                song : 'media/music/Sixeco.caff'
+//            },
             {
                 name : 'TweakRAM',
-                song : 'media/music/SnD_TweakRAM.caff'
+                song : 'SnD_TweakRAM.caff'
             }
         ],
         init: function() {
-            Ext.each(this.music, function(song) {
-                ig.music.add(new ig.Sound('node/public/impactjs/' + song.song));
-            });
-            ig.music.random = true;
-            ig.music.play();
+            var me = this;
+            me.initSounds();
 
-            Othello.game = this;
-            // Initialize your game here; bind keys etc.
-//            ig.input.bind( ig.KEY.UP_ARROW, 'up' );
-            this.loadLevel( LevelTest );
+            Othello.game = me;
+
+
+            me.loadLevel( LevelTest );
             ig.input.initMouse();
 
             ig.input.bind(ig.KEY.MOUSE1, 'click');
 
-            this.newGame();
+            me.newGame();
+        },
+        checkSetting : function(setting) {
+            return localStorage.getItem(setting) != 'off';
+        },
+        initSounds : function() {
+//            debugger;
+            var me           = this,
+                soundRoot    = me.soundRoot,
+                fxEnabled    = me.checkSetting('fx'),
+                musicEnabled = me.checkSetting('music'),
+                fxRoot,
+                musicRoot;
+
+            if (fxEnabled) {
+                fxRoot       = soundRoot + 'sounds/';
+                var sounds = this.sounds,
+                    sound,
+                    name;
+
+                for (name in this.sounds) {
+                    sound = sounds[name];
+                    sounds[name] = new ig.Sound(fxRoot + sound, true);
+                    sounds[name].play();
+                }
+
+                this.sounds = sounds;
+            }
+
+            if (musicEnabled) {
+                musicRoot    = soundRoot + 'music/';
+
+                Ext.each(this.music, function(song) {
+                    ig.music.add(new ig.Sound(musicRoot + song.song));
+                });
+                ig.music.random = true;
+
+                ig.music.play();
+            }
         },
         newGame : function() {
             var me      = this,
@@ -61,10 +98,10 @@ ig.module(
                 }
             }
             me.chips = me.buildChips();
-            me.turn = 'black'; // TODO: fix
+            me.turn  = 'black'; // TODO: fix
             me.swapTurn();
             me.calcScore();
-            this.sounds.newGame.play();
+            this.playSound('newGame');
         },
         update: function() {
             // Update all entities and backgroundMaps
@@ -287,6 +324,13 @@ ig.module(
             });
 
 //            console.log('Score: White: ', whiteScore, ' black: ', blackScore)
+        },
+        playSound : function(sound) {
+            var me = this;
+            if (me.checkSetting('fx')) {
+                this.sounds[sound].play();
+            }
+
         }
 
     });
