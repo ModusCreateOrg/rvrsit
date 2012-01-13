@@ -73,7 +73,7 @@ Ext.define('Othello.view.Navigation', {
                         iconMask : true,
                         text     : 'Settings',
 //                        iconCls  : 'settings',
-                        action   : 'gameSettings'
+                        action   : 'settings'
                     }
                 ]
             }

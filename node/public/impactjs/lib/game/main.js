@@ -54,7 +54,6 @@ ig.module(
             return localStorage.getItem(setting) != 'off';
         },
         initSounds : function() {
-//            debugger;
             var me           = this,
                 soundRoot    = me.soundRoot,
                 fxEnabled    = me.checkSetting('fx'),

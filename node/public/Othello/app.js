@@ -27,6 +27,7 @@
         name : 'Othello',
         appFolder : scriptPath + '/app',
         controllers : [
+            'Settings',
             'ScoreCard',
             'Viewport',
             'Messaging',
