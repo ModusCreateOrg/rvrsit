@@ -60,7 +60,7 @@ ig.module(
         },
         startFlip : function(color) {
             var me       = this,
-                game     = Othello.app.game,
+                game     = Othello.game,
                 newColor = color || game.swapTurn();
 
 //            console.log(me.itemId, me.color, ' => ', newColor);
@@ -96,7 +96,7 @@ ig.module(
             me.animating = false;
             if (me.wasClicked) {
                 delete me.wasClicked;
-                Othello.app.game.sayTurn();
+                Othello.game.sayTurn();
             }
         },
         isItemClicked : function() {
@@ -139,7 +139,7 @@ ig.module(
         getChipStacks : function() {
 
             var me = this,
-                turnColor  = Othello.app.game.turn,
+                turnColor  = Othello.game.turn,
                 chipStacks = [],
                 stackObj,
                 dir,

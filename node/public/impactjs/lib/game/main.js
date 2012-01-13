@@ -17,14 +17,25 @@ ig.module(
 //        font: new ig.Font( 'media/04b03.font.png' ),
 
         turn : 'black',
+        sounds : {
+            newGame :  new ig.Sound('media/sounds/new_game.caff', true)
+        },
         songs : [
-            new ig.Sound('media/sounds/Sixeco.caff', true),
-//            new ig.Sound('media/sounds/SnD_TweakRAM.caff'),
-//            new ig.Sound('media/sounds/Sore_point.caff'),
-//            new ig.Sound('media/sounds/faerie.caff')
+            new ig.Sound('media/music/Truepianos.caff'),
+            new ig.Sound('media/music/Sixeco.caff'),
+            new ig.Sound('media/music/SnD_TweakRAM.caff'),
+            new ig.Sound('media/music/Sore_point.caff'),
+            new ig.Sound('media/music/faerie.caff'),
+            new ig.Sound('media/music/verZion.caff')
         ],
         init: function() {
-            Othello.app.game = this;
+            Ext.each(this.songs, function(song) {
+                ig.music.add(song);
+            });
+            ig.music.random = true;
+            ig.music.play();
+
+            Othello.game = this;
             // Initialize your game here; bind keys etc.
 //            ig.input.bind( ig.KEY.UP_ARROW, 'up' );
             this.loadLevel( LevelTest );
@@ -32,16 +43,12 @@ ig.module(
 
             ig.input.bind(ig.KEY.MOUSE1, 'click');
 
-            //fire sencha touch event
-//            Othello.app.fireEvent('gameboardinit');
             this.newGame();
         },
         newGame : function() {
             var me      = this,
                 myChips = this.allChips;
 
-
-            this.songs[0].play();
             if (myChips) {
                 for (var chip in myChips) {
                     me.removeEntity(myChips[chip]);
@@ -50,6 +57,8 @@ ig.module(
             me.chips = me.buildChips();
             me.turn = 'black'; // TODO: fix
             me.swapTurn();
+            me.calcScore();
+            this.sounds.newGame.play();
         },
         update: function() {
             // Update all entities and backgroundMaps
@@ -61,7 +70,6 @@ ig.module(
         draw: function() {
             // Draw all entities and backgroundMaps
             this.parent();
-
         },
         buildChips : function() {
             var blankChips = {},
@@ -236,7 +244,7 @@ ig.module(
         },
         sayTurn : function() {
             this.calcScore();
-            console.log(this.turn + "'s turn");
+//            console.log(this.turn + "'s turn");
         },
         swapTurn : function() {
             var oldTurn = this.turn;
@@ -272,7 +280,7 @@ ig.module(
                 black : blackScore
             });
 
-            console.log('Score: White: ', whiteScore, ' black: ', blackScore)
+//            console.log('Score: White: ', whiteScore, ' black: ', blackScore)
         }
 
     });

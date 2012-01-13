@@ -44,7 +44,7 @@ Ext.define('Othello.view.Viewport', {
     buildScoreCard : function() {
         return {
             xtype  : 'scorecard',
-            width  : 200,
+            width  : 140,
             height : 300,
             itemId : 'scoreCard'
         };

@@ -25,11 +25,11 @@ Ext.define('Othello.view.Navigation', {
         me.getNavigationBar().add(
             [
                 {
-                    //iconCls   : 'compose',
-                    text        : 'Msg',
-                    align       : 'right',
-                    action      : 'messaging',
-                    badgeText   : '2'
+                    //iconCls  : 'compose',
+                    text       : 'Msg',
+                    align      : 'right',
+                    action     : 'messaging',
+                    badgeText  : '2'
                 },
                 {
                     text    : 'Stats',
@@ -48,16 +48,27 @@ Ext.define('Othello.view.Navigation', {
     },
 
     applyBottomToolbar: function(config) {
-        if (config===true) {
+        if (config === true) {
             config = {
-                docked  : 'bottom',
-                ui      : 'light',
-                items   : {
-                    xtype: 'button',
-                    iconMask: true,
-                    iconCls: 'settings',
-                    action: 'socketDebug'
-                }
+                docked : 'bottom',
+                ui     : 'light',
+                items  : [
+                    {
+                        xtype    : 'button',
+                        iconMask : true,
+                        iconCls  : 'settings',
+                        action   : 'socketDebug'
+                    },
+                    {
+                        xtype : 'spacer'
+                    },
+                    {
+                        xtype    : 'button',
+                        iconMask : true,
+                        text     : 'New Game',
+                        action   : 'newGame'
+                    }
+                ]
             }
         }
         return Ext.factory(config, Ext.Toolbar, this.getBottomToolbar());

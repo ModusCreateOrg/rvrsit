@@ -8,10 +8,9 @@ Ext.define('Othello.view.ScoreCard', {
             black : 'node/public/impactjs/media/images/rvrs-blck.png'
         },
         html :  [
-            '<div>',
+            '<div style="padding-top: 5px;">',
                 '<div class="othello-scorecard-player"> Player :: ',
-                    '<img class="othello-scorecard-player-turn" height="24px" src="node/public/impactjs/media/images/rvrs-wht.png">',
-
+                    '<img style="float: right;position: relative; top: -5px;" class="othello-scorecard-player-turn" height="32px" src="node/public/impactjs/media/images/rvrs-wht.png">',
                 '</div>',
                 '<div class="othello-scorecard-score-keeper">',
                     '<span style="displ">White :: </span>',

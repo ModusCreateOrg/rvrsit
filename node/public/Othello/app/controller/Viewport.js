@@ -41,7 +41,6 @@ Ext.define('Othello.controller.Viewport', {
         }
     ],
     init : function() {
-        console.log(this.$className, 'init');
 
         var me = this;
 
@@ -54,42 +53,39 @@ Ext.define('Othello.controller.Viewport', {
         ]);
 
         
-        me.application.on({
-            scope    : me,
-            newgame  : me.onNewGame,
-            swapturn : me.onSwapTurn
-        });
-
         me.turn = 'white';
 
         me.control({
             // intentionally long
             'othelloNavigation > toolbar[docked=bottom] > button[action=socketDebug]': {
-                tap : me.showSocketDebug
+                tap : me.onSocketDebugBtn
+            },  
+            'othelloNavigation > toolbar[docked=bottom] > button[action=newGame]': {
+                tap : me.onNewGameBtn
+            },
+            'othelloNavigation > toolbar[docked=bottom] > button[action=soundToggle]': {
+                tap : me.onNewGameBtn
             }
         });
 
 
         me.callParent();
     },
-
+    onNewGameBtn : function() {
+        Othello.game.newGame();
+    },
+    onSoundCycle : function(btn) {
+        Othello.game.newGame();
+    },
     showMessagingWindow: function() {
 
     },
 
-    showSocketDebug: function() {
+    onSocketDebugBtn: function() {
         this.getViewport().push(this.getSocketDebug());
     },
 
     setTitle : function(title) {
         this.getDockedItems()[0].setTitle(title);
-    },
-    onSwapTurn : function() {
-        this.turn = (this.turn === 'white') ? 'black' : 'white';
-        console.info(this.turn);
-        this.tallyScore();
-    },
-    getTurn : function() {
-        return this.turn;
     }
 });
