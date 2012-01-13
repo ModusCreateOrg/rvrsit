@@ -59,7 +59,10 @@ Ext.define('Othello.controller.Viewport', {
             // intentionally long
             'othelloNavigation > toolbar[docked=bottom] > button[action=socketDebug]': {
                 tap : me.onSocketDebugBtn
-            },  
+            },
+            'othelloNavigation > toolbar[docked=bottom] > button[action=settings]': {
+                tap : me.onSettingsBtn
+            },
             'othelloNavigation > toolbar[docked=bottom] > button[action=newGame]': {
                 tap : me.onNewGameBtn
             },
@@ -70,6 +73,9 @@ Ext.define('Othello.controller.Viewport', {
 
 
         me.callParent();
+    },
+    onSettingsBtn : function() {
+
     },
     onNewGameBtn : function() {
         Othello.game.newGame();

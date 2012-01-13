@@ -20,17 +20,23 @@ ig.module(
         sounds : {
             newGame :  new ig.Sound('media/sounds/new_game.caff', true)
         },
-        songs : [
-            new ig.Sound('media/music/Truepianos.caff'),
-            new ig.Sound('media/music/Sixeco.caff'),
-            new ig.Sound('media/music/SnD_TweakRAM.caff'),
-            new ig.Sound('media/music/Sore_point.caff'),
-            new ig.Sound('media/music/faerie.caff'),
-            new ig.Sound('media/music/verZion.caff')
+        music : [
+            {
+                name : 'Truepianos',
+                song : 'media/music/Truepianos.caff'
+            },
+            {
+                name : 'Sixeco',
+                song : 'media/music/Sixeco.caff'
+            },
+            {
+                name : 'TweakRAM',
+                song : 'media/music/SnD_TweakRAM.caff'
+            }
         ],
         init: function() {
-            Ext.each(this.songs, function(song) {
-                ig.music.add(song);
+            Ext.each(this.music, function(song) {
+                ig.music.add(new ig.Sound('node/public/impactjs/' + song.song));
             });
             ig.music.random = true;
             ig.music.play();
