@@ -17,6 +17,12 @@ ig.module(
 //        font: new ig.Font( 'media/04b03.font.png' ),
 
         turn : 'black',
+        songs : [
+            new ig.Sound('media/sounds/Sixeco.caff', true),
+//            new ig.Sound('media/sounds/SnD_TweakRAM.caff'),
+//            new ig.Sound('media/sounds/Sore_point.caff'),
+//            new ig.Sound('media/sounds/faerie.caff')
+        ],
         init: function() {
             Othello.app.game = this;
             // Initialize your game here; bind keys etc.
@@ -35,6 +41,7 @@ ig.module(
                 myChips = this.allChips;
 
 
+            this.songs[0].play();
             if (myChips) {
                 for (var chip in myChips) {
                     me.removeEntity(myChips[chip]);

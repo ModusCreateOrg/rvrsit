@@ -19,6 +19,7 @@ ig.module(
             y : 48
         },
         sounds : {
+            badMove : new ig.Sound('media/sounds/bad_move.mp3', true),
             white : new ig.Sound('media/sounds/chip_flip_white.mp3', true),
             black : new ig.Sound('media/sounds/chip_flip_black.mp3', true)
         },
@@ -43,6 +44,7 @@ ig.module(
                 if (me.isItemClicked()) {
                     var adjacentChipStacks =  me.getChipStacks();
                     if (adjacentChipStacks.length == 0) {
+                        this.sounds.badMove.play();
                         return;
                     }
                     me.adjacentChipStacks = adjacentChipStacks;
@@ -148,10 +150,9 @@ ig.module(
                 chip = this.connections[dir];
                 if (chip.color && chip.color != me.color) {
                     stackObj = this.checkAdjacent(dir, turnColor, {
-                        direction      : dir,
-                        turnColor      : turnColor,
-                        foundDiffColor : false,
-                        chipStack      : []
+                        direction : dir,
+                        turnColor : turnColor,
+                        chipStack : []
                     });
                     if (stackObj.doFlip) {
 //                        console.log('pushing', dir)

@@ -14,10 +14,10 @@ Ext.define('Othello.view.ScoreCard', {
 
                 '</div>',
                 '<div class="othello-scorecard-score-keeper">',
-                    '<span style="displ">White ::</span>',
+                    '<span style="displ">White :: </span>',
                     '<span class="othello-scorecard-score-keeper-white">0</span>',
                     '<br />',
-                    '<span style="displ">Black ::</span>',
+                    '<span style="displ">Black :: </span>',
                     '<span class="othello-scorecard-score-keeper-black">0</span>',
                     '<br />',
                 '</div>',
