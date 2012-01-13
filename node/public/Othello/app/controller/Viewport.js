@@ -69,8 +69,26 @@ Ext.define('Othello.controller.Viewport', {
             }
         });
 
+        this.application.on({
+            scope   : this,
+            setting : this.appSettingsChange
+        });
 
         me.callParent();
+    },
+    appSettingsChange : function(field, setting, value) {
+        console.log(setting, value)
+        localStorage.setItem(setting, value);
+
+        if (setting == 'music')  {
+            Othello.game.setMusicVolume(value);
+        }
+
+        if (setting == 'fx')  {
+            Othello.game.setFxVolume(value);
+        }
+
+
     },
     onSettingsBtn : function() {
         this.getController('Settings').showSettings();

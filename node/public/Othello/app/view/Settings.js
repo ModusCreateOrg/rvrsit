@@ -1,51 +1,50 @@
 Ext.define('Othello.view.Settings', {
     extend : 'Ext.Panel',
-
-
+    xtype : 'settings',
     config : {
+        style         : 'background-color: #FFF',
         modal         : true,
-        height        : 300,
         width         : 300,
         centered      : true,
         hideOnMaskTap : true,
-        defaults      : {
-            maxValue  : 1,
-            minValue  : 0,
-            increment : .1
-        },
+
         layout : {
             type  : 'vbox',
             align : 'stretch'
         }
     },
     initialize : function() {
-        var listeners = {
-            scope  : this,
-            change : this.onFieldChange
+        var resetOverride = function() {
+            this.setValue(this.defaultValue);
         };
         this.add([
             {
-                xtype      : 'sliderfield',
-                fieldLabel : 'Music',
-                setting    : 'music',
-                listeners  : listeners
+                xtype        : 'sliderfield',
+                fieldLabel   : 'Music',
+                setting      : 'music',
+                defaultValue : this.settings.music * 100,
+                reset        : resetOverride
             },
             {
-                xtype      : 'sliderfield',
-                fieldLabel : 'Effects',
-                setting    : 'fx',
-                listeners  : listeners
+                xtype        : 'sliderfield',
+                fieldLabel   : 'Effects',
+                setting      : 'fx',
+                defaultValue : this.settings.fx * 100,
+                reset        : resetOverride
             }
         ]);
         this.callParent();
 
-        this.on('hide', this.onHideDestroy, this);
-    },
-    onFieldChange : function(field, value) {
-        console.log(field.setting, value[0])
 
+        this.on('hide', this.onHideDestroy, this);
     },
     onHideDestroy : function() {
         Ext.Function.defer(this.destroy, 1000, this);
+    },
+    show : function() {
+        this.callParent(arguments);
+        this.items.each(function(item){
+            item.reset();
+        });
     }
 });

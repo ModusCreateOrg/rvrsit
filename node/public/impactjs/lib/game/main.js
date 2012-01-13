@@ -27,10 +27,6 @@ ig.module(
                 name : 'Truepianos',
                 song : 'Truepianos.caff'
             },
-//            {
-//                name : 'Sixeco',
-//                song : 'media/music/Sixeco.caff'
-//            },
             {
                 name : 'TweakRAM',
                 song : 'SnD_TweakRAM.caff'
@@ -38,10 +34,10 @@ ig.module(
         ],
         init: function() {
             var me = this;
-            me.initSounds();
-
             Othello.game = me;
 
+            me.initSound();
+            me.initSettings();
 
             me.loadLevel( LevelTest );
             ig.input.initMouse();
@@ -50,41 +46,44 @@ ig.module(
 
             me.newGame();
         },
-        checkSetting : function(setting) {
-            return localStorage.getItem(setting) != 'off';
-        },
-        initSounds : function() {
-            var me           = this,
-                soundRoot    = me.soundRoot,
-                fxEnabled    = me.checkSetting('fx'),
-                musicEnabled = me.checkSetting('music'),
+
+        initSound : function() {
+            var me          = this,
+                soundRoot   = me.soundRoot,
+                settings    = me.getSettings(),
                 fxRoot,
                 musicRoot;
 
-            if (fxEnabled) {
-                fxRoot       = soundRoot + 'sounds/';
-                var sounds = this.sounds,
+            if (settings.fx > 0 && ! me.fxInitialized) {
+                fxRoot = soundRoot + 'sounds/';
+//                debugger;
+                var sounds = me.sounds,
                     sound,
                     name;
 
                 for (name in this.sounds) {
-                    sound = sounds[name];
-                    sounds[name] = new ig.Sound(fxRoot + sound, true);
-                    sounds[name].play();
+                    sound = new ig.Sound(fxRoot + sounds[name], true);
+                    sound.volume = settings.fx;
+                    sounds[name] = sound;
                 }
 
-                this.sounds = sounds;
+                me.sounds = sounds;
+                me.fxInitialized = true;
             }
 
-            if (musicEnabled) {
-                musicRoot    = soundRoot + 'music/';
+            if (settings.music > 0 && ! me.musicInitialized) {
+                musicRoot = soundRoot + 'music/';
 
                 Ext.each(this.music, function(song) {
                     ig.music.add(new ig.Sound(musicRoot + song.song));
                 });
+
+                ig.music.volume = settings.music;
                 ig.music.random = true;
 
                 ig.music.play();
+
+                me.musicInitialized = true;
             }
         },
         newGame : function() {
@@ -322,15 +321,54 @@ ig.module(
                 black : blackScore
             });
 
-//            console.log('Score: White: ', whiteScore, ' black: ', blackScore)
         },
         playSound : function(sound) {
             var me = this;
-            if (me.checkSetting('fx')) {
-                this.sounds[sound].play();
+            if (me.getSetting('fx')) {
+                if (! me.fxInitialized) {
+                    this.initSound();
+                }
+                me.sounds[sound].play();
+
             }
-
+        },
+        setMusicVolume : function(vol) {
+            ig.music.volume = vol;
+        },
+        setFxVolume : function(vol) {
+            var sounds = this.sounds;
+            for (var key in this.sounds) {
+                sounds[key].volume = vol;
+            }
+        },
+        initSettings : function() {
+            if (localStorage.getItem('fx') == null) {
+                this.applySettings({
+                    fx    : .5,
+                    music : .5
+                })
+            }
+        },
+        applySettings : function(settings) {
+            for (var key in settings) {
+                localStorage.setItem(key, settings[key]);
+            }
+        },
+        getSetting : function(setting) {
+            return localStorage.getItem(setting);
+        },
+        getSettings : function() {
+            return {
+                fx    : +this.getSetting('fx'),
+                music : +this.getSetting('music')
+            }
+        },
+        clearSettings : function() {
+            for (var k in localStorage) {
+                delete localStorage[k];
+                ig.music.stop();
+                ig.music.volume = 0;
+            }
         }
-
     });
 });
