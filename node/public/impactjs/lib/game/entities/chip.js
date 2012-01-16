@@ -84,17 +84,21 @@ ig.module(
             game.calcScore();
         },
         endFlip : function() {
-            var me = this;
+            var me = this,
+                game = Othello.game;
+
             me.color = me.newColor;
             if (me.wasBlank) {
                 delete me.wasBlank;
                 me.currentAnim = me.anims['flip_' + (me.color == black ? black : white)];
             }
+
             me.animating = false;
             if (me.wasClicked) {
                 delete me.wasClicked;
-                Othello.game.sayTurn();
+                game.sayTurn();
             }
+            game.registerVisibleChip(me);
         },
         isItemClicked : function() {
             // TODO: Add turn checking
@@ -121,6 +125,7 @@ ig.module(
             if (! adjacentChip || ! adjacentChip.color) {
                 return stackObj;
             }
+
 //            debugger;
             if (adjacentChip.color != flipToColor) {
                 stackObj.chipStack.push(this);
@@ -162,12 +167,14 @@ ig.module(
             return chipStacks;
         },
         processChipStacks : function(chipStacks) {
+
             var myItemId    = this.itemId,
                 chipsToFlip = [],
                 duration,
                 color,
                 stack;
 
+//            debugger;
             /**
              * TODO :: Convert to generic for loops, to increase speed.
              */
@@ -182,7 +189,6 @@ ig.module(
                     }
                 });
             });
-
 
             Ext.each(chipsToFlip, function(chip) {
                 if (chip.itemId != myItemId) {

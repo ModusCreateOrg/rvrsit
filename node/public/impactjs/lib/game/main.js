@@ -14,7 +14,6 @@ ig.module(
     MyGame = ig.Game.extend({
         soundRoot : 'node/public/impactjs/media/',
 
-
         turn : 'black',
         sounds : {
             badMove : 'bad_move.mp3',
@@ -123,7 +122,7 @@ ig.module(
                 black      = 'black',
                 white      = 'white',
                 row,
-                blank,
+                visible,
                 color,
                 x,
                 y,
@@ -134,25 +133,25 @@ ig.module(
             for (; yIndex < boardSize; ++yIndex) {
                 row   = [];
 
-                for (xIndex = 0; xIndex < boardSize; ++xIndex) {
-                    y      = chipSize * yIndex;
-                    x      = chipSize * xIndex;
-                    color  = ((xIndex + yIndex) % 2)? black : white;
-                    blank  = ((xIndex == 3 || xIndex == 4) && (yIndex == 3 || yIndex == 4));
-                    itemId = 'ogp-' + xIndex + '-' + yIndex;
+                for (xIndex= 0; xIndex < boardSize; ++xIndex) {
+                    y       = chipSize * yIndex;
+                    x       = chipSize * xIndex;
+                    color   = ((xIndex + yIndex) % 2)? black : white;
+                    visible = ((xIndex == 3 || xIndex == 4) && (yIndex == 3 || yIndex == 4));
+                    itemId  = 'ogp-' + xIndex + '-' + yIndex;
 
                     chip = ig.game.spawnEntity(EntityChip, x, y, {
-                        color  : blank ? color : blank,
+                        color  : visible ? color : visible,
                         itemId : itemId,
                         row    : xIndex,
                         col    : yIndex
                     });
-
-                    if (blank) {
-                        blankChips[itemId] = chip;
+//                    debugger;
+                    if (visible) {
+                        visChips[itemId] = chip;
                     }
                     else {
-                        visChips[itemId] = chip;
+                        blankChips[itemId] = chip;
                     }
 
                     allChips[itemId] = chip;
@@ -161,6 +160,7 @@ ig.module(
                 chips.push(row);
             }
 
+            this.visChips = visChips;
             this.allChips = allChips;
 
             for (var key in allChips) {
@@ -305,7 +305,7 @@ ig.module(
             for (itemId in allChips) {
                 chip = allChips[itemId];
                 color = chip.newColor || chip.color;
-
+//                console.log(itemId, color);
                 if (color == 'white') {
                     whiteScore++;
                 }
@@ -314,6 +314,7 @@ ig.module(
                 }
 
             }
+//            console.log('white', whiteScore, 'black', blackScore)
 
             Othello.app.fireEvent('scoreupdate', this,  {
                 turn  : this.turn,
@@ -329,7 +330,6 @@ ig.module(
                     this.initSound();
                 }
                 me.sounds[sound].play();
-
             }
         },
         setMusicVolume : function(vol) {
@@ -346,7 +346,7 @@ ig.module(
                 this.applySettings({
                     fx    : .5,
                     music : .5
-                })
+                });
             }
         },
         applySettings : function(settings) {
@@ -363,12 +363,62 @@ ig.module(
                 music : +this.getSetting('music')
             }
         },
+        registerVisibleChip : function(chip) {
+            this.visChips[chip.itemId] = chip;
+        },
         clearSettings : function() {
             for (var k in localStorage) {
                 delete localStorage[k];
                 ig.music.stop();
                 ig.music.volume = 0;
             }
+        },
+        findNextMove : function(color) {
+            color = this.turn;
+
+            var nextMoves = [],
+                visChips  = this.visChips,
+                visibleChip,
+                itemId,
+                region,
+                regionalChip,
+                chipConnections,
+                stacks;
+
+            for (itemId in visChips) {
+                visibleChip = visChips[itemId];
+                chipConnections = visibleChip.connections;
+
+                for (region in chipConnections) {
+                    regionalChip = chipConnections[region];
+                    if (! regionalChip.color) {
+                        stacks = regionalChip.getChipStacks();
+                        if (stacks.length > 0) {
+//                            console.log(itemId, regionalChip.itemId, stacks);
+                            nextMoves.push({
+                                chip   : regionalChip,
+                                stacks : stacks
+                            });
+                        }
+
+                    }
+                }
+            }
+
+//            console.log('nextMoves', nextMoves)
+            // TODO: Push to logic that makes an intelligent decision
+            this.swapTurn();
+            var nextMove = nextMoves[0];
+//            debugger;
+//            nextMove.chip.wasClicked = true;
+            nextMove.chip.startFlip(color);
+            nextMove.chip.processChipStacks(nextMove.stacks);
+//            Ext.each(nextMove.stacks, function(chip) {
+//
+//                if (chip.color != color) {
+//                    chip.startFlip(color);
+//                }
+//            });
         }
     });
 });

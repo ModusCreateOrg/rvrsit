@@ -63,6 +63,12 @@ Ext.define('Othello.view.Navigation', {
                         xtype : 'spacer'
                     },
                     {
+                        text : 'Next move();',
+                        handler : function() {
+                            Othello.game.findNextMove();
+                        }
+                    },
+                    {
                         xtype    : 'button',
                         iconMask : true,
                         text     : 'New Game',
