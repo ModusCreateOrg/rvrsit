@@ -373,17 +373,43 @@ ig.module(
                 ig.music.volume = 0;
             }
         },
-        findNextMove : function(color) {
-            color = this.turn;
+        flattenChipStacks : function(originItemId, chipStacks) {
+            var chipsToFlip = [],
+                duration,
+                color,
+                stack;
 
-            var nextMoves = [],
-                visChips  = this.visChips,
+            Ext.each(chipStacks, function(stackObj) {
+                stack = stackObj.chipStack;
+                duration = 150;
+                color = stackObj.turnColor;
+
+                Ext.each(stackObj.chipStack, function(chip) {
+                    if (chip.itemId != originItemId) {
+                        chipsToFlip.push(chip);
+                    }
+                });
+            });
+
+            return chipsToFlip;
+
+        },
+        getRandomIndex : function() {
+            return   + Math.floor((Math.random() * Math.random()) * 100).toString()[0];
+        },
+        findNextMove : function(color) {
+
+            var me = this,
+                nextMoves = [],
+                visChips  = me.visChips,
                 visibleChip,
                 itemId,
                 region,
                 regionalChip,
                 chipConnections,
                 stacks;
+
+            color = me.turn;
 
             for (itemId in visChips) {
                 visibleChip = visChips[itemId];
@@ -394,7 +420,6 @@ ig.module(
                     if (! regionalChip.color) {
                         stacks = regionalChip.getChipStacks();
                         if (stacks.length > 0) {
-//                            console.log(itemId, regionalChip.itemId, stacks);
                             nextMoves.push({
                                 chip   : regionalChip,
                                 stacks : stacks
@@ -405,20 +430,21 @@ ig.module(
                 }
             }
 
-//            console.log('nextMoves', nextMoves)
             // TODO: Push to logic that makes an intelligent decision
+
+            var nextMoveIndex = -1,
+                nextMove;
+            while (! nextMove) {
+                nextMoveIndex = this.getRandomIndex();
+                nextMove = nextMoves[nextMoveIndex];
+            }
+
             this.swapTurn();
-            var nextMove = nextMoves[0];
-//            debugger;
-//            nextMove.chip.wasClicked = true;
+
+            nextMove.chipsToFlip = me.flattenChipStacks(nextMove.chip.itemId, nextMove.stacks)
             nextMove.chip.startFlip(color);
             nextMove.chip.processChipStacks(nextMove.stacks);
-//            Ext.each(nextMove.stacks, function(chip) {
-//
-//                if (chip.color != color) {
-//                    chip.startFlip(color);
-//                }
-//            });
+
         }
     });
 });

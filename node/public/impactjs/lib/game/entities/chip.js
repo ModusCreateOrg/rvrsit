@@ -177,6 +177,7 @@ ig.module(
 //            debugger;
             /**
              * TODO :: Convert to generic for loops, to increase speed.
+             * TODO :: Use othello.game.flattenChipStacks!
              */
             Ext.each(chipStacks, function(stackObj) {
                 stack = stackObj.chipStack;
