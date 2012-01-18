@@ -12,9 +12,10 @@ ig.module(
     .defines(function(){
 
     MyGame = ig.Game.extend({
+        boardSize:  64,
         soundRoot : 'node/public/impactjs/media/',
-
-        turn : 'white',
+        computerColor : 'white',
+        turn : 'black',
         sounds : {
             badMove : 'bad_move.mp3',
             white   : 'chip_flip_white.mp3',
@@ -61,7 +62,7 @@ ig.module(
                     name;
 
                 for (name in this.sounds) {
-                    sound = new ig.Sound(fxRoot + sounds[name], true);
+                    sound = new ig.Sound(fxRoot + sounds[name], false);
                     sound.volume = settings.fx;
                     sounds[name] = sound;
                 }
@@ -95,10 +96,11 @@ ig.module(
                 }
             }
             me.chips = me.buildChips();
-            me.turn  = 'white'; // TODO: fix
+            me.turn  = 'white';
             me.swapTurn();
             me.calcScore();
-            this.playSound('newGame');
+            me.playSound('newGame');
+            me.halt = false;
         },
         update: function() {
             // Update all entities and backgroundMaps
@@ -139,6 +141,8 @@ ig.module(
                     color   = ((xIndex + yIndex) % 2)? black : white;
                     visible = ((xIndex == 3 || xIndex == 4) && (yIndex == 3 || yIndex == 4));
                     itemId  = 'ogp-' + xIndex + '-' + yIndex;
+
+//                    color = 'black';
 
                     chip = ig.game.spawnEntity(EntityChip, x, y, {
                         color  : visible ? color : visible,
@@ -250,7 +254,6 @@ ig.module(
                     this.setConnections(chip, 'nw',row,col);
                 }
             }
-//            console.log(chip.itemId, chip.connections)
         },
         setConnections : function(chip, position, x, y) {
             var itemId,
@@ -285,7 +288,6 @@ ig.module(
         },
         sayTurn : function() {
             this.calcScore();
-//            console.log(this.turn + "'s turn");
         },
         swapTurn : function() {
             var oldTurn = this.turn;
@@ -293,8 +295,7 @@ ig.module(
 
             return oldTurn;
         },
-        calcScore : function() {
-
+        getScore : function() {
             var allChips   = this.allChips,
                 whiteScore = 0,
                 blackScore = 0,
@@ -314,14 +315,15 @@ ig.module(
                 }
 
             }
-//            console.log('white', whiteScore, 'black', blackScore)
 
-            Othello.app.fireEvent('scoreupdate', this,  {
+            return {
                 turn  : this.turn,
                 white : whiteScore,
                 black : blackScore
-            });
-
+            }
+        },
+        calcScore : function() {
+            Othello.app.fireEvent('scoreupdate', this,  this.getScore());
         },
         playSound : function(sound) {
             var me = this;
@@ -373,21 +375,15 @@ ig.module(
                 ig.music.volume = 0;
             }
         },
-        flattenChipStacks : function(originItemId, chipStacks) {
+        flattenChipStacks : function(chipStacks) {
             var chipsToFlip = [],
-                duration,
-                color,
                 stack;
 
             Ext.each(chipStacks, function(stackObj) {
                 stack = stackObj.chipStack;
-                duration = 150;
-                color = stackObj.turnColor;
 
                 Ext.each(stackObj.chipStack, function(chip) {
-                    if (chip.itemId != originItemId) {
-                        chipsToFlip.push(chip);
-                    }
+                    chipsToFlip.push(chip);
                 });
             });
 
@@ -397,9 +393,92 @@ ig.module(
         getRandomIndex : function() {
             return   + Math.floor((Math.random() * Math.random()) * 100).toString()[0];
         },
-        findNextMove : function(color) {
+        nextMove : function() {
+            var me              = this,
+                app             = Othello.app,
+                currentTurn     = me.turn,
+                computerColor   = me.computerColor,
+                nextMoves       = me.findNextMoves(currentTurn),
+                nextMoveIndex   = -1,
+                numVisibleChips = Object.keys(me.visChips).length,
+                nextMove;
 
-            var me = this,
+
+            if (nextMoves.length < 1) {
+                debugger;
+
+                // are all chips visible?
+                if (numVisibleChips == me.boardSize)  {
+                    // if so, calc score  & end game!
+                    me.halt = true;
+                    Othello.app.fireEvent('endgame', this, this.getScore());
+                    return;
+                }
+                else /*if(currentTurn != computerColor)*/ {
+                    // Count the chips.  Are all black or white?
+                    var score = me.getScore();
+                   // if so, end game
+                    if (score.white == 0 || score.black == 0) {
+                        app.fireEvent('winner', this, currentTurn, score[currentTurn]);
+                        me.halt = true;
+                        return;
+                    }
+                    app.fireEvent('nomoves', this, currentTurn);
+
+                }
+
+
+            }
+
+
+            if (me.halt) {
+                return;
+            }
+
+
+            if (currentTurn != computerColor) {
+                return;
+            }
+
+
+            // TODO: Game difficulty mode
+            // Random choosing
+            var chooseRandomMove = function() {
+                while (! nextMove) {
+                    nextMoveIndex = me.getRandomIndex();
+                    nextMove = nextMoves[nextMoveIndex];
+                }
+            };
+
+//            debugger;
+            // hard
+            var moveIdx = 0,
+                flattenedStack,
+                potentialMove,
+                moveCount = 0;
+
+            for (; moveIdx < nextMoves.length; moveIdx ++) {
+                potentialMove  = nextMoves[moveIdx];
+                flattenedStack = me.flattenChipStacks(potentialMove.stacks);
+                if (flattenedStack.length > moveCount) {
+                    nextMove = potentialMove;
+//                    nextMove.chipsToFlip = flattenedStack;
+                }
+            }
+
+            if (! nextMove) {
+                debugger;
+                return;
+            }
+
+            me.swapTurn();
+
+            nextMove.chip.startFlip(currentTurn);
+            nextMove.chip.processChipStacks(nextMove.stacks);
+        },
+        findNextMoves : function(color) {
+
+            var me        = this,
                 nextMoves = [],
                 visChips  = me.visChips,
                 visibleChip,
@@ -413,42 +492,34 @@ ig.module(
 
             for (itemId in visChips) {
                 visibleChip = visChips[itemId];
-                chipConnections = visibleChip.connections;
+                if (visibleChip.color != color) {
+                    chipConnections = visibleChip.connections;
 
-                for (region in chipConnections) {
-                    regionalChip = chipConnections[region];
-                    if (! regionalChip.color) {
-                        stacks = regionalChip.getChipStacks();
-                        if (stacks.length > 0) {
-                            nextMoves.push({
-                                chip   : regionalChip,
-                                stacks : stacks
-                            });
+                    for (region in chipConnections) {
+                        regionalChip = chipConnections[region];
+                        if (! regionalChip.color) {
+                            stacks = regionalChip.getChipStacks();
+                            if (stacks.length > 0) {
+                                nextMoves.push({
+                                    chip   : regionalChip,
+                                    stacks : stacks
+                                });
+                            }
+
                         }
-
                     }
                 }
             }
 
-            // TODO: Push to logic that makes an intelligent decision
-            var nextMoveIndex = -1,
-                nextMove;
-
-            while (! nextMove) {
-                nextMoveIndex = this.getRandomIndex();
-                nextMove = nextMoves[nextMoveIndex];
-            }
-
-            this.swapTurn();
-
-            nextMove.chipsToFlip = me.flattenChipStacks(nextMove.chip.itemId, nextMove.stacks)
-            nextMove.chip.startFlip(color);
-            nextMove.chip.processChipStacks(nextMove.stacks);
+            return nextMoves;
 
         },
         playSelf : function() {
+            if (this.halt) {
+                return;
+            }
             var fn = Ext.Function.bind(function() {
-                this.findNextMove();
+                this.findNextMoves();
                 setTimeout(fn, 1500);
             }, this);
             setTimeout(fn, 1500);

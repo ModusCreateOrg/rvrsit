@@ -32,10 +32,14 @@ ig.module(
             me.currentAnim = me.anims['flip_' + me.color];
         },
         update : function() {
-            var me = this;
+            var me = this,
+                game = Othello.game;
 
             // is not animating && the event type is click
             if (!me.color && ! me.animating && ig.input.pressed('click')) {
+                if (game.isFlipping) {
+                    return;
+                }
 
                 if (me.isItemClicked()) {
                     var adjacentChipStacks =  me.getChipStacks();
@@ -47,6 +51,7 @@ ig.module(
                     }
                     me.adjacentChipStacks = adjacentChipStacks;
                     me.wasClicked = true;
+                    game.isFlipping = true;
                     me.startFlip();
                 }
             }
@@ -97,6 +102,12 @@ ig.module(
                 delete me.wasClicked;
                 game.sayTurn();
             }
+
+            if (me.isLast) {
+                delete me.isLast;
+                game.isFlipping = false;
+                game.nextMove();
+            }
             game.registerVisibleChip(me);
 
 
@@ -108,14 +119,15 @@ ig.module(
                 igMouse  = igInput.mouse,
                 thisPos  = me.pos,
                 thisSize = me.size,
+                five     = 5,
                 mouseY   = igMouse.y,
                 mouseX   = igMouse.x,
                 posX     = thisPos.x,
                 posY     = thisPos.y,
                 sizeY    = thisSize.y,
                 sizeX    = thisSize.x,
-                boundY   = mouseY >= ( posY + 5 ) && mouseY <= (sizeY - 5) + posY,
-                boundX   = mouseX >= ( posX + 5 ) && mouseX <= (sizeX - 5) + posX;
+                boundY   = mouseY >= (posY + five) && mouseY <= (sizeY - five) + posY,
+                boundX   = mouseX >= (posX + five) && mouseX <= (sizeX - five) + posX;
 
             return (boundY && boundX);
         },
@@ -139,10 +151,10 @@ ig.module(
 
             return stackObj;
         },
-        getChipStacks : function() {
+        getChipStacks : function(color) {
 
             var me = this,
-                turnColor  = Othello.game.turn,
+                turnColor  = color || Othello.game.turn,
                 chipStacks = [],
                 stackObj,
                 dir,
@@ -168,32 +180,18 @@ ig.module(
         },
         processChipStacks : function(chipStacks) {
 
-            var myItemId    = this.itemId,
-                chipsToFlip = [],
-                duration,
-                color,
-                stack;
+            var game        = Othello.game,
+                myItemId    = this.itemId,
+                chipsToFlip = game.flattenChipStacks(chipStacks),
+                totalChips  = chipsToFlip.length - 1,
+                duration    = 150,
+                color       = chipStacks[0].turnColor;
 
-//            debugger;
-            /**
-             * TODO :: Convert to generic for loops, to increase speed.
-             * TODO :: Use othello.game.flattenChipStacks!
-             */
-            Ext.each(chipStacks, function(stackObj) {
-                stack    = stackObj.chipStack;
-                duration = 150;
-                color    = stackObj.turnColor;
-
-                Ext.each(stackObj.chipStack, function(chip) {
-                    if (chip.itemId != myItemId) {
-                        chipsToFlip.push(chip);
-                    }
-                });
-            });
-
-
-            Ext.each(chipsToFlip, function(chip) {
+            Ext.each(chipsToFlip, function(chip, index) {
                 if (chip.itemId != myItemId) {
+                    if (index == totalChips) {
+                        chip.isLast = true;
+                    }
                     var fn = Ext.Function.bind(chip.startFlip, chip, [color]);
                     setTimeout(fn, duration);
                     duration += 150;

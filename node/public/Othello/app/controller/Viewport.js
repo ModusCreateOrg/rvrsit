@@ -1,6 +1,12 @@
 Ext.define('Othello.controller.Viewport', {
     extend : 'Ext.app.Controller',
-
+    tpls : {
+        winner : Ext.create('Ext.Template',
+            '<b>{winner}</b> is the winner!<br />',
+            '<b>Black: </b> {black}<br />',
+            '<b>White: </b> {white}<br />'
+        )
+    },
     views : [
         'Viewport',
         'Navigation',
@@ -69,15 +75,17 @@ Ext.define('Othello.controller.Viewport', {
             }
         });
 
-        this.application.on({
-            scope   : this,
-            setting : this.appSettingsChange
+        me.application.on({
+            scope   : me,
+            setting : me.onAppSettingsChange,
+            nomoves : me.onAppNoMoves,
+            endgame : me.onAppEndGame,
+            winner  : me.onAppWinner
         });
 
         me.callParent();
     },
-    appSettingsChange : function(field, setting, value) {
-        console.log(setting, value)
+    onAppSettingsChange : function(field, setting, value) {
         localStorage.setItem(setting, value);
 
         if (setting == 'music')  {
@@ -88,6 +96,27 @@ Ext.define('Othello.controller.Viewport', {
             Othello.game.setFxVolume(value);
         }
 
+
+    },
+    onAppEndGame : function(game, score) {
+        score.winner = (score.white > score.black) ? 'white' : 'black';
+
+        Ext.Msg.alert('End game!', this.tpls.winner.apply(score));
+    },
+    onAppNoMoves : function(game, color) {
+        Ext.Msg.alert(
+            'Error', color + ' ' +
+            'currently has no moves available!',
+            this.onAfterNoMovesAlert,
+            this
+        );
+    },
+    onAppWinner : function(game, color, score) {
+        Ext.Msg.alert('Winner!', color + ' is the winner with ' + score + ' chips!');
+    },
+    onAfterNoMovesAlert : function() {
+        Othello.game.swapTurn();
+        Othello.game.nextMove();
 
     },
     onSettingsBtn : function() {
