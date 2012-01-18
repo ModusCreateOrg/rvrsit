@@ -14,7 +14,7 @@ ig.module(
     MyGame = ig.Game.extend({
         soundRoot : 'node/public/impactjs/media/',
 
-        turn : 'black',
+        turn : 'white',
         sounds : {
             badMove : 'bad_move.mp3',
             white   : 'chip_flip_white.mp3',
@@ -95,7 +95,7 @@ ig.module(
                 }
             }
             me.chips = me.buildChips();
-            me.turn  = 'black'; // TODO: fix
+            me.turn  = 'white'; // TODO: fix
             me.swapTurn();
             me.calcScore();
             this.playSound('newGame');
@@ -431,9 +431,9 @@ ig.module(
             }
 
             // TODO: Push to logic that makes an intelligent decision
-
             var nextMoveIndex = -1,
                 nextMove;
+
             while (! nextMove) {
                 nextMoveIndex = this.getRandomIndex();
                 nextMove = nextMoves[nextMoveIndex];
@@ -445,6 +445,13 @@ ig.module(
             nextMove.chip.startFlip(color);
             nextMove.chip.processChipStacks(nextMove.stacks);
 
+        },
+        playSelf : function() {
+            var fn = Ext.Function.bind(function() {
+                this.findNextMove();
+                setTimeout(fn, 1500);
+            }, this);
+            setTimeout(fn, 1500);
         }
     });
 });

@@ -68,8 +68,7 @@ ig.module(
                 me.wasBlank = true;
             }
 
-
-            Othello.game.playSound(newColor);
+            game.playSound(newColor);
 
             me.currentAnim = me.anims['flip_' + newColor];
             me.currentAnim.rewind();
@@ -99,6 +98,8 @@ ig.module(
                 game.sayTurn();
             }
             game.registerVisibleChip(me);
+
+
         },
         isItemClicked : function() {
             // TODO: Add turn checking
@@ -157,7 +158,6 @@ ig.module(
                         chipStack : []
                     });
                     if (stackObj.doFlip) {
-//                        console.log('pushing', dir)
                         chipStacks.push(stackObj);
                     }
                 }
@@ -180,9 +180,9 @@ ig.module(
              * TODO :: Use othello.game.flattenChipStacks!
              */
             Ext.each(chipStacks, function(stackObj) {
-                stack = stackObj.chipStack;
+                stack    = stackObj.chipStack;
                 duration = 150;
-                color = stackObj.turnColor;
+                color    = stackObj.turnColor;
 
                 Ext.each(stackObj.chipStack, function(chip) {
                     if (chip.itemId != myItemId) {
@@ -191,6 +191,7 @@ ig.module(
                 });
             });
 
+
             Ext.each(chipsToFlip, function(chip) {
                 if (chip.itemId != myItemId) {
                     var fn = Ext.Function.bind(chip.startFlip, chip, [color]);
@@ -198,6 +199,7 @@ ig.module(
                     duration += 150;
                 }
             });
+
         }
 
     });
