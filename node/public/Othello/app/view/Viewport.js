@@ -34,8 +34,8 @@ Ext.define('Othello.view.Viewport', {
     buildItems : function() {
         return {
             xtype     : 'component',
-            height    : 384,
-            width     : 384,
+//            height    : 384,
+//            width     : 384,
             tpl       : '<canvas id="{id}"></canvas>',
             data      : { id : 'canvas'}
         };

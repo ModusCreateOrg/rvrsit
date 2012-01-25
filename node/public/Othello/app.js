@@ -1,4 +1,4 @@
-(function() {
+(function () {
 
     var scripts = document.getElementsByTagName('script'),
         matchRe = /app\.js$/,
@@ -24,8 +24,8 @@
     });
 
     Ext.application({
-        name : 'Othello',
-        appFolder : scriptPath + '/app',
+        name        : 'Othello',
+        appFolder   : scriptPath + '/app',
         controllers : [
             'Settings',
             'ScoreCard',
@@ -33,11 +33,11 @@
             'Messaging',
             'Login'
         ],
-        init : function() {
+        init : function () {
             Othello.app = this;
 
         },
-        launch : function() {
+        launch      : function () {
 
         }
     });

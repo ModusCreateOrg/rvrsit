@@ -63,9 +63,9 @@ Ext.define('Othello.view.Navigation', {
                         xtype : 'spacer'
                     },
                     {
-                        text : 'Next move();',
+                        text : 'Play Self!',
                         handler : function() {
-                            Othello.game.findNextMove();
+                            Othello.game.playSelf();
                         }
                     },
                     {

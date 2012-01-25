@@ -45,9 +45,13 @@ ig.module(
             ig.input.bind(ig.KEY.MOUSE1, 'click');
 
             me.newGame();
+
+
+
         },
 
         initSound : function() {
+            return;
             var me          = this,
                 soundRoot   = me.soundRoot,
                 settings    = me.getSettings(),
@@ -326,10 +330,11 @@ ig.module(
             Othello.app.fireEvent('scoreupdate', this,  this.getScore());
         },
         playSound : function(sound) {
+            return;
             var me = this;
             if (me.getSetting('fx')) {
                 if (! me.fxInitialized) {
-                    this.initSound();
+//                    this.initSound();
                 }
                 me.sounds[sound].play();
             }
@@ -519,7 +524,7 @@ ig.module(
                 return;
             }
             var fn = Ext.Function.bind(function() {
-                this.findNextMoves();
+                this.nextMove();
                 setTimeout(fn, 1500);
             }, this);
             setTimeout(fn, 1500);

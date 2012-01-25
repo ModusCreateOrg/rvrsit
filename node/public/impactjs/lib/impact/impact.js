@@ -71,7 +71,8 @@ Function.prototype.bind = function(bind) {
 (function(window){
 
 var scripts = document.getElementsByTagName('script'),
-    matchRe = /impact\.js$/,
+    impactMatchRe = /impact\.js$/,
+    gameMinMatchRe = /game\.min\.js$/,
     match,
     scriptSrc,
     i,
@@ -81,7 +82,7 @@ var scripts = document.getElementsByTagName('script'),
 for (i = 0, ln = scripts.length; i < ln; i++) {
     scriptSrc = scripts[i].src;
 
-    match = scriptSrc.match(matchRe);
+    match = scriptSrc.match(impactMatchRe) || scriptSrc.match(gameMinMatchRe);
 
     if (match) {
         scriptPath = scriptSrc.substring(0, scriptSrc.length - match[0].length);
