@@ -51,7 +51,7 @@ ig.module(
         },
 
         initSound : function() {
-            return;
+//            return;
             var me          = this,
                 soundRoot   = me.soundRoot,
                 settings    = me.getSettings(),
@@ -66,7 +66,7 @@ ig.module(
                     name;
 
                 for (name in this.sounds) {
-                    sound = new ig.Sound(fxRoot + sounds[name], false);
+                    sound = new ig.Sound(fxRoot + sounds[name], true);
                     sound.volume = settings.fx;
                     sounds[name] = sound;
                 }
@@ -330,11 +330,11 @@ ig.module(
             Othello.app.fireEvent('scoreupdate', this,  this.getScore());
         },
         playSound : function(sound) {
-            return;
+//            return;
             var me = this;
             if (me.getSetting('fx')) {
                 if (! me.fxInitialized) {
-//                    this.initSound();
+                    this.initSound();
                 }
                 me.sounds[sound].play();
             }
@@ -520,9 +520,9 @@ ig.module(
 
         },
         playSelf : function() {
-            if (this.halt) {
-                return;
-            }
+//            if (this.halt) {
+//                return;
+//            }
             var fn = Ext.Function.bind(function() {
                 this.nextMove();
                 setTimeout(fn, 1500);
