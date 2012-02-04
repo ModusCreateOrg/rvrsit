@@ -1,0 +1,17 @@
+Everything is inside the silkjs/ directory.  All the other files are not
+used by the SilkJS version.
+
+After checking out SilkJS and building it, you should do:
+(from the SilkJS directory)
+sudo ./silkjs Install.js
+
+This puts silkjs in /usr/local/bin, httpd-silkjs in /usr/local/bin, and
+include type files in /usr/share/silkjs
+
+To run the server:
+cd othello/silkjs
+httpd-silkjs ./othello.js
+
+Point your browser at http://localhost:9090/debug.html
+
+
