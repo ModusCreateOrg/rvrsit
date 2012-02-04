@@ -1,3 +1,6 @@
+if (false) {
+    // this is not used!!!  Just keeping the file for reference (mschwartz)
+
 alert('here');
 Ext.define('Othello.socket', {
     singleton: true,
@@ -160,3 +163,5 @@ Ext.onReady(function() {
             socket.emit('tapBoard', {x:5,y:5, player:0});
         });
 });*/
+
+} // if (false)

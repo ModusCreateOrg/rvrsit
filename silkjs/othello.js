@@ -19,7 +19,7 @@ Schema.add({
 		{ name: 'name', type: 'varchar', size: 128 },
 		{ name: 'email', type: 'varchar', size: 128 },
 		{ name: 'gameName', type: 'varchar', size: 128 },
-		{ name: 'password', type: 'varchar', size: 128, serverOnly: true }
+		{ name: 'password', type: 'varchar', size: 128, serverOnly: true }  // serverOnly: true means Schema.clean() will remove this field from a record
 	],
 	primaryKey: 'userId',
 	indexes: [

@@ -25,7 +25,7 @@ rpcMethods = {
 				lastActivity: now
 			});
 			Json.success({
-				user: Schema.clean('Users', user)
+				user: Schema.clean('Users', user)   // removes the password field so it's not sent over the wire.
 			});
 		}
 		else {
