@@ -8,6 +8,7 @@ Config.mysql = {
 };
 
 include('rpc_action.js');
+include('heartbeat_action.js');
 
 SQL = new MySQL();
 SQL.connect();
