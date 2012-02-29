@@ -110,5 +110,4 @@ Ext.define('Rvrsit.controller.Viewport', {
         localStorage.setItem('music', 'off');
 
     }
-
 });

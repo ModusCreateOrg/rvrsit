@@ -35,6 +35,9 @@
         init        : function() {
             Rvrsit.app = this;
             Rvrsit.heartbeat = new silk.Heartbeat();
+            // preload some junk
+            new Image().src='impactjs/media/images/new/button-untouched.png';
+            new Image().src='impactjs/media/images/new/button-touched.png';
         },
         launch      : function() {
             silk.heartbeat_enabled = true;
@@ -51,7 +54,7 @@
                     };
                 },
                 callback : function(o) {
-                    console.dir(o);   // will be called once/sec
+//                    console.dir(o);   // will be called once/sec
                 }
             });
             // callbacks have a unique key
@@ -61,7 +64,18 @@
             // based on that global/store.  Multiple callbacks might look at
             // the same global.
             Rvrsit.heartbeat.addCallback('echo', function() {
-                console.log('callback ' + n);
+//                console.log('callback ' + n);
+            });
+        },
+        rpc : function(method, config) {
+            config = config || {};
+            Ext.Ajax.request({
+                method: 'POST',
+                url: '/rpc',
+                params: Ext.apply(config.params || {}, { method: method }),
+                success: function(response) {
+                    config.handler && config.handler(Ext.decode(response.responseText));
+                }
             });
         }
     });
