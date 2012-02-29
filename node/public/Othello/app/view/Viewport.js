@@ -1,22 +1,23 @@
 Ext.define('Othello.view.Viewport', {
     extend : 'Ext.Container',
+    xtype  : 'othelloviewport',
+
     requires : [
         'Othello.view.ScoreCard'
     ],
 
-    xtype : 'othelloviewport',
-    config : {
+    config     : {
         fullscreen : true,
-        bodyStyle  : 'padding: 10px; background-color: #FEFEFE',
+        style      : 'background-image: url(node/public/impactjs/media/images/new/bg.jpg); background-repeat: no-repeat;',
+        //        bodyStyle  : 'padding: 10px; background-color: #FEFEFE',
         layout     : {
             type  : 'hbox',
-            align : 'stretch',
-            pack  : 'center'
+            align : 'stretch'
         }
     },
     initialize : function() {
         this.setItems([
-            this.buildItems(),
+            this.buildGameBoard(),
             this.buildScoreCard()
         ]);
 
@@ -26,26 +27,26 @@ Ext.define('Othello.view.Viewport', {
             buffer  : 500,
             painted : function() {
                 //TODO: push to controller somehow
-                ig.main( '#canvas', MyGame, 30, 384, 384, 1 );
+                ig.main('#canvas', MyGame, 30, 548, 548, 1);
             }
         })
     },
 
-    buildItems : function() {
+    buildGameBoard : function() {
         return {
-            xtype     : 'component',
-//            height    : 384,
-//            width     : 384,
-            tpl       : '<canvas id="{id}"></canvas>',
-            data      : { id : 'canvas'}
+            xtype  : 'component',
+            height : 750,
+            width  : 675,
+            tpl    : '<canvas id="{id}" style="position: absolute; width: 548px; height: 548px; top: 77px; left: 62px;"></canvas>',
+            data   : { id : 'canvas'}
         };
     },
 
     buildScoreCard : function() {
         return {
             xtype  : 'scorecard',
-            width  : 140,
-            height : 300,
+            width  : 351,
+            height : 750,
             itemId : 'scoreCard'
         };
 

@@ -20,6 +20,7 @@ Ext.define('Othello.controller.ScoreCard', {
 //        console.log('new game')
     },
     onAppScoreUpdate : function(game, scoreObj) {
+        return;
 //        console.log('onAppScoreUpdate', arguments);
         var scoreCard = this.getScorecard(),
             imgLocations = scoreCard.getImgLocations();

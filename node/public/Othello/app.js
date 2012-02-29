@@ -30,14 +30,10 @@
             'Settings',
             'ScoreCard',
             'Viewport',
-            'Messaging',
             'Login'
         ],
         init : function () {
             Othello.app = this;
-
-        },
-        launch      : function () {
 
         }
     });

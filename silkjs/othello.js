@@ -48,5 +48,5 @@ HttpChild.requestHandler = function() {
 		res.data.user = Schema.findOne('UserSessions', { cookie: req.data.othello_login});
 		res.data.user = Util.apply(res.data.user, Schema.findOne('Users', { userId: res.data.user.userId }));
 	}
-}
+};
 

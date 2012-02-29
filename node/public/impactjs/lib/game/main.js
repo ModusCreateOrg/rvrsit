@@ -1,28 +1,28 @@
 ig.module(
-	'game.main'
+    'game.main'
 )
 .requires(
-	'impact.game',
-	'impact.font',
+    'impact.game',
+    'impact.font',
 
     'game.entities.chip',
-    'game.levels.test'
-//    'impact.debug.debug'
+    'game.levels.main'
+    //    'impact.debug.debug'
 )
-    .defines(function(){
+.defines(function() {
 
     MyGame = ig.Game.extend({
-        boardSize:  64,
-        soundRoot : 'node/public/impactjs/media/',
+        boardSize     : 100,
+        soundRoot     : 'node/public/impactjs/media/',
         computerColor : 'white',
-        turn : 'black',
-        sounds : {
+        turn          : 'black',
+        sounds        : {
             badMove : 'bad_move.mp3',
             white   : 'chip_flip_white.mp3',
             black   : 'chip_flip_black.mp3',
             newGame : 'new_game.mp3'
         },
-        music : [
+        music         : [
             {
                 name : 'Truepianos',
                 song : 'Truepianos.caff'
@@ -32,35 +32,32 @@ ig.module(
                 song : 'SnD_TweakRAM.caff'
             }
         ],
-        init: function() {
+        init          : function() {
             var me = this;
             Othello.game = me;
 
             me.initSound();
             me.initSettings();
 
-            me.loadLevel( LevelTest );
+            me.loadLevel(LevelMain);
             ig.input.initMouse();
 
             ig.input.bind(ig.KEY.MOUSE1, 'click');
 
             me.newGame();
-
-
-
         },
 
         initSound : function() {
-//            return;
-            var me          = this,
-                soundRoot   = me.soundRoot,
-                settings    = me.getSettings(),
+            //            return;
+            var me = this,
+                soundRoot = me.soundRoot,
+                settings = me.getSettings(),
                 fxRoot,
                 musicRoot;
 
-            if (settings.fx > 0 && ! me.fxInitialized) {
+            if (settings.fx > 0 && !me.fxInitialized) {
                 fxRoot = soundRoot + 'sounds/';
-//                debugger;
+                //                debugger;
                 var sounds = me.sounds,
                     sound,
                     name;
@@ -75,7 +72,7 @@ ig.module(
                 me.fxInitialized = true;
             }
 
-            if (settings.music > 0 && ! me.musicInitialized) {
+            if (settings.music > 0 && !me.musicInitialized) {
                 musicRoot = soundRoot + 'music/';
 
                 Ext.each(this.music, function(song) {
@@ -90,8 +87,8 @@ ig.module(
                 me.musicInitialized = true;
             }
         },
-        newGame : function() {
-            var me      = this,
+        newGame   : function() {
+            var me = this,
                 myChips = this.allChips;
 
             if (myChips) {
@@ -100,31 +97,31 @@ ig.module(
                 }
             }
             me.chips = me.buildChips();
-            me.turn  = 'white';
+            me.turn = 'white';
             me.swapTurn();
             me.calcScore();
             me.playSound('newGame');
             me.halt = false;
         },
-        update: function() {
+        update    : function() {
             // Update all entities and backgroundMaps
             this.parent();
 
             // Add your own, additional update code here
         },
 
-        draw: function() {
+        draw                    : function() {
             // Draw all entities and backgroundMaps
             this.parent();
         },
-        buildChips : function() {
+        buildChips              : function() {
             var blankChips = {},
                 visChips   = {},
                 chips      = [],
                 allChips   = {},
                 yIndex     = 0,
-                boardSize  = 8,
-                chipSize   = 48,
+                boardSize  = 10,
+                chipSize   = 55,
                 black      = 'black',
                 white      = 'white',
                 row,
@@ -137,24 +134,33 @@ ig.module(
                 chip;
 
             for (; yIndex < boardSize; ++yIndex) {
-                row   = [];
+                row = [];
 
-                for (xIndex= 0; xIndex < boardSize; ++xIndex) {
-                    y       = chipSize * yIndex;
-                    x       = chipSize * xIndex;
-                    color   = ((xIndex + yIndex) % 2)? black : white;
-                    visible = ((xIndex == 3 || xIndex == 4) && (yIndex == 3 || yIndex == 4));
-                    itemId  = 'ogp-' + xIndex + '-' + yIndex;
+                for (xIndex = 0; xIndex < boardSize; ++xIndex) {
+                    y = (chipSize * yIndex) + 5;
+                    x = (chipSize * xIndex) + 3;
 
-//                    color = 'black';
+                    if (xIndex == boardSize - 1) {
+                        x--;
+                    }
+                    if (yIndex == boardSize - 1) {
+                        y--;
+                    }
+
+                    color = ((xIndex + yIndex) % 2) ? black : white;
+                    visible = ((xIndex == 4 || xIndex == 5) && (yIndex == 4 || yIndex == 5));
+                    itemId = 'ogp-' + xIndex + '-' + yIndex;
 
                     chip = ig.game.spawnEntity(EntityChip, x, y, {
                         color  : visible ? color : visible,
+//                        color  : color,
                         itemId : itemId,
                         row    : xIndex,
                         col    : yIndex
                     });
-//                    debugger;
+
+
+
                     if (visible) {
                         visChips[itemId] = chip;
                     }
@@ -176,90 +182,91 @@ ig.module(
             }
             return chips;
         },
-        initPositionalAwareness: function(chip) {
+        initPositionalAwareness : function(chip) {
             var row = chip.row,
-                col = chip.col;
+                col = chip.col,
+                max = 9;
 
-            chip.isEdgePiece = (col === 0 || col=== 7 || row===0 || row===7);
+            chip.isEdgePiece = (col === 0 || col === 7 || row === 0 || row === 7);
 
             chip.connections = {};
 
             if (col === 0) {
                 if (row === 0) {
-                    this.setConnections(chip, 'e', row,col);
-                    this.setConnections(chip, 'se', row,col);
-                    this.setConnections(chip, 's', row,col);
+                    this.setConnections(chip, 'e', row, col);
+                    this.setConnections(chip, 'se', row, col);
+                    this.setConnections(chip, 's', row, col);
                 }
-                else if (row === 7) {
+                else if (row === max) {
                     //S, SW, W
-                    this.setConnections(chip, 's', row,col);
-                    this.setConnections(chip, 'sw',row,col);
-                    this.setConnections(chip, 'w',row,col);
+                    this.setConnections(chip, 's', row, col);
+                    this.setConnections(chip, 'sw', row, col);
+                    this.setConnections(chip, 'w', row, col);
                 }
                 else {
                     // W, SW, S, SE, E
-                    this.setConnections(chip, 'e',row,col);
-                    this.setConnections(chip, 'se',row,col);
-                    this.setConnections(chip, 's', row,col);
-                    this.setConnections(chip, 'sw',row,col);
-                    this.setConnections(chip, 'w', row,col);
+                    this.setConnections(chip, 'e', row, col);
+                    this.setConnections(chip, 'se', row, col);
+                    this.setConnections(chip, 's', row, col);
+                    this.setConnections(chip, 'sw', row, col);
+                    this.setConnections(chip, 'w', row, col);
                 }
 
             }
-            else if (col > 0 && col < 7) {
+            else if (col > 0 && col < max) {
                 if (row === 0) {
                     // N, NE, E, SE, S
-                    this.setConnections(chip, 'n', row,col);
-                    this.setConnections(chip, 'ne',row,col);
-                    this.setConnections(chip, 'e',row,col);
-                    this.setConnections(chip, 'se', row,col);
-                    this.setConnections(chip, 's',row,col);
+                    this.setConnections(chip, 'n', row, col);
+                    this.setConnections(chip, 'ne', row, col);
+                    this.setConnections(chip, 'e', row, col);
+                    this.setConnections(chip, 'se', row, col);
+                    this.setConnections(chip, 's', row, col);
                 }
-                else if (row === 7) {
+                else if (row === max) {
                     // N, S, SW, W, NW
-                    this.setConnections(chip, 's', row,col);
-                    this.setConnections(chip, 'sw',row,col);
-                    this.setConnections(chip, 'w',row,col);
-                    this.setConnections(chip, 'nw', row,col);
-                    this.setConnections(chip, 'n',row,col);
+                    this.setConnections(chip, 's', row, col);
+                    this.setConnections(chip, 'sw', row, col);
+                    this.setConnections(chip, 'w', row, col);
+                    this.setConnections(chip, 'nw', row, col);
+                    this.setConnections(chip, 'n', row, col);
                 }
                 else {
                     // All coords
-                    this.setConnections(chip, 'n', row,col);
-                    this.setConnections(chip, 'ne',row,col);
-                    this.setConnections(chip, 'e',row,col);
-                    this.setConnections(chip, 'se', row,col);
-                    this.setConnections(chip, 's',row,col);
-                    this.setConnections(chip, 'sw', row,col);
-                    this.setConnections(chip, 'w',row,col);
-                    this.setConnections(chip, 'nw',row,col);
+                    this.setConnections(chip, 'n', row, col);
+                    this.setConnections(chip, 'ne', row, col);
+                    this.setConnections(chip, 'e', row, col);
+                    this.setConnections(chip, 'se', row, col);
+                    this.setConnections(chip, 's', row, col);
+                    this.setConnections(chip, 'sw', row, col);
+                    this.setConnections(chip, 'w', row, col);
+                    this.setConnections(chip, 'nw', row, col);
                 }
 
             }
-            else if (col === 7) {
+            else if (col === max) {
                 if (row === 0) {
                     // N, NE, E
-                    this.setConnections(chip, 'n', row,col);
-                    this.setConnections(chip, 'ne',row,col);
-                    this.setConnections(chip, 'e',row,col);
+                    this.setConnections(chip, 'n', row, col);
+                    this.setConnections(chip, 'ne', row, col);
+                    this.setConnections(chip, 'e', row, col);
                 }
-                else if (row === 7) {
+                else if (row === max) {
                     // N, W, NW
-                    this.setConnections(chip, 'n', row,col);
-                    this.setConnections(chip, 'w',row,col);
-                    this.setConnections(chip, 'nw',row,col);
+                    this.setConnections(chip, 'n', row, col);
+                    this.setConnections(chip, 'w', row, col);
+                    this.setConnections(chip, 'nw', row, col);
                 }
                 else {
                     // N, NE, E, W, NW
-                    this.setConnections(chip, 'n', row,col);
-                    this.setConnections(chip, 'ne',row,col);
-                    this.setConnections(chip, 'e', row,col);
-                    this.setConnections(chip, 'w', row,col);
-                    this.setConnections(chip, 'nw',row,col);
+                    this.setConnections(chip, 'n', row, col);
+                    this.setConnections(chip, 'ne', row, col);
+                    this.setConnections(chip, 'e', row, col);
+                    this.setConnections(chip, 'w', row, col);
+                    this.setConnections(chip, 'nw', row, col);
                 }
             }
         },
-        setConnections : function(chip, position, x, y) {
+        setConnections          : function(chip, position, x, y) {
             var itemId,
                 ogp = 'ogp-';
 
@@ -290,17 +297,17 @@ ig.module(
 
             chip.connections[position] = this.allChips[itemId];
         },
-        sayTurn : function() {
+        sayTurn                 : function() {
             this.calcScore();
         },
-        swapTurn : function() {
+        swapTurn                : function() {
             var oldTurn = this.turn;
             this.turn = (oldTurn == 'white') ? 'black' : 'white';
 
             return oldTurn;
         },
-        getScore : function() {
-            var allChips   = this.allChips,
+        getScore                : function() {
+            var allChips = this.allChips,
                 whiteScore = 0,
                 blackScore = 0,
                 color,
@@ -310,7 +317,7 @@ ig.module(
             for (itemId in allChips) {
                 chip = allChips[itemId];
                 color = chip.newColor || chip.color;
-//                console.log(itemId, color);
+                //                console.log(itemId, color);
                 if (color == 'white') {
                     whiteScore++;
                 }
@@ -326,29 +333,29 @@ ig.module(
                 black : blackScore
             }
         },
-        calcScore : function() {
-            Othello.app.fireEvent('scoreupdate', this,  this.getScore());
+        calcScore               : function() {
+            Othello.app.fireEvent('scoreupdate', this, this.getScore());
         },
-        playSound : function(sound) {
-//            return;
+        playSound               : function(sound) {
+            //            return;
             var me = this;
             if (me.getSetting('fx')) {
-                if (! me.fxInitialized) {
+                if (!me.fxInitialized) {
                     this.initSound();
                 }
                 me.sounds[sound].play();
             }
         },
-        setMusicVolume : function(vol) {
+        setMusicVolume          : function(vol) {
             ig.music.volume = vol;
         },
-        setFxVolume : function(vol) {
+        setFxVolume             : function(vol) {
             var sounds = this.sounds;
             for (var key in this.sounds) {
                 sounds[key].volume = vol;
             }
         },
-        initSettings : function() {
+        initSettings            : function() {
             if (localStorage.getItem('fx') == null) {
                 this.applySettings({
                     fx    : .5,
@@ -356,31 +363,31 @@ ig.module(
                 });
             }
         },
-        applySettings : function(settings) {
+        applySettings           : function(settings) {
             for (var key in settings) {
                 localStorage.setItem(key, settings[key]);
             }
         },
-        getSetting : function(setting) {
+        getSetting              : function(setting) {
             return localStorage.getItem(setting);
         },
-        getSettings : function() {
+        getSettings             : function() {
             return {
                 fx    : +this.getSetting('fx'),
                 music : +this.getSetting('music')
             }
         },
-        registerVisibleChip : function(chip) {
+        registerVisibleChip     : function(chip) {
             this.visChips[chip.itemId] = chip;
         },
-        clearSettings : function() {
+        clearSettings           : function() {
             for (var k in localStorage) {
                 delete localStorage[k];
                 ig.music.stop();
                 ig.music.volume = 0;
             }
         },
-        flattenChipStacks : function(chipStacks) {
+        flattenChipStacks       : function(chipStacks) {
             var chipsToFlip = [],
                 stack;
 
@@ -395,25 +402,24 @@ ig.module(
             return chipsToFlip;
 
         },
-        getRandomIndex : function() {
-            return   + Math.floor((Math.random() * Math.random()) * 100).toString()[0];
+        getRandomIndex          : function() {
+            return   +Math.floor((Math.random() * Math.random()) * 100).toString()[0];
         },
-        nextMove : function() {
-            var me              = this,
-                app             = Othello.app,
-                currentTurn     = me.turn,
-                computerColor   = me.computerColor,
-                nextMoves       = me.findNextMoves(currentTurn),
-                nextMoveIndex   = -1,
+        nextMove                : function() {
+            var me = this,
+                app = Othello.app,
+                currentTurn = me.turn,
+                computerColor = me.computerColor,
+                nextMoves = me.findNextMoves(currentTurn),
+                nextMoveIndex = -1,
                 numVisibleChips = Object.keys(me.visChips).length,
                 nextMove;
-
 
             if (nextMoves.length < 1) {
                 debugger;
 
                 // are all chips visible?
-                if (numVisibleChips == me.boardSize)  {
+                if (numVisibleChips == me.boardSize) {
                     // if so, calc score  & end game!
                     me.halt = true;
                     Othello.app.fireEvent('endgame', this, this.getScore());
@@ -422,7 +428,7 @@ ig.module(
                 else /*if(currentTurn != computerColor)*/ {
                     // Count the chips.  Are all black or white?
                     var score = me.getScore();
-                   // if so, end game
+                    // if so, end game
                     if (score.white == 0 || score.black == 0) {
                         app.fireEvent('winner', this, currentTurn, score[currentTurn]);
                         me.halt = true;
@@ -432,46 +438,42 @@ ig.module(
 
                 }
 
-
             }
-
 
             if (me.halt) {
                 return;
             }
 
-
             if (currentTurn != computerColor) {
                 return;
             }
 
-
             // TODO: Game difficulty mode
             // Random choosing
             var chooseRandomMove = function() {
-                while (! nextMove) {
+                while (!nextMove) {
                     nextMoveIndex = me.getRandomIndex();
                     nextMove = nextMoves[nextMoveIndex];
                 }
             };
 
-//            debugger;
+            //            debugger;
             // hard
             var moveIdx = 0,
                 flattenedStack,
                 potentialMove,
                 moveCount = 0;
 
-            for (; moveIdx < nextMoves.length; moveIdx ++) {
-                potentialMove  = nextMoves[moveIdx];
+            for (; moveIdx < nextMoves.length; moveIdx++) {
+                potentialMove = nextMoves[moveIdx];
                 flattenedStack = me.flattenChipStacks(potentialMove.stacks);
                 if (flattenedStack.length > moveCount) {
                     nextMove = potentialMove;
-//                    nextMove.chipsToFlip = flattenedStack;
+                    //                    nextMove.chipsToFlip = flattenedStack;
                 }
             }
 
-            if (! nextMove) {
+            if (!nextMove) {
                 debugger;
                 return;
             }
@@ -481,11 +483,11 @@ ig.module(
             nextMove.chip.startFlip(currentTurn);
             nextMove.chip.processChipStacks(nextMove.stacks);
         },
-        findNextMoves : function(color) {
+        findNextMoves           : function(color) {
 
-            var me        = this,
+            var me = this,
                 nextMoves = [],
-                visChips  = me.visChips,
+                visChips = me.visChips,
                 visibleChip,
                 itemId,
                 region,
@@ -502,7 +504,7 @@ ig.module(
 
                     for (region in chipConnections) {
                         regionalChip = chipConnections[region];
-                        if (! regionalChip.color) {
+                        if (!regionalChip.color) {
                             stacks = regionalChip.getChipStacks();
                             if (stacks.length > 0) {
                                 nextMoves.push({
@@ -519,10 +521,10 @@ ig.module(
             return nextMoves;
 
         },
-        playSelf : function() {
-//            if (this.halt) {
-//                return;
-//            }
+        playSelf                : function() {
+            //            if (this.halt) {
+            //                return;
+            //            }
             var fn = Ext.Function.bind(function() {
                 this.nextMove();
                 setTimeout(fn, 1500);

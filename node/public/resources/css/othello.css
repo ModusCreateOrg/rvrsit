@@ -1,5 +1,4 @@
-
-.othello-scorecard-score-container {
+.scorecard-score-container {
     position: relative;
     top: -5px;
 }
@@ -7,41 +6,65 @@
 /**
     Score card
 **/
-.othello-scorecard-player {
-    height : 50px;
-    border : 2px solid #000;
-    -webkit-border-radius: 10px;
-    margin : 2px 0 2px 5px;
-    background-color: #9E9E9E;
-    font-weight: bold;
-    text-align: center;
+.scorecard-player {
+    height: 70px;
+    width: 306px;
+    background-image: url(../../impactjs/media/images/new/score_bg.png);
+    background-repeat: no-repeat;
+    margin: 20px 0px 2px 27px;
     color: #FFF;
-    padding: 10px;
 }
 
-.othello-scorecard-score-keeper {
-    height : 85px;
+
+
+
+
+.scorecard-player-turn {
+    color: #996633;
+    font-family: "Helvetica Neue";
+    position: relative;
+    top: 25px;
+    left: 12px;
+    font-size: .7em;
+    font-weight: bold;
+}
+
+
+
+.scorecard-player-score {
+    color: #996633;
+    font-family: "Helvetica Neue";
+    position: relative;
+    top: 25px;
+    left: 8px;
+    font-size: .7em;
+    font-weight: bold;
+}
+
+
+.scorecard-score-keeper {
+    height: 85px;
     background-color: #9E9E9E;
     color: #FFF;
-    border : 2px solid #000;
+    border: 2px solid #000;
     font-size: 1.3em;
     -webkit-border-radius: 10px;
-    margin : 5px 0px 2px 5px;
     /*text-align: center;*/
     padding: 10px;
 }
 
+.scorecard-score-keeper-white {
+    position: relative;
+    top: -11px;
+    right: -5px;
+}
 
-.othello-scorecard-score-keeper-white {
-    position : relative;
+.scorecard-score-keeper-black {
+    position: relative;
     top: -11px;
     right: -5px;
 }
-.othello-scorecard-score-keeper-black {
-    position : relative;
-    top: -11px;
-    right: -5px;
-}
+
 /* Debugging and development */
 
 div.debug {
