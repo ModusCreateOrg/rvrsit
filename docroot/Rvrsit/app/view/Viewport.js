@@ -26,7 +26,7 @@ Ext.define('Rvrsit.view.Viewport', {
             scope   : this,
             buffer  : 500,
             painted : function() {
-                //TODO: push to controller somehow
+                //TODO: push to controller
                 ig.main('#canvas', MyGame, 30, 548, 548, 1);
             }
         })
@@ -38,7 +38,7 @@ Ext.define('Rvrsit.view.Viewport', {
             height : 750,
             width  : 675,
             tpl    : '<canvas id="{id}" style="position: absolute; width: 548px; height: 548px; top: 77px; left: 62px;"></canvas>',
-            data   : { id : 'canvas'}
+            data   : { id : 'canvas' }
         };
     },
 

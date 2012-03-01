@@ -34,48 +34,57 @@ rpcMethods = {
 	},
 	registerUser: function() {
 		var errors = [];
+        var data = req.data;
 
-		var user = Schema.newRecord('Users');
-		user.name = req.data.name;
-		user.email = req.data.email;
-		user.gameName = req.data.gameName;
-		user.password = req.data.password;
 
-		if (user.email.length && Schema.findOne('Users', {email: user.email })) {
+		if (data.email.length && Schema.findOne('Users', {email: data.email })) {
 			errors.push('User with that email address already registered');
 		}
 
 		// validate form
-		if (!user.name.length) {
+		if (!data.name.length) {
 			errors.push('You must enter a name');
 		}
-		if (!user.email.length || user.email.indexOf('@') == -1 || user.email.indexOf('.') == -1) {
+//		if (!user.email.length || user.email.indexOf('@') == -1 || user.email.indexOf('.') == -1) {
+		if (!data.email.length) {
 			errors.push('You must enter a valid email address');
 		}
-		if (!user.gameName.length) {
-			errors.push('You must enter a game name');
-		}
-		if (!req.data.password.length) {
-			errors.push('You must enter a password');
-		}
-		else if (!req.data.password2.length) {
-			errors.push('You must re-enter your password');
-		}
-		else if (req.data.password !== req.data.password2) {
-			errors.push('The passwords entered do not match');
-		}
+//		if (!req.data.password.length) {
+//			errors.push('You must enter a password');
+//		}
+//		else if (!req.data.password2.length) {
+//			errors.push('You must re-enter your password');
+//		}
+//		else if (req.data.password !== req.data.password2) {
+//			errors.push('The passwords entered do not match');
+//		}
+
+
+
 		if (errors.length) {
+            console.log('registerUser failure' + data.email + ' ' + data.name);
+
+            console.log(errors.join('<br/>\n* '));
 			Json.failure('There are errors in your form: <br/>\n* ' + errors.join('<br/>\n* '));
 		}
-		user = Schema.putOne('Users', user);
-		Json.success({
-			user: Schema.clean('Users', user)
-		});
+        else {
+            var user = Schema.newRecord('Users');
+            user.name = req.data.name;
+            user.email = req.data.email;
+
+            user = Schema.putOne('Users', user);
+            console.log('registerUser Success' + user.email + ' ' + user.name);
+            Json.success({
+                user: Schema.clean('Users', user)
+            });
+
+        }
+
 	}
 };
 
 function rpc_action() {
-	console.log('Invoking method ' + req.data.method);
+//	console.log('Invoking method ' + req.data.method);
 	rpcMethods[req.data.method] && rpcMethods[req.data.method]();
 	Json.failure('No such rpc method ' + req.data.method);
 }

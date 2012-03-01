@@ -1,20 +1,8 @@
-Ext.define('Rvrsit.controller.Login', {
+Ext.define('Rvrsit.controller.Register', {
     extend : 'Ext.app.Controller',
 
     views : [
-        'LoginWindow',
-        'RegisterWindow'
-    ],
-
-    refs : [
-        {
-            ref      : 'loginWindow',
-            selector : 'loginWindow'
-        },
-        {
-            ref      : 'regWindow',
-            selector : 'registerWindow'
-        }
+        'Register'
     ],
 
     config: {
@@ -29,16 +17,12 @@ Ext.define('Rvrsit.controller.Login', {
                 tap: me.showLoginWindow,
                 scope: me
             },
-            'button[action=login]': {
-                tap: me.doLogIn,
-                scope: me
-            },
-            'button[action=showRegWin]': {
-                tap: me.showRegWindow,
+            'button[action=singlePlayer]': {
+                tap: me.onSinglePlayer,
                 scope: me
             },
             'button[action=register]': {
-                tap: me.doRegister,
+                tap: me.onRegister,
                 scope: me
             }
         });
@@ -69,64 +53,63 @@ Ext.define('Rvrsit.controller.Login', {
         }
     },
 
-    /**
-     * Show new user registration window
-     * TODO: window on tablets, navigation card on phones
-     */
-    showRegWindow: function() {
-        var me          = this,
-            loginWindow = me.getLoginWindow(),
-            regWindow   = me.getRegWindow();
 
-        // close the log in window, if open
-        if (loginWindow) loginWindow.hide();
+    showView: function() {
+        var me        = this;
 
-        // no need to register if already logged in (hack?)
-        if (me.getLoggedIn()) return;
+        var regWindow = me.getView('Register').create();
+        Ext.Viewport.add(regWindow);
+        regWindow.show();
+    },
 
-        if (!regWindow) {
-            regWindow = me.getView('RegisterWindow').create();
-            Ext.Viewport.add(regWindow);
-        } else {
-            regWindow.show();
+
+    onSinglePlayer: function(btn) {
+        var me     = this,
+			form   = btn.up('formpanel'),
+            values = form.getValues();
+
+        var registerWindow = Ext.ComponentQuery.query('register')[0];
+
+        if (registerWindow) {
+            registerWindow.hide();
+            registerWindow.destroy();
         }
+        this.application.fireEvent('singleplayer');
     },
 
-    /**
-     * Submit login credentials to server
-     * @param btn
-     */
-    doLogIn: function(btn) {
-        var me      = this,
-			form    = btn.up('formpanel'),
-            values  = form.getValues();
-
-		rpc('auth', {
-			params: values,
-			handler: function(o) {
-				me.onUserAuthenticated(o);
-			}
-
-		});
-//        Rvrsit.socket.emit('auth', values, this.onUserAuthenticated, this);
-    },
+//    onSinglePlayer: function(btn) {
+//        var me      = this,
+//			form    = btn.up('formpanel'),
+//            values  = form.getValues();
+//
+//		rpc('auth', {
+//			params: values,
+//			handler: function(o) {
+//				me.onUserAuthenticated(o);
+//			}
+//
+//		});
+//    },
 
     /**
      * Submit person's registration data
      * @param btn
      */
-    doRegister: function(btn) {
+    onRegister: function(btn) {
         var me      = this,
 			form    = btn.up('formpanel'),
             values  = form.getValues();
 
-		rpc('registerUser', {
+		if (! values.name.length || ! values.email.length) {
+            Ext.Msg.alert('Error!', 'You must enter a name and valid email address!');
+            return;
+        }
+        this.application.rpc('registerUser', {
 			params: values,
 			handler: function(o) {
 				me.onUserRegistered(o);
 			}
 		});
-//        Rvrsit.socket.emit('registerUser', values, this.onUserRegistered, this);
     },
 
     /**

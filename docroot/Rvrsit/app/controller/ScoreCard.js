@@ -4,23 +4,37 @@ Ext.define('Rvrsit.controller.ScoreCard', {
     views : [
         'ScoreCard'
     ],
+
     refs : [
         {
             ref      : 'scorecard',
             selector : '[itemId="scoreCard"]'
         }
     ],
+
     init : function() {
         this.application.on({
-            scope : this,
+            scope       : this,
             scoreupdate : this.onAppScoreUpdate
         });
+
+        this.control({
+            'scorecard' : {
+                play     : this.onScoreCardPanelPlay,
+                settings : this.onScoreCardPanelSettings
+            }
+        })
     },
-    onScoreCardPanelNewBtn : function() {
-//        console.log('new game')
+
+    onScoreCardPanelPlay : function() {
+        this.application.fireEvent('play');
     },
+    onScoreCardPanelSettings : function() {
+        this.application.fireEvent('settings');
+    },
+
     onAppScoreUpdate : function(game, scoreObj) {
-         this.getScorecard().updateScore(scoreObj);
+        this.getScorecard().updateScore(scoreObj);
     }
 
 

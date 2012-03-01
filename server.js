@@ -15,31 +15,31 @@ SQL.connect();
 
 Schema.add({
 	name: 'Users',
+    primaryKey: 'userId',
 	fields: [
 		{ name: 'userId', type: 'int', autoIncrement: true },
 		{ name: 'name', type: 'varchar', size: 128 },
-		{ name: 'email', type: 'varchar', size: 128 },
-		{ name: 'gameName', type: 'varchar', size: 128 },
-		{ name: 'password', type: 'varchar', size: 128, serverOnly: true }  // serverOnly: true means Schema.clean() will remove this field from a record
+		{ name: 'email', type: 'varchar', size: 128 }
+//		{ name: 'gameName', type: 'varchar', size: 128 },
+//		{ name: 'password', type: 'varchar', size: 128, serverOnly: true }  // serverOnly: true means Schema.clean() will remove this field from a record
 	],
-	primaryKey: 'userId',
 	indexes: [
-		'email',
-		'gameName'
+		'email'
+//		'gameName'
 	]
 });
 
 Schema.add({
 	name: 'UserSessions',
+	primaryKey: 'cookie',
+	engine: 'memory',
 	fields: [
 		{ name: 'userId', type: 'int' },
 		{ name: 'cookie', type: 'varchar', size: 32 },
 		{ name: 'state', type: 'int' },
 		{ name: 'loginTime', type: 'int' },
 		{ name: 'lastActivity', type: 'int' }
-	],
-	primaryKey: 'cookie',
-	engine: 'memory'
+	]
 });
 
 HttpChild.requestHandler = function() {

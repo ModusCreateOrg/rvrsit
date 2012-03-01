@@ -1,7 +1,7 @@
 // Heartbeat.js
 Ext.namespace('Ext', 'silk');
 
-silk.HEARTBEAT_TIME = 1; // heartbeat frequency in seconds
+silk.HEARTBEAT_TIME = 10; // heartbeat frequency in seconds
 silk.heartbeatUrl = '/Heartbeat';
 
 silk.heartbeats = 0;

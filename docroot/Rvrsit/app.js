@@ -30,20 +30,15 @@
             'Settings',
             'ScoreCard',
             'Viewport',
-            'Login'
+            'Register'
         ],
         init        : function() {
             Rvrsit.app = this;
             Rvrsit.heartbeat = new silk.Heartbeat();
-            // preload some junk
-            new Image().src='impactjs/media/images/new/button-untouched.png';
-            new Image().src='impactjs/media/images/new/button-touched.png';
         },
         launch      : function() {
             silk.heartbeat_enabled = true;
-            /*
-             EXAMPLE
-             */
+
             var n = 0;
             Rvrsit.heartbeat.addMethod('echo', {
                 method   : 'echo',
@@ -74,6 +69,8 @@
                 url: '/rpc',
                 params: Ext.apply(config.params || {}, { method: method }),
                 success: function(response) {
+                    console.log('RPC RESPONSE:', response.responseText);
+                    console.log(arguments);
                     config.handler && config.handler(Ext.decode(response.responseText));
                 }
             });

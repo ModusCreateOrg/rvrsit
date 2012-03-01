@@ -53,10 +53,10 @@ Ext.define('Rvrsit.view.ScoreCard', {
                     'We are a highly motivated, interdisciplinary team that believe in lean development, design strategy, and user experience to develop stunning applications with emerging technology.',
                 '</div>',
                 '<div class="button button-untouched">',
-                    '<div class="btn-title title-play">Play</div>',
+                    '<div class="btn-title play">Play</div>',
                 '</div>',
                 '<div class="button button-touched">',
-                    '<div class="btn-title title-settings">Settings</div>',
+                    '<div class="btn-title settings">Settings</div>',
                 '</div>',
             '</div>'
         ].join('')
@@ -84,22 +84,19 @@ Ext.define('Rvrsit.view.ScoreCard', {
             scope    : this,
             delegate : '.button'
         });
+
         // hack!
         this.on('painted', function() {
             var el = this.element.down('.button-touched');
 
             el && Ext.get(el).replaceCls('button-touched', 'button-untouched');
         }, this);
-
-
     },
     onElementTap : function(evtObj) {
         var target = evtObj.getTarget();
-        console.log('tap', target);
         if (target) {
-            console.log(Ext.get(target.dom));
-//            this.fireEvent('new', this);
-
+            var event = target.childNodes[0].classList[1];
+            this.fireEvent(event, this);
         }
     },
     onElementTouchStart : function(evtObj) {
@@ -124,7 +121,6 @@ Ext.define('Rvrsit.view.ScoreCard', {
             me.whitePlayerScoreEl  = myElement.down('.score-keeper-white').dom;
             me.blackPlayerScoreEl  = myElement.down('.score-keeper-black').dom;
         }
-
 
         me.playerTurnIndicator.replaceCls(turnOpposites[scoreObj.turn], 'tile-' + scoreObj.turn);
 

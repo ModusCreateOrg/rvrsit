@@ -33,27 +33,23 @@ Ext.define('Rvrsit.controller.Viewport', {
         });
 
         me.control({
-            // intentionally long
-            'othelloNavigation > toolbar[docked=bottom] > button[action=socketDebug]' : {
-                tap : me.onSocketDebugBtn
-            },
-            'othelloNavigation > toolbar[docked=bottom] > button[action=settings]'    : {
-                tap : me.onSettingsBtn
-            },
             'othelloNavigation > toolbar[docked=bottom] > button[action=newGame]'     : {
-                tap : me.onNewGameBtn
+                tap : me.onAppPlay
             },
             'othelloNavigation > toolbar[docked=bottom] > button[action=soundToggle]' : {
-                tap : me.onNewGameBtn
+                tap : me.onAppPlay
             }
         });
 
         me.application.on({
-            scope   : me,
-            setting : me.onAppSettingsChange,
-            nomoves : me.onAppNoMoves,
-            endgame : me.onAppEndGame,
-            winner  : me.onAppWinner
+            scope        : me,
+            play         : me.onAppPlay,
+            settings     : me.onAppSettings,
+            singleplayer : me.onAppSinglePlayer,
+            setting      : me.onAppSettingsChange,
+            nomoves      : me.onAppNoMoves,
+            endgame      : me.onAppEndGame,
+            winner       : me.onAppWinner
         });
 
         me.callParent();
@@ -86,6 +82,27 @@ Ext.define('Rvrsit.controller.Viewport', {
         );
     },
 
+    onAppSinglePlayer : function() {
+        var game = Rvrsit.game;
+
+        if (game.mode == 'single') {
+            game.newGame();
+            return;
+        }
+
+        Ext.Msg.alert(
+            'Single player mode selected',
+            'In single player mode, you will be playing against the computer as the black piece.' +
+            'You are first. Press OK to begin!',
+            function() {
+                console.log('here');
+                game.setMode('single');
+                game.newGame();
+            }
+        );
+
+    },
+
     onAppWinner : function(game, color, score) {
         Ext.Msg.alert('Winner!', color + ' is the winner with ' + score + ' chips!');
     },
@@ -93,21 +110,26 @@ Ext.define('Rvrsit.controller.Viewport', {
     onAfterNoMovesAlert : function() {
         Rvrsit.game.swapTurn();
         Rvrsit.game.nextMove();
-
     },
 
-    onSettingsBtn : function() {
+    onAppSettings : function() {
         this.getController('Settings').showSettings();
     },
 
-    onNewGameBtn : function() {
-        Rvrsit.game.newGame();
+    onAppPlay : function() {
+        var game = Rvrsit.game;
+
+        if (game.mode == 'single') {
+            game.newGame();
+            return;
+        }
+
+        this.getController('Register').showView();
     },
 
     onSoundCycle : function(btn) {
         ig.music.stop();
 
         localStorage.setItem('music', 'off');
-
     }
 });
