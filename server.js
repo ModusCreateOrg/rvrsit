@@ -8,7 +8,7 @@ Config.numChildren = 25;
 //};
 
 include('rpc_action.js');
-include('heartbeat_action.js');
+//include('heartbeat_action.js');
 
 HttpChild.requestHandler = function() {
 //	var now = Util.currentTime();
@@ -18,6 +18,6 @@ HttpChild.requestHandler = function() {
 //		res.data.user = Schema.findOne('UserSessions', { cookie: req.data.othello_login});
 //		res.data.user = Util.apply(res.data.user, Schema.findOne('Users', { userId: res.data.user.userId }));
 //	}
-    console.log('requestHandler');
+//    console.log('requestHandler');
 };
 

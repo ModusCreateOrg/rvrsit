@@ -1,19 +1,19 @@
-Ext.define('Rvrsit.view.Register', {
-    extend : 'Ext.form.Panel',
-
-    xtype : 'register',
+Ext.define('Rvrsit.view.Waiting', {
+    extend   : 'Ext.dataview.List',
+    xtype    : 'waiting',
+    requires : [ 'Rvrsit.store.Waiting' ],
 
     config : {
-        title         : 'Login',
+        title         : 'Choose a player!',
         floating      : true,
         modal         : true,
         centered      : true,
         scrollable    : false,
         hideOnMaskTap : false,
+        height        : 500,
         width         : 400,
-        defaults      : {
-            labelWidth : '30%'
-        }
+
+        itemTpl : '{name}, <span style="float: right:">{gameId}</span>'
     },
 
     initialize : function() {
@@ -24,7 +24,6 @@ Ext.define('Rvrsit.view.Register', {
             me.createBottomTbar()
         ]);
 
-        me.add(me.buildFields());
         me.callParent();
     },
 
@@ -57,8 +56,12 @@ Ext.define('Rvrsit.view.Register', {
                     xtype : 'spacer'
                 },
                 {
-                    text   : 'Login',
-                    action : 'register',
+                    text    : 'Refresh List',
+                    action  : 'refreshList'
+                },
+                {
+                    text   : 'Play',
+                    action : 'playUser',
                     ui     : 'confirm'
                 }
             ]
@@ -73,5 +76,4 @@ Ext.define('Rvrsit.view.Register', {
 
         return Ext.factory(config, Ext.Toolbar, this.getTitle());
     }
-
 });

@@ -29,6 +29,7 @@
         controllers : [
             'Settings',
             'ScoreCard',
+            'Waiting',
             'Viewport',
             'Register'
         ],
@@ -49,7 +50,7 @@
                     };
                 },
                 callback : function(o) {
-//                    console.dir(o);   // will be called once/sec
+                    //                    console.dir(o);   // will be called once/sec
                 }
             });
             // callbacks have a unique key
@@ -59,21 +60,31 @@
             // based on that global/store.  Multiple callbacks might look at
             // the same global.
             Rvrsit.heartbeat.addCallback('echo', function() {
-//                console.log('callback ' + n);
+                //                console.log('callback ' + n);
             });
         },
-        rpc : function(method, config) {
+
+        rpc         : function(method, config) {
             config = config || {};
             Ext.Ajax.request({
-                method: 'POST',
-                url: '/rpc',
-                params: Ext.apply(config.params || {}, { method: method }),
-                success: function(response) {
+                method  : 'POST',
+                url     : '/rpc',
+                params  : Ext.apply(config.params || {}, { method : method }),
+                success : function(response) {
                     console.log('RPC RESPONSE:', response.responseText);
                     console.log(arguments);
-                    config.handler && config.handler(Ext.decode(response.responseText));
+                    var data = (Ext.decode(response.responseText));
+
+                    config.handler && config.handler.call(config.scope || window, data);
                 }
             });
+        },
+        setUser : function(user) {
+            localStorage.setItem('user', Ext.encode(user));
+        },
+        getUser : function() {
+            var thisUser = this.user;
+            return thisUser ? thisUser : this.user = Ext.decode(localStorage.getItem('user'));
         }
     });
 
