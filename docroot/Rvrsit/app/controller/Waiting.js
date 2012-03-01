@@ -5,13 +5,13 @@ Ext.define('Rvrsit.controller.Waiting', {
 
     init           : function() {
         this.control({
-            'waiting > [action="singlePlayer"]' : {
+            '[action="listSinglePlayer"]' : {
                 tap : this.onSinglePlayer
             },
-            'waiting > [action="playUser"]'     : {
+            '[action="listPlayUser"]'     : {
                 tap : this.onPlayUser
             },
-            'waiting > [action="refreshList"]'  : {
+            '[action="listRefreshList"]'  : {
                 tap : this.onRefreshList
             }
         });
@@ -30,18 +30,19 @@ Ext.define('Rvrsit.controller.Waiting', {
         me.application.fireEvent('singleplayer');
     },
     onPlayUser     : function(btn) {
-        var me = this,
-            list = btn.up('waiting'),
-            selected = list.getSelectedRecords()[0];
+        var me       = this,
+            list     = btn.up('waiting'),
+            selected = list.getSelected();
 
         if (selected) {
             me.application.fireEvent('playUser', selected.data);
         }
-
     },
-    showView       : function(data) {
-        var me = this,
-            view = me.getView('Waiting').create();
+    showView : function(data) {
+        var me   = this,
+            view = me.getView('Waiting').create({
+                store : Ext.create('Rvrsit.store.Waiting')
+            });
 
         Ext.Viewport.add(view);
         view.show();
@@ -52,14 +53,13 @@ Ext.define('Rvrsit.controller.Waiting', {
 
         me.application.rpc('getWaitingList', {
             scope   : me,
-            handler : me.onAfterRefreshList
+            handler : me.onAfterRefreshList,
+            params  : me.application.getUser()
         });
     },
     onAfterRefreshList : function(data) {
         var list = Ext.Viewport.down('waiting');
 
-        debugger;
-        list.store.applyData(data);
-
+        list.getStore().loadData(data);
     }
 });

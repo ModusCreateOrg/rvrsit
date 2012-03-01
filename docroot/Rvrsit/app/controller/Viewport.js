@@ -49,7 +49,8 @@ Ext.define('Rvrsit.controller.Viewport', {
             setting      : me.onAppSettingsChange,
             nomoves      : me.onAppNoMoves,
             endgame      : me.onAppEndGame,
-            winner       : me.onAppWinner
+            winner       : me.onAppWinner,
+            userUpdate   : me.onAppUserUpdate
         });
 
         me.callParent();
@@ -93,14 +94,12 @@ Ext.define('Rvrsit.controller.Viewport', {
         Ext.Msg.alert(
             'Single player mode selected',
             'In single player mode, you will be playing against the computer as the black piece.' +
-            'You are first. Press OK to begin!',
+                'You are first. Press OK to begin!',
             function() {
-                console.log('here');
                 game.setMode('single');
                 game.newGame();
             }
         );
-
     },
 
     onAppWinner : function(game, color, score) {
@@ -116,7 +115,11 @@ Ext.define('Rvrsit.controller.Viewport', {
         this.getController('Settings').showSettings();
     },
 
-    onAppPlay : function() {
+    onAppUserUpdate : function(userObj) {
+        this.application.setUser(userObj);
+    },
+
+    onAppPlay    : function() {
         var game = Rvrsit.game;
 
         if (game.mode == 'single') {
@@ -124,12 +127,18 @@ Ext.define('Rvrsit.controller.Viewport', {
             return;
         }
 
-        this.getController('Register').showView();
+        var user = this.application.getUser();
+
+        if (! user) {
+            this.getController('Register').showView();
+        }
+        else {
+            this.getController('Waiting').showView();
+        }
     },
 
     onSoundCycle : function(btn) {
         ig.music.stop();
-
         localStorage.setItem('music', 'off');
     }
 });

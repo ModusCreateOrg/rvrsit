@@ -13,7 +13,7 @@ Ext.define('Rvrsit.view.Waiting', {
         height        : 500,
         width         : 400,
 
-        itemTpl : '{name}, <span style="float: right:">{gameId}</span>'
+        itemTpl : '{name}'
     },
 
     initialize : function() {
@@ -49,19 +49,19 @@ Ext.define('Rvrsit.view.Waiting', {
             items  : [
                 {
                     text   : 'Single Player',
-                    action : 'singlePlayer',
+                    action : 'listSinglePlayer',
                     ui     : 'decline'
                 },
                 {
                     xtype : 'spacer'
                 },
                 {
-                    text    : 'Refresh List',
-                    action  : 'refreshList'
+                    text   : 'Refresh List',
+                    action : 'listRefreshList'
                 },
                 {
                     text   : 'Play',
-                    action : 'playUser',
+                    action : 'listPlayUser',
                     ui     : 'confirm'
                 }
             ]

@@ -5,25 +5,25 @@ Ext.define('Rvrsit.controller.Register', {
         'Register'
     ],
 
-    config: {
-        loggedIn: false
+    config : {
+        loggedIn : false
     },
 
     init : function() {
         var me = this;
-        
+
         me.control({
-            'button[action=play]': {
-                tap: me.showLoginWindow,
-                scope: me
+            'button[action=play]'         : {
+                tap   : me.showLoginWindow,
+                scope : me
             },
-            'button[action=singlePlayer]': {
-                tap: me.onSinglePlayer,
-                scope: me
+            'button[action=singlePlayer]' : {
+                tap   : me.onSinglePlayer,
+                scope : me
             },
-            'button[action=register]': {
-                tap: me.onRegister,
-                scope: me
+            'button[action=register]'     : {
+                tap   : me.onRegister,
+                scope : me
             }
         });
 
@@ -37,7 +37,7 @@ Ext.define('Rvrsit.controller.Register', {
      * Show login window
      * TODO: window on tablets, navigation card on phones
      */
-    showLoginWindow: function() {
+    showLoginWindow : function() {
         var me = this,
             loginWin = me.getLoginWindow();
 
@@ -53,21 +53,15 @@ Ext.define('Rvrsit.controller.Register', {
         }
     },
 
+    showView : function() {
+        var me        = this,
+            regWindow = me.getView('Register').create();
 
-    showView: function() {
-        var me        = this;
-
-        var regWindow = me.getView('Register').create();
         Ext.Viewport.add(regWindow);
         regWindow.show();
     },
 
-
-    onSinglePlayer: function(btn) {
-        var me     = this,
-			form   = btn.up('formpanel'),
-            values = form.getValues();
-
+    onSinglePlayer : function(btn) {
         var registerWindow = Ext.ComponentQuery.query('register')[0];
 
         if (registerWindow) {
@@ -77,61 +71,31 @@ Ext.define('Rvrsit.controller.Register', {
         this.application.fireEvent('singleplayer');
     },
 
-//    onSinglePlayer: function(btn) {
-//        var me      = this,
-//			form    = btn.up('formpanel'),
-//            values  = form.getValues();
-//
-//		rpc('auth', {
-//			params: values,
-//			handler: function(o) {
-//				me.onUserAuthenticated(o);
-//			}
-//
-//		});
-//    },
-
     /**
      * Submit person's registration data
      * @param btn
      */
-    onRegister: function(btn) {
-        var me      = this,
-			form    = btn.up('formpanel'),
-            values  = form.getValues();
+    onRegister : function(btn) {
+        var me = this,
+            form = btn.up('formpanel'),
+            values = form.getValues();
 
-		if (! values.name.length || ! values.email.length) {
+        if (!values.name.length || !values.email.length) {
             Ext.Msg.alert('Error!', 'You must enter a name and valid email address!');
             return;
         }
-        this.application.rpc('registerUser', {
-			params: values,
-			handler: function(o) {
-				me.onUserRegistered(o);
-			}
-		});
-    },
 
-    /**
-     * Callback called on auth data received from server
-     * Can be successful or failed
-     * @param data
-     */
-    onUserAuthenticated: function(data) {
-        var me = this;
-
-        console.log(data);
-        if (!data || data.success !== true) return me.authFailed(data);
-
-        me.getLoginWindow().hide();
-
-        //TODO: open playWindow
+        this.application.rpc('register', {
+            params  : values,
+            scope   : me,
+            handler : me.onUserRegistered
+        });
     },
 
     /**
      * Executed if authentication fails
      */
-    authFailed: function(data) {
+    authFailed : function(data) {
         console.log('auth failed');
     },
 
@@ -140,8 +104,16 @@ Ext.define('Rvrsit.controller.Register', {
      * Can be successful or failed
      * @param data
      */
-    onUserRegistered: function(data) {
-        console.log('registered', data);
+    onUserRegistered : function(data) {
+
+        var registerWindow = Ext.ComponentQuery.query('register')[0];
+
+        if (registerWindow) {
+            registerWindow.hide();
+            registerWindow.destroy();
+        }
+        this.application.fireEvent('userUpdate', data.user);
+        this.application.getController('Waiting').showView();
     }
 
 });
