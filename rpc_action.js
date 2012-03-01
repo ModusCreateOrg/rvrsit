@@ -36,9 +36,12 @@ rpcMethods = {
 		var errors = [];
         var data = req.data;
 
-
-		if (data.email.length && Schema.findOne('Users', {email: data.email })) {
-			errors.push('User with that email address already registered');
+//console.log(Util.print_r(Schema.findOne('Users', { email: data.email })));
+		if (data.email.length) {
+      var existing = Schema.findOne('Users', {email: data.email });
+      if (existing.email) {
+  			errors.push('User with that email address already registered');
+      }
 		}
 
 		// validate form
