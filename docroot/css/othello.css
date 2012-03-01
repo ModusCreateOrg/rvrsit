@@ -1,7 +1,12 @@
+/* make our fonts look better in Safari/Chrome  */
+
+* { -webkit-font-smoothing: antialiased }
+
 strong { font-weight: bold }
 
-/* style the actual canvas */
-canvas { 
+/* style the actual canvas  */
+
+canvas {
     border: 2px solid rgba(0, 0, 0, 0.65);
     box-shadow: 0px 6px 10px rgba(0, 0, 0, .5);
 }
@@ -10,17 +15,16 @@ canvas {
     position: relative;
     top: -5px;
 }
-/**
-    Score card
-**/
+
+/* score card sidebar */
 
 .logo {
     background-image: url(../impactjs/media/images/rvrsit-logo.png);
     background-repeat: no-repeat;
     width: 231px;
-    height: 60px;    
+    height: 60px;
     overflow: hidden;
-    margin: 20px 65px;    
+    margin: 20px 65px;
 }
 
 .player {
@@ -31,17 +35,23 @@ canvas {
     margin: 20px 0 2px 27px;
     color: #FFF;
 }
+
 .player-turn-tile {
     height: 32px;
     width: 32px;
 }
+
 .tile-white { background-image: url(../impactjs/media/images/rvrs-wht-32px.png) }
+
 .tile-black { background-image: url(../impactjs/media/images/rvrs-blck-32px.png) }
+
 .tile-black-score { background-image: url(../impactjs/media/images/rvrs-blck-32px.png) }
+
 .player-turn-label {
     font-weight: bold;
     text-transform: uppercase;
 }
+
 .player-turn-title {
     color: #996633;
     font-family: "Helvetica Neue";
@@ -52,6 +62,7 @@ canvas {
     font-weight: bold;
     text-shadow: 0px 1px #fff;
 }
+
 .player-score {
     color: #996633;
     font-family: "Helvetica Neue";
@@ -62,6 +73,7 @@ canvas {
     font-weight: bold;
     text-shadow: 0px 1px #fff;
 }
+
 .score-keeper {
     height: 85px;
     background-color: #9E9E9E;
@@ -72,16 +84,19 @@ canvas {
     /*text-align: center;*/
     padding: 10px;
 }
+
 .score-keeper-white {
     /*position: relative;*/
     font-weight: bold;
 }
+
 .score-keeper-black {
     /*position: relative;*/
     top: -79px;
     right: -240px;
     font-weight: bold;
 }
+
 .about-pane {
     border: 1px solid #474747;
     -webkit-border-radius: 10px;
@@ -95,11 +110,13 @@ canvas {
     padding: 5px;
     left: 27px;
 }
-    .about-pane p {
-        font-size: 15px;
-        line-height: 22px;
-        padding: 12px;
-    }
+
+.about-pane p {
+    font-size: 15px;
+    line-height: 22px;
+    padding: 12px;
+}
+
 .btn-title {
     position: relative;
     font-weight: bold;
@@ -109,17 +126,17 @@ canvas {
     font-size: 1.3em;
     text-shadow: 0px 1px #fff;
 }
-.btn-title.play::before {
-    content: '';
-}
-.btn-title.settings::before {
-    content: '';
-}
+
+.btn-title.play::before { content: '' }
+
+.btn-title.settings::before { content: '' }
+
 .tile-black-player {
     position: relative;
     top : -53px;
     right : 50px;
 }
+
 .button {
     width: 308px;
     height: 58px;
@@ -129,21 +146,25 @@ canvas {
     color: #555555;
     margin-bottom: 10px;
 }
+
 .button-untouched {
     background-image: url(../impactjs/media/images/new/button-untouched.png);
     background-repeat: no-repeat;
 }
+
 .button-touched {
     top: 47px;
     background-image: url(../impactjs/media/images/new/button-touched.png);
     background-repeat: no-repeat;
 }
+
 .button-touched .btn-title {
     top: 13px;
     color: #996633;
 }
 
-/* login panel */
+/* login panel  */
+
 .login-panel .x-toolbar-dark {
     background-color: #454747;
     background-image: -webkit-gradient(linear, left top, left bottom, from(rgb(69, 71, 71)), to(rgb(21, 21, 21)));
@@ -152,10 +173,10 @@ canvas {
     background-image: -o-linear-gradient(top, rgb(69, 71, 71), rgb(21, 21, 21));
     background-image: -ms-linear-gradient(top, rgb(69, 71, 71), rgb(21, 21, 21));
     background-image: linear-gradient(top, rgb(69, 71, 71), rgb(21, 21, 21));
-    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0,StartColorStr='#454747', EndColorStr='#151515');    
+    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0,StartColorStr='#454747', EndColorStr='#151515');
 }
 
 .login-panel .x-title .x-innerhtml {
     text-shadow: 0px 1px black;
-    font-size: 18px;    
+    font-size: 18px;
 }
