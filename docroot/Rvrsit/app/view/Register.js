@@ -5,6 +5,7 @@ Ext.define('Rvrsit.view.Register', {
 
     config : {
         title         : 'Login',
+        cls           : 'login-panel',
         floating      : true,
         modal         : true,
         centered      : true,
