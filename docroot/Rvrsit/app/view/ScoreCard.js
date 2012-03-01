@@ -49,8 +49,8 @@ Ext.define('Rvrsit.view.ScoreCard', {
                 '</div>',
 
                 '<div class="about-pane">',
-                    'This application was designed and built by ModusCreate! </br>',
-                    'We are a highly motivated, interdisciplinary team that believe in lean development, design strategy, and user experience to develop stunning applications with emerging technology.',
+                    '<p><strong>This game was designed and built by ModusCreate!</strong></p>',
+                    '<p>We are a highly motivated, interdisciplinary team that believes in lean development, design strategy, and user experience to develop stunning applications with emerging technology.</p>',
                 '</div>',
                 '<div class="button button-untouched">',
                     '<div class="btn-title play">Play</div>',
