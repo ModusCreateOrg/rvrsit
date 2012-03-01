@@ -6,6 +6,16 @@ strong { font-weight: bold }
 /**
     Score card
 **/
+
+.logo {
+    background-image: url(../impactjs/media/images/rvrsit-logo.png);
+    background-repeat: no-repeat;
+    width: 231px;
+    height: 60px;    
+    overflow: hidden;
+    margin: 20px 65px;    
+}
+
 .player {
     height: 70px;
     width: 306px;

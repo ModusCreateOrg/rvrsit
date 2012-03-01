@@ -10,6 +10,7 @@ Ext.define('Rvrsit.view.ScoreCard', {
         },
         html :  [
             '<div style="padding-top: 5px;">',
+                '<div class="logo"></div>',
                 '<div class="player">',
                     '<div class="player-turn-title">TURN</div>',
                     /** ZOMG! A table! Dave phix0r this!! please? :)**/
