@@ -11,7 +11,7 @@ Ext.define('Rvrsit.view.ScoreCard', {
         html :  [
             '<div style="padding-top: 5px;">',
                 '<div class="logo animated flip"></div>',
-                '<div class="player animated flip-1">',
+                '<div class="player animated fade-in">',
                     '<div class="player-turn-title">TURN</div>',
                     /** ZOMG! A table! Dave phix0r this!! please? :)**/
 
@@ -27,7 +27,7 @@ Ext.define('Rvrsit.view.ScoreCard', {
                     '</table>',
                 '</div>',
 
-                '<div class="player animated flip-2">',
+                '<div class="player animated fade-in">',
                     '<div class="player-score">SCORE</div>',
 
                     /** ZOMG! A table! Dave phix0r this!! please? :)**/
@@ -49,7 +49,7 @@ Ext.define('Rvrsit.view.ScoreCard', {
                     '</table>',
                 '</div>',
 
-                '<div class="about-pane">',
+                '<div class="about-pane animated fade-in">',
                     '<p><strong>This game was designed and built by the team at <a href="http://www.moduscreate.com">Modus Create</a>.</strong></p>',
                     '<p>We are a highly motivated, interdisciplinary team that believes in lean development, design strategy, and user experience to develop stunning applications with emerging technology.</p>',
                 '</div>',
