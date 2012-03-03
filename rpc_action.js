@@ -6,7 +6,6 @@
  * To change this template use File | Settings | File Templates.
  */
 
-console = require('builtin/console');
 fs = require('builtin/fs');
 
 rpcMethods = {
@@ -37,7 +36,7 @@ rpcMethods = {
         var user = DataApi.findUser(data);
 
         if (user) {
-            var waitingList = DataApi.getWaitingList(data);
+            var waitinngList = DataApi.getWaitingList(data);
             Json.success({
                 message     : 'User authenticated',
                 waitingList : waitingList,
@@ -62,13 +61,19 @@ rpcMethods = {
     },
     getStatus : function() {
 
+    },
+    updateGame : function(data) {
+        console.log('updateGame called');
+        console.log(Util.print_r(data));
+        DataApi.writeFile('data/games/test.json', data.chipData);
+        Json.success({ message : 'OK', data: data.chipData})
     }
 };
 
 
 var rpc_action = function() {
     var rpcMethod = req.data.method;
-    console.log('Invoking method ' + rpcMethod);
+    console.log('\n' + Date.now() + ' RPC ::  ' + rpcMethod);
 
     rpcMethods[rpcMethod] && rpcMethods[rpcMethod](req.data);
     Json.failure('No such rpc method ' + rpcMethod);

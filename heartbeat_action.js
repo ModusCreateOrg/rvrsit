@@ -61,16 +61,21 @@ heartbeatMethods = {
 };
 
 function Heartbeat_action() {
-    console.log('\n' + Date.now() + ' Heartbeat_action');
+//    console.log('\n' + Date.now() + ' Heartbeat_action');
     var result = {},
         methods = Json.decode(req.data.methods),
         params = Json.decode(req.data.params),
         keys = Json.decode(req.data.keys),
-        count = methods.length;
+        count = methods.length,
+        method;
 
     for (var i = 0; i < count; i++) {
-        if (heartbeatMethods[methods[i]]) {
-            console.log('HB :: Execute - ' + methods[i]);
+        method = methods[i];
+
+        if (heartbeatMethods[method]) {
+            if (method != 'serverTime') {
+                console.log(' HB :: Execute - ' + methods[i]);
+            }
             result[keys[i]] = heartbeatMethods[methods[i]](params[i]);
         }
     }

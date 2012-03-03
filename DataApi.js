@@ -64,6 +64,9 @@ var DataApi = {
         this.writeFile('data/users.json', users);
     },
     writeFile      : function(file, data) {
-        fs.writeFile(file, Json.encode(data))
+        if (typeof data == 'object') {
+            data = Json.encode(data);
+        }
+        fs.writeFile(file, data)
     }
 };

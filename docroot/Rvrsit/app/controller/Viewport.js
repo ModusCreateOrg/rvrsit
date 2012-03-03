@@ -141,13 +141,13 @@ Ext.define('Rvrsit.controller.Viewport', {
     },
 
     onGameChipFlips : function(data) {
-        console.log('onGameChipFlips', data);
-
+//        console.log('onGameChipFlips', data);
         this.application.rpc('updateGame', {
-            id       : 1,
-            user     : this.user,
-            chipData : data
-
+            params : {
+                id       : 1,
+                user     : this.user,
+                chipData : Ext.encode(data)
+            }
         })
     }
 });

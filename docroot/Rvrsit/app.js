@@ -38,24 +38,24 @@
             Rvrsit.heartbeat = new silk.Heartbeat();
         },
         launch      : function() {
-            silk.heartbeat_enabled = true;
+            silk.heartbeat_enabled = false;
 
-            var n = 0;
-            Rvrsit.heartbeat.addMethod('echo', {
-                method   : 'echo',
-                params   : function() {
-                    n++;
-                    return {
-                        message : 'Hello from client ' + n
-                    };
-                },
-                scope    : this,
-                callback : function(o) {
-                    console.log('echo callback executed')
-                    console.log('Echo', o);
-                    console.log('this', this)
-                }
-            });
+//            var n = 0;
+//            Rvrsit.heartbeat.addMethod('echo', {
+//                method   : 'echo',
+//                params   : function() {
+//                    n++;
+//                    return {
+//                        message : 'Hello from client ' + n
+//                    };
+//                },
+//                scope    : this,
+//                callback : function(o) {
+////                    console.log('echo callback executed');
+////                    console.log('Echo', o);
+////                    console.log('this', this)
+//                }
+//            });
 
 //            callbacks have a unique key
 //            they are called after the heartbeat methods are all called
@@ -65,6 +65,27 @@
 //            the same global.
 //            Rvrsit.heartbeat.addCallback('echo', function() {
 ////                console.log('ech callback ' + n);
+//            });
+
+            this.initHeartBeats();
+        },
+
+        initHeartBeats : function() {
+            var me = this;
+            //            var n = 0;
+//            Rvrsit.heartbeat.addMethod('gameStatus', {
+//                method   : 'gameStatus',
+//                params   : function() {
+//                    return {
+//                        gameId : 'test'
+//                    };
+//                },
+//                scope    : this,
+//                callback : function(o) {
+//                    console.log('gameStatus');
+//                    console.log('Echo', o);
+//                    console.log('this', this)
+//                }
 //            });
         },
 
