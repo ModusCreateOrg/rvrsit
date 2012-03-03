@@ -37,6 +37,9 @@ Ext.define('Rvrsit.controller.Waiting', {
         if (selected) {
             me.application.fireEvent('playUser', selected.data);
         }
+        else {
+            Ext.Msg.alert('Error', 'You must select a player to enage!');
+        }
     },
     showView : function(data) {
         var me   = this,

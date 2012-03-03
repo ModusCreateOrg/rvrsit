@@ -1,7 +1,7 @@
 // Heartbeat.js
 Ext.namespace('Ext', 'silk');
 
-silk.HEARTBEAT_TIME = 10; // heartbeat frequency in seconds
+silk.HEARTBEAT_TIME = .5; // heartbeat frequency in seconds
 silk.heartbeatUrl = '/Heartbeat';
 
 silk.heartbeats = 0;
@@ -13,103 +13,124 @@ silk.heartbeat_inprogress = false;
  * @class silk.Heartbeat
  */
 silk.Heartbeat = function() {
-	// callbacks are simply called once per heartbeat
-	var callbacks = {};
-	this.addCallback = function(key, func) {
-		callbacks[key] = func;
-	};
-	this.removeCallback = function(key) {
-		delete callbacks[key];
-	};
+    // callbacks are simply called once per heartbeat
+    var callbacks = {};
+    var scopes = {};
 
-	// methods are RPC calls to the server
-	var queue = {};
-	this.addMethod = function(key, config) {
-		queue[key] = config;
-	};
-	this.removeMethod = function(key) {
-		delete queue[key];
-	};
+    this.addCallback = function(key, func, scope) {
+        callbacks[key] = func;
+        scope[key] = scope || window;
 
-	function DoHeartbeat() {
-		if (silk.heartbeat_inprogress || !silk.heartbeat_enabled) {
-			return;
-		}
-		silk.heartbeat_inprogress = true;
-		var params = [];
-		var keys = [];
-		var methods = [];
-		for (var key in queue) {
-			var parm = queue[key].params();
-			params.push(parm);
-			keys.push(key);
-			methods.push(queue[key].method);
-		}
+    };
+    this.removeCallback = function(key) {
+        delete callbacks[key];
+        delete scopes[key];
+    };
 
-		Ext.Ajax.request({
-			url: silk.heartbeatUrl,
-			params: {
-				keys: Ext.encode(keys),
-				params: Ext.encode(params),
-				methods: Ext.encode(methods)
-			},
-			success: function(result) {
-				var data = Ext.decode(result.responseText);
-				if (data.data) {
-					data = data.data;
-				}
-				for (var key in data) {
-					if (queue[key] && queue[key].callback) {
-						queue[key].callback(data[key]);
-					}
-				}
-				for (var key in callbacks) {
-					callbacks[key]();
-				}
-				silk.heartbeat_inprogress = false;
-				silk.heartbeats++;
-			},
-			failure: function() {
-				silk.heartbeat_inprogress = false;
-			}
-		});
-	}
+    // methods are RPC calls to the server
+    var queue = {};
+    this.addMethod = function(key, config) {
+        queue[key] = config;
+    };
+    this.removeMethod = function(key) {
+        delete queue[key];
+    };
 
-	this.Force = function() {
-		DoHeartbeat();
-	};
+    function DoHeartbeat() {
+        if (silk.heartbeat_inprogress || !silk.heartbeat_enabled) {
+            return;
+        }
+        silk.heartbeat_inprogress = true;
+        var params = [],
+            keys = [],
+            methods = [],
+            key,
+            myParams,
+            parm;
 
-	this.addMethod('servertime', {
-		method: 'serverTime',
-		params: function() {
-			return {}; // no params
-		},
-		callback: function(data) {
-			silk.servertime = parseInt(data);
-		}
-	});
 
-	var hbTask = null;
-	this.newHeartbeatTime = function(hbTime) {
-		silk.HEARTBEAT_TIME = hbTime;
-		if (hbTask) {
-			Ext.TaskMgr.stop(hbTask);
-			hbTask = null;
-		}
-		DoHeartbeat();
-		hbTask = Ext.TaskMgr.start({
-			interval: silk.HEARTBEAT_TIME * 1000,
-			run: function() {
-				if (!silk.heartbeat_enabled || silk.heartbeat_inprogress) {
-					return;
-				}
-				DoHeartbeat();
-			}
-		});
-	};
+        for ( key in queue) {
+            myParams = queue[key].params;
+            parm     = Ext.isFunction(myParams) ? myParams() : myParams;
 
-	this.newHeartbeatTime(silk.HEARTBEAT_TIME);
-	return this;
+            params.push(parm);
+            keys.push(key);
+            methods.push(queue[key].method);
+        }
+
+        Ext.Ajax.request({
+            url     : silk.heartbeatUrl,
+            params  : {
+                keys    : Ext.encode(keys),
+                params  : Ext.encode(params),
+                methods : Ext.encode(methods)
+            },
+            success : function(result) {
+                var data = Ext.decode(result.responseText),
+                    key,
+                    queueItem;
+
+
+                if (data.data) {
+                    data = data.data;
+                }
+
+//                debugger;
+                for (key in data) {
+                    queueItem = queue[key];
+                    if (queueItem && queueItem.callback) {
+                        queueItem.callback.call(queueItem.scope || window, data[key]);
+                    }
+                }
+
+                for (key in callbacks) {
+                    callbacks[key].call();
+                }
+
+                silk.heartbeat_inprogress = false;
+                silk.heartbeats++;
+            },
+            failure : function() {
+                silk.heartbeat_inprogress = false;
+            }
+        });
+    }
+
+    this.force = function() {
+        DoHeartbeat();
+    };
+
+    this.addMethod('servertime', {
+        method   : 'serverTime',
+        params   : function() {
+            return {}; // no params
+        },
+        callback : function(data) {
+            silk.servertime = parseInt(data);
+        }
+    });
+
+    var hbTask = null;
+    this.newHeartbeatTime = function(hbTime) {
+        silk.HEARTBEAT_TIME = hbTime;
+        if (hbTask) {
+            Ext.TaskMgr.stop(hbTask);
+            hbTask = null;
+        }
+        DoHeartbeat();
+        hbTask = Ext.TaskMgr.start({
+            interval : silk.HEARTBEAT_TIME * 1000,
+            run      : function() {
+                if (!silk.heartbeat_enabled || silk.heartbeat_inprogress) {
+                    return;
+                }
+                DoHeartbeat();
+            }
+        });
+    };
+
+    this.newHeartbeatTime(silk.HEARTBEAT_TIME);
+    return this;
 };
 
 /*!
@@ -126,22 +147,22 @@ silk.Heartbeat = function() {
  * separate tasks can be started at any time and will run independently of each
  * other. Example usage:
  * <pre><code>
-// Start a simple clock task that updates a div once per second
-var updateClock = function(){
-    Ext.fly('clock').update(new Date().format('g:i:s A'));
-}
-var task = {
-    run: updateClock,
-    interval: 1000 //1 second
-}
-var runner = new Ext.util.TaskRunner();
-runner.start(task);
+ // Start a simple clock task that updates a div once per second
+ var updateClock = function(){
+ Ext.fly('clock').update(new Date().format('g:i:s A'));
+ }
+ var task = {
+ run: updateClock,
+ interval: 1000 //1 second
+ }
+ var runner = new Ext.util.TaskRunner();
+ runner.start(task);
 
-// equivalent using TaskMgr
-Ext.TaskMgr.start({
-    run: updateClock,
-    interval: 1000
-});
+ // equivalent using TaskMgr
+ Ext.TaskMgr.start({
+ run: updateClock,
+ interval: 1000
+ });
 
  * </code></pre>
  * <p>See the {@link #start} method for details about how to configure a task object.</p>
@@ -151,67 +172,67 @@ Ext.TaskMgr.start({
  * @param {Number} interval (optional) The minimum precision in milliseconds supported by this TaskRunner instance
  * (defaults to 10)
  */
-Ext.util.TaskRunner = function(interval){
+Ext.util.TaskRunner = function(interval) {
     interval = interval || 10;
     var tasks = [],
-    	removeQueue = [],
-    	id = 0,
-    	running = false,
+        removeQueue = [],
+        id = 0,
+        running = false,
 
-    	// private
-    	stopThread = function(){
-	        running = false;
-	        clearInterval(id);
-	        id = 0;
-	    },
+        // private
+        stopThread = function() {
+            running = false;
+            clearInterval(id);
+            id = 0;
+        },
 
-    	// private
-    	startThread = function(){
-	        if(!running){
-	            running = true;
-	            id = setInterval(runTasks, interval);
-	        }
-	    },
+        // private
+        startThread = function() {
+            if (!running) {
+                running = true;
+                id = setInterval(runTasks, interval);
+            }
+        },
 
-    	// private
-    	removeTask = function(t){
-	        removeQueue.push(t);
-	        if(t.onStop){
-	            t.onStop.apply(t.scope || t);
-	        }
-	    },
+        // private
+        removeTask = function(t) {
+            removeQueue.push(t);
+            if (t.onStop) {
+                t.onStop.apply(t.scope || t);
+            }
+        },
 
-    	// private
-    	runTasks = function(){
-	    	var rqLen = removeQueue.length,
-	    		now = new Date().getTime();
+        // private
+        runTasks = function() {
+            var rqLen = removeQueue.length,
+                now = new Date().getTime();
 
-	        if(rqLen > 0){
-	            for(var i = 0; i < rqLen; i++){
-	                tasks.remove(removeQueue[i]);
-	            }
-	            removeQueue = [];
-	            if(tasks.length < 1){
-	                stopThread();
-	                return;
-	            }
-	        }
-	        for(var i = 0, t, itime, rt, len = tasks.length; i < len; ++i){
-	            t = tasks[i];
-	            itime = now - t.taskRunTime;
-	            if(t.interval <= itime){
-	                rt = t.run.apply(t.scope || t, t.args || [++t.taskRunCount]);
-	                t.taskRunTime = now;
-	                if(rt === false || t.taskRunCount === t.repeat){
-	                    removeTask(t);
-	                    return;
-	                }
-	            }
-	            if(t.duration && t.duration <= (now - t.taskStartTime)){
-	                removeTask(t);
-	            }
-	        }
-	    };
+            if (rqLen > 0) {
+                for (var i = 0; i < rqLen; i++) {
+                    tasks.remove(removeQueue[i]);
+                }
+                removeQueue = [];
+                if (tasks.length < 1) {
+                    stopThread();
+                    return;
+                }
+            }
+            for (var i = 0, t, itime, rt, len = tasks.length; i < len; ++i) {
+                t = tasks[i];
+                itime = now - t.taskRunTime;
+                if (t.interval <= itime) {
+                    rt = t.run.apply(t.scope || t, t.args || [++t.taskRunCount]);
+                    t.taskRunTime = now;
+                    if (rt === false || t.taskRunCount === t.repeat) {
+                        removeTask(t);
+                        return;
+                    }
+                }
+                if (t.duration && t.duration <= (now - t.taskStartTime)) {
+                    removeTask(t);
+                }
+            }
+        };
 
     /**
      * Starts a new task.
@@ -237,7 +258,7 @@ Ext.util.TaskRunner = function(interval){
      * that calculations based on the repeat count can be performed.</p>
      * @return {Object} The task
      */
-    this.start = function(task){
+    this.start = function(task) {
         tasks.push(task);
         task.taskStartTime = new Date().getTime();
         task.taskRunTime = 0;
@@ -252,7 +273,7 @@ Ext.util.TaskRunner = function(interval){
      * @param {Object} task The task to stop
      * @return {Object} The task
      */
-    this.stop = function(task){
+    this.stop = function(task) {
         removeTask(task);
         return task;
     };
@@ -261,10 +282,10 @@ Ext.util.TaskRunner = function(interval){
      * Stops all tasks that are currently running.
      * @method stopAll
      */
-    this.stopAll = function(){
+    this.stopAll = function() {
         stopThread();
-        for(var i = 0, len = tasks.length; i < len; i++){
-            if(tasks[i].onStop){
+        for (var i = 0, len = tasks.length; i < len; i++) {
+            if (tasks[i].onStop) {
                 tasks[i].onStop();
             }
         }
@@ -279,15 +300,15 @@ Ext.util.TaskRunner = function(interval){
  * A static {@link Ext.util.TaskRunner} instance that can be used to start and stop arbitrary tasks.  See
  * {@link Ext.util.TaskRunner} for supported methods and task config properties.
  * <pre><code>
-// Start a simple clock task that updates a div once per second
-var task = {
-    run: function(){
-        Ext.fly('clock').update(new Date().format('g:i:s A'));
-    },
-    interval: 1000 //1 second
-}
-Ext.TaskMgr.start(task);
-</code></pre>
+ // Start a simple clock task that updates a div once per second
+ var task = {
+ run: function(){
+ Ext.fly('clock').update(new Date().format('g:i:s A'));
+ },
+ interval: 1000 //1 second
+ }
+ Ext.TaskMgr.start(task);
+ </code></pre>
  * <p>See the {@link #start} method for details about how to configure a task object.</p>
  * @singleton
  */

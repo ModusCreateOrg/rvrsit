@@ -46,12 +46,26 @@ ig.module(
                     if (adjacentChipStacks.length == 0) {
 
                         Rvrsit.game.playSound('badMove');
-
                         return;
                     }
-                    me.adjacentChipStacks = adjacentChipStacks;
+
                     me.wasClicked = true;
                     game.isFlipping = true;
+
+                    me.adjacentChipStacks = adjacentChipStacks;
+                    me.flattenedChipStacks = game.flattenChipStacks(adjacentChipStacks);
+
+                    var chipItemIds = [];
+
+                    Ext.each(me.flattenedChipStacks, function(chip, index) {
+                        chipItemIds[index] = chip.itemId;
+                    });
+
+                    Rvrsit.app.fireEvent('chipFlips', {
+                        turnColor   : adjacentChipStacks[0].turnColor,
+                        chipItemIds : chipItemIds
+                    });
+
                     me.startFlip();
                 }
             }
@@ -61,6 +75,7 @@ ig.module(
             }
             me.parent();
         },
+
         startFlip : function(color) {
             var me       = this,
                 game     = Rvrsit.game,
@@ -80,10 +95,12 @@ ig.module(
 
 
             if (me.adjacentChipStacks) {
-                var stacks = me.adjacentChipStacks;
+                var flattenedChipStacks = me.flattenedChipStacks,
+                    adjacentChipStacks = me.adjacentChipStacks;
                 delete me.adjacentChipStacks;
+                delete me.flattenedChipStacks;
 //                console.log('me.adjacentChipStacks = ', stacks);
-                me.processChipStacks(stacks);
+                me.processChipStacks(adjacentChipStacks[0].turnColor, flattenedChipStacks);
             }
             game.calcScore();
         },
@@ -109,7 +126,6 @@ ig.module(
                 game.nextMove();
             }
             game.registerVisibleChip(me);
-
 
         },
         isItemClicked : function() {
@@ -178,14 +194,16 @@ ig.module(
 
             return chipStacks;
         },
-        processChipStacks : function(chipStacks) {
+        processChipStacks : function(color, chipsToFlip) {
 
-            var game        = Rvrsit.game,
-                myItemId    = this.itemId,
-                chipsToFlip = game.flattenChipStacks(chipStacks),
+//            debugger;
+            var myItemId    = this.itemId,
+//                chipsToFlip = me.flattenedChipStacks,
                 totalChips  = chipsToFlip.length - 1,
-                duration    = 150,
-                color       = chipStacks[0].turnColor;
+                duration    = 150;
+//                color       = me.turnColor;
+
+
 
             Ext.each(chipsToFlip, function(chip, index) {
                 if (chip.itemId != myItemId) {

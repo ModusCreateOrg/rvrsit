@@ -15,7 +15,7 @@ Ext.define('Rvrsit.view.ScoreCard', {
                     '<div class="player-turn-title">TURN</div>',
                     /** ZOMG! A table! Dave phix0r this!! please? :)**/
 
-                    '<table style="width:200px; margin-left: 100px; margin-top: -10px;">',
+                    '<table style="width:200px; margin-left: 100px;">',
                         '<tr>',
                             '<td style="width: 50px;">',
                                 '<div class="player-turn-tile tile-black player-indicator">&nbsp;</div>',
@@ -31,7 +31,7 @@ Ext.define('Rvrsit.view.ScoreCard', {
                     '<div class="player-score">SCORE</div>',
 
                     /** ZOMG! A table! Dave phix0r this!! please? :)**/
-                    '<table style="width:200px; margin-left: 100px; margin-top: -10px;">',
+                    '<table style="width:200px; margin-left: 100px;">',
                         '<tr>',
                             '<td style="width: 50px;">',
                                 '<div class="player-turn-tile tile-white" style="position: inherit !important;">&nbsp;</div>',

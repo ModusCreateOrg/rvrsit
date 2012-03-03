@@ -38,30 +38,34 @@
             Rvrsit.heartbeat = new silk.Heartbeat();
         },
         launch      : function() {
-            silk.heartbeat_enabled = false;
+            silk.heartbeat_enabled = true;
 
-            //            var n = 0;
-            //            Rvrsit.heartbeat.addMethod('echo', {
-            //                method   : 'echo',
-            //                params   : function() {
-            //                    n++;
-            //                    return {
-            //                        message : 'Hello from client ' + n
-            //                    };
-            //                },
-            //                callback : function(o) {
-            //                    //                    console.dir(o);   // will be called once/sec
-            //                }
-            //            });
-            // callbacks have a unique key
-            // they are called after the heartbeat methods are all called
-            // so a method might store to a global variable or add records
-            // to a data store, and the callback can do some sort of update
-            // based on that global/store.  Multiple callbacks might look at
-            // the same global.
-            //            Rvrsit.heartbeat.addCallback('echo', function() {
-            //                //                    console.log('callback ' + n);
-            //            });
+            var n = 0;
+            Rvrsit.heartbeat.addMethod('echo', {
+                method   : 'echo',
+                params   : function() {
+                    n++;
+                    return {
+                        message : 'Hello from client ' + n
+                    };
+                },
+                scope    : this,
+                callback : function(o) {
+                    console.log('echo callback executed')
+                    console.log('Echo', o);
+                    console.log('this', this)
+                }
+            });
+
+//            callbacks have a unique key
+//            they are called after the heartbeat methods are all called
+//            so a method might store to a global variable or add records
+//            to a data store, and the callback can do some sort of update
+//            based on that global/store.  Multiple callbacks might look at
+//            the same global.
+//            Rvrsit.heartbeat.addCallback('echo', function() {
+////                console.log('ech callback ' + n);
+//            });
         },
 
         rpc : function(method, config) {

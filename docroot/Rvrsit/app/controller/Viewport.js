@@ -50,7 +50,8 @@ Ext.define('Rvrsit.controller.Viewport', {
             nomoves      : me.onAppNoMoves,
             endgame      : me.onAppEndGame,
             winner       : me.onAppWinner,
-            userUpdate   : me.onAppUserUpdate
+            userUpdate   : me.onAppUserUpdate,
+            chipFlips    : me.onGameChipFlips
         });
 
         me.callParent();
@@ -119,17 +120,10 @@ Ext.define('Rvrsit.controller.Viewport', {
         this.application.setUser(userObj);
     },
 
-    onAppPlay    : function() {
-        var game = Rvrsit.game;
-
-        if (game.mode == 'single') {
-            game.newGame();
-            return;
-        }
-
+    onAppPlay : function() {
         var user = this.application.getUser();
 
-        if (! user) {
+        if (!user) {
             this.getController('Register').showView();
         }
         else {
@@ -140,5 +134,20 @@ Ext.define('Rvrsit.controller.Viewport', {
     onSoundCycle : function(btn) {
         ig.music.stop();
         localStorage.setItem('music', 'off');
+    },
+
+    controlChip : function(data) {
+        Rvrsit.game.forceFlipChips(data);
+    },
+
+    onGameChipFlips : function(data) {
+        console.log('onGameChipFlips', data);
+
+        this.application.rpc('updateGame', {
+            id       : 1,
+            user     : this.user,
+            chipData : data
+
+        })
     }
 });
