@@ -14,12 +14,13 @@ Ext.define('Rvrsit.controller.Settings', {
 
     showSettings : function() {
         var settings = Rvrsit.game.getSettings();
-        this.getView('Settings').create({
+        Ext.Viewport.add({
+            xclass : 'Rvrsit.view.Settings',
             settings : settings
         }).show();
     },
     onFieldChange : function(field, value) {
 
-        this.application.fireEvent('setting', this, field.setting, value[0] / 100);
+        this.getApplication().fireEvent('setting', this, field.setting, value[0] / 100);
     }
 });

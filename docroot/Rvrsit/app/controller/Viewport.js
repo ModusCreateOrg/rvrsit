@@ -31,16 +31,7 @@ Ext.define('Rvrsit.controller.Viewport', {
             xtype : 'othelloviewport'
         });
 
-        me.control({
-            'othelloNavigation > toolbar[docked=bottom] > button[action=newGame]'     : {
-                tap : me.onAppPlay
-            },
-            'othelloNavigation > toolbar[docked=bottom] > button[action=soundToggle]' : {
-                tap : me.onAppPlay
-            }
-        });
-
-        me.application.on({
+        me.getApplication().on({
             scope        : me,
             play         : me.onAppPlay,
             settings     : me.onAppSettings,
@@ -84,18 +75,46 @@ Ext.define('Rvrsit.controller.Viewport', {
     },
 
     onAppSinglePlayer : function() {
-        var game = Rvrsit.game;
+        var me = this,
+            game = Rvrsit.game;
 
-        if (game.mode == 'single') {
-            game.newGame();
-            return;
-        }
+//        if (game.mode == 'single') {
+//            game.newGame();
+//            return;
+//        }
+
+        Ext.Msg.show({
+            title   : 'Choose game mode:',
+            buttons : [
+                {
+                    itemId : 'yes',
+                    text   : '1 Player'
+                },
+                {
+                    itemId : 'no',
+                    text   : '2 Player'
+                }
+            ],
+            fn : function(btn) {
+                if (btn == 'yes') {
+                    me.initSinglePlayerMode();
+                }
+                else {
+                    game.setMode('double');
+                    game.newGame();
+                }
+            }
+        })
+
+    },
+    initSinglePlayerMode : function() {
+        var game = Rvrsit.game;
 
         Ext.Msg.alert(
             'Single player mode selected',
-            'In single player mode, you will be playing against the computer as the black piece.' +
-                ' You are first. Press OK to begin!',
-            function() {
+            'You will be playing against the computer as the black piece.' +
+                ' You are first.',
+            function(btn) {
                 game.setMode('single');
                 game.newGame();
             }
@@ -112,17 +131,17 @@ Ext.define('Rvrsit.controller.Viewport', {
     },
 
     onAppSettings : function() {
-        this.getController('Settings').showSettings();
+        this.getApplication().getController('Settings').showSettings();
     },
 
     onAppUserUpdate : function(userObj) {
-        this.application.setUser(userObj);
+        this.getApplication().setUser(userObj);
     },
 
     onAppPlay : function() {
         // TODO: Get multi-player working!
         this.onAppSinglePlayer();
-//        var user = this.application.getUser(),
+//        var user = this.getApplication().getUser(),
 //            controller = ! user ? 'Register' : 'Waiting';
 //
 //        this.getController(controller).showView();
@@ -140,11 +159,11 @@ Ext.define('Rvrsit.controller.Viewport', {
     onGameChipFlips : function(data) {
         // TODO: Get multi-player working!
 
-//        if (this.application.user.name == 'Slave') {
+//        if (this.getApplication().user.name == 'Slave') {
 //            return;
 //        }
 //        console.log('onGameChipFlips', data);
-//        this.application.rpc('updateGame', {
+//        this.getApplication().rpc('updateGame', {
 //            params : {
 //                id       : 1,
 //                user     : Ext.encode(this.user),

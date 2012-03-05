@@ -35,7 +35,7 @@ MyGame = ig.Game.extend({
     init          : function() {
         var me = this;
 
-        me.initSound();
+//        me.initSound();
         me.initSettings();
 
         me.loadLevel(LevelMain);
@@ -47,6 +47,7 @@ MyGame = ig.Game.extend({
     },
 
     initSound : function() {
+//        return;
         var me = this,
             soundRoot = me.soundRoot,
             settings = me.getSettings(),
@@ -61,7 +62,7 @@ MyGame = ig.Game.extend({
                 name;
 
             for (name in this.sounds) {
-                sound = new ig.Sound(fxRoot + sounds[name], true);
+                sound = new ig.Sound(fxRoot + sounds[name], false);
                 sound.volume = settings.fx;
                 sounds[name] = sound;
             }
@@ -99,7 +100,7 @@ MyGame = ig.Game.extend({
 
         me.swapTurn();
         me.calcScore();
-        me.playSound('newGame');
+//        me.playSound('newGame');
 
         me.halt = false;
     },
@@ -337,6 +338,7 @@ MyGame = ig.Game.extend({
         Rvrsit.app.fireEvent('scoreupdate', this, this.getScore());
     },
     playSound               : function(sound) {
+        return;
         var me = this;
         if (me.getSetting('fx')) {
             if (!me.fxInitialized) {

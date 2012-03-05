@@ -10,29 +10,29 @@ Ext.define('Rvrsit.controller.ScoreCard', {
             scorecard : {
                 selector : '[itemId="scoreCard"]'
             }
+        },
+        control : {
+            'scorecard' : {
+                play     : 'onScoreCardPanelPlay',
+                settings : 'onScoreCardPanelSettings'
+            }
         }
     },
 
     init : function() {
-        this.application.on({
+        this.getApplication().on({
             scope       : this,
             scoreupdate : this.onAppScoreUpdate
         });
 
-        this.control({
-            'scorecard' : {
-                play     : this.onScoreCardPanelPlay,
-                settings : this.onScoreCardPanelSettings
-            }
-        })
     },
 
     onScoreCardPanelPlay : function() {
-        this.application.fireEvent('play');
+        this.getApplication().fireEvent('play');
     },
 
     onScoreCardPanelSettings : function() {
-        this.application.fireEvent('settings');
+        this.getApplication().fireEvent('settings');
     },
 
     onAppScoreUpdate : function(game, scoreObj) {

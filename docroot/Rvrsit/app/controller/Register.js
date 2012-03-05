@@ -1,13 +1,11 @@
 Ext.define('Rvrsit.controller.Register', {
     extend : 'Ext.app.Controller',
 
-
-
     config : {
         loggedIn : false,
-         views : [
+        views    : [
             'Register'
-        ],
+        ]
     },
 
     init : function() {
@@ -34,32 +32,10 @@ Ext.define('Rvrsit.controller.Register', {
         me.callParent();
     },
 
-    /**
-     * Show login window
-     * TODO: window on tablets, navigation card on phones
-     */
-    showLoginWindow : function() {
-        var me = this,
-            loginWin = me.getLoginWindow();
-
-        // if already logged, show different window
-        if (me.getLoggedIn()) return;
-
-        //if login window already created, show it
-        if (!loginWin) {
-            loginWin = me.getView('LoginWindow').create();
-            Ext.Viewport.add(loginWin);
-        } else {
-            loginWin.show();
-        }
-    },
-
     showView : function() {
-        var me        = this,
-            regWindow = me.getView('Register').create();
-
-        Ext.Viewport.add(regWindow);
-        regWindow.show();
+        Ext.Viewport.add({
+            xclass : 'Rvrsit.view.Register'
+        }).show();
     },
 
     onSinglePlayer : function(btn) {
@@ -69,7 +45,7 @@ Ext.define('Rvrsit.controller.Register', {
             registerWindow.hide();
             registerWindow.destroy();
         }
-        this.application.fireEvent('singleplayer');
+        this.getApplication().fireEvent('singleplayer');
     },
 
     /**
@@ -86,16 +62,13 @@ Ext.define('Rvrsit.controller.Register', {
             return;
         }
 
-        this.application.rpc('register', {
+        this.getApplication().rpc('register', {
             params  : values,
             scope   : me,
             handler : me.onUserRegistered
         });
     },
 
-    /**
-     * Executed if authentication fails
-     */
     authFailed : function(data) {
         console.log('auth failed');
     },
@@ -113,8 +86,8 @@ Ext.define('Rvrsit.controller.Register', {
             registerWindow.hide();
             registerWindow.destroy();
         }
-        this.application.fireEvent('userUpdate', data.user);
-        this.application.getController('Waiting').showView();
+        this.getApplication().fireEvent('userUpdate', data.user);
+        this.getApplication().getController('Waiting').showView();
     }
 
 });

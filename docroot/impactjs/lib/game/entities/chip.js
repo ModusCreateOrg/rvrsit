@@ -43,16 +43,17 @@ ig.module(
 
                 if (me.isItemClicked()) {
                     var adjacentChipStacks =  me.getChipStacks();
+
                     if (adjacentChipStacks.length == 0) {
 
-                        Rvrsit.game.playSound('badMove');
+//                        Rvrsit.game.playSound('badMove');
                         return;
                     }
 
-                    me.wasClicked = true;
+                    me.wasClicked   = true;
                     game.isFlipping = true;
 
-                    me.adjacentChipStacks = adjacentChipStacks;
+                    me.adjacentChipStacks  = adjacentChipStacks;
                     me.flattenedChipStacks = game.flattenChipStacks(adjacentChipStacks);
 
                     var chipItemIds = [];
@@ -88,7 +89,7 @@ ig.module(
                 me.wasBlank = true;
             }
 
-            game.playSound(newColor);
+//            game.playSound(newColor);
 
             me.currentAnim = me.anims['flip_' + newColor];
             me.currentAnim.rewind();
@@ -96,7 +97,7 @@ ig.module(
 
             if (me.adjacentChipStacks) {
                 var flattenedChipStacks = me.flattenedChipStacks,
-                    adjacentChipStacks = me.adjacentChipStacks;
+                    adjacentChipStacks  = me.adjacentChipStacks;
                 delete me.adjacentChipStacks;
                 delete me.flattenedChipStacks;
 //                console.log('me.adjacentChipStacks = ', stacks);

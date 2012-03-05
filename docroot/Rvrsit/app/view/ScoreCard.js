@@ -8,6 +8,16 @@ Ext.define('Rvrsit.view.ScoreCard', {
             black : 'tile-white',
             white : 'tile-black'
         },
+        turnTitles:  {
+            single : {
+                black : 'Your turn',
+                white : 'Computer'
+            },
+            'double' : {
+                black : 'Player #1',
+                white : 'Player #2'
+            }
+        },
         html :  [
             '<div style="padding-top: 5px;">',
                 '<div class="logo animated flip"></div>',
@@ -21,7 +31,7 @@ Ext.define('Rvrsit.view.ScoreCard', {
                                 '<div class="player-turn-tile tile-black player-indicator">&nbsp;</div>',
                             '</td>',
                             '<td>',
-                                '<div class="player-turn-label">BLACK</div>',
+                                '<div class="player-turn-label"> </div>',
                             '</td>',
                         '</tr>',
                     '</table>',
@@ -114,7 +124,9 @@ Ext.define('Rvrsit.view.ScoreCard', {
     },
     updateScore : function(scoreObj) {
         var me = this,
-            turnOpposites = this.getTurnOpposites();
+            turnOpposites = this.getTurnOpposites(),
+            turnTitleTexts = this.getTurnTitles()[Rvrsit.game.mode];
+
         if (!me.playerTurnIndicator) {
             var myElement = me.element;
             me.playerTurnIndicator = myElement.down('.player-indicator');
@@ -125,7 +137,7 @@ Ext.define('Rvrsit.view.ScoreCard', {
 
         me.playerTurnIndicator.replaceCls(turnOpposites[scoreObj.turn], 'tile-' + scoreObj.turn);
 
-        me.playerTurnLabel.innerHTML    = scoreObj.turn;
+        me.playerTurnLabel.innerHTML    = turnTitleTexts[scoreObj.turn];
         me.whitePlayerScoreEl.innerHTML = scoreObj.white;
         me.blackPlayerScoreEl.innerHTML = scoreObj.black;
     }

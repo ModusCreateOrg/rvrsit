@@ -25,7 +25,7 @@ Ext.define('Rvrsit.controller.Waiting', {
             list.destroy();
         }
 
-        me.application.fireEvent('singleplayer');
+        me.getApplication().fireEvent('singleplayer');
     },
     onPlayUser         : function(btn) {
         var me = this,
@@ -33,29 +33,27 @@ Ext.define('Rvrsit.controller.Waiting', {
             selected = list.getSelected();
 
         if (selected) {
-            me.application.fireEvent('playUser', selected.data);
+            me.getApplication().fireEvent('playUser', selected.data);
         }
         else {
             Ext.Msg.alert('Error', 'You must select a player to enage!');
         }
     },
     showView           : function(data) {
-        var me = this,
-            view = me.getView('Waiting').create({
-                store : Ext.create('Rvrsit.store.Waiting')
-            });
+        Ext.Viewport.add({
+            xclass : 'Rvrsit.view.Waiting',
+            store  : Ext.create('Rvrsit.store.Waiting')
+        });
 
-        Ext.Viewport.add(view);
-        view.show();
         this.onRefreshList();
     },
     onRefreshList      : function() {
         var me = this;
 
-        me.application.rpc('getWaitingList', {
+        me.getApplication().rpc('getWaitingList', {
             scope   : me,
             handler : me.onAfterRefreshList,
-            params  : me.application.getUser()
+            params  : me.getApplication().getUser()
         });
     },
     onAfterRefreshList : function(data) {

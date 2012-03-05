@@ -33,7 +33,7 @@
             'Viewport',
             'Register'
         ],
-        init        : function() {
+        launch        : function() {
             Rvrsit.app = this;
             Rvrsit.heartbeat = new silk.Heartbeat();
 
@@ -41,10 +41,6 @@
                 gameInitialized : this.onGameInitialized,
                 scope : this
             });
-
-        },
-        launch      : function() {
-
 
         },
 

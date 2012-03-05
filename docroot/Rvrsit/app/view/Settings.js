@@ -1,7 +1,13 @@
 Ext.define('Rvrsit.view.Settings', {
     extend : 'Ext.Panel',
-    xtype : 'settings',
-    config : {
+    xtype  : 'settings',
+
+    uses : [
+        'Ext.field.Slider',
+        'Ext.TitleBar'
+    ],
+
+    config        : {
         style         : 'background-color: #FFF',
         modal         : true,
         width         : 300,
@@ -13,38 +19,32 @@ Ext.define('Rvrsit.view.Settings', {
             align : 'stretch'
         }
     },
-    initialize : function() {
-        var resetOverride = function() {
-            this.setValue(this.defaultValue);
-        };
-        this.add([
+    initialize    : function() {
+        var me = this;
+        me.add([
             {
-                xtype        : 'sliderfield',
-                fieldLabel   : 'Music',
-                setting      : 'music',
-                defaultValue : this.settings.music * 100,
-                reset        : resetOverride
+                xtype  : 'titlebar',
+                title  : 'Settings',
+                docked : 'top'
             },
             {
-                xtype        : 'sliderfield',
-                fieldLabel   : 'Effects',
-                setting      : 'fx',
-                defaultValue : this.settings.fx * 100,
-                reset        : resetOverride
+                xtype   : 'sliderfield',
+                label   : 'Music',
+                setting : 'music',
+                value   : me.settings.music * 100
+            },
+            {
+                xtype   : 'sliderfield',
+                label   : 'Effects',
+                setting : 'fx',
+                value   : me.settings.fx * 100
             }
         ]);
-        this.callParent();
+        me.callParent();
 
-
-        this.on('hide', this.onHideDestroy, this);
+        me.on('hide', me.onHideDestroy, me);
     },
     onHideDestroy : function() {
         Ext.Function.defer(this.destroy, 1000, this);
-    },
-    show : function() {
-        this.callParent(arguments);
-        this.items.each(function(item){
-            item.reset();
-        });
     }
 });
