@@ -1,12 +1,13 @@
 Ext.define('Rvrsit.controller.Register', {
     extend : 'Ext.app.Controller',
 
-    views : [
-        'Register'
-    ],
+
 
     config : {
-        loggedIn : false
+        loggedIn : false,
+         views : [
+            'Register'
+        ],
     },
 
     init : function() {

@@ -1,9 +1,8 @@
 /**
+ * @aside guide list
+ * @aside video list
+ *
  * List is a custom styled DataView which allows Grouping, Indexing, Icons, and a Disclosure.
- *
- * # Example:
- *
- * Here is an example of the usage in a {@link Ext.List}:
  *
  *     @example miniphone preview
  *     Ext.define('Contact', {
@@ -15,34 +14,36 @@
  *        model: 'Contact',
  *        sorters: 'lastName',
  *
- *        getGroupString: function(record) {
- *            return record.get('lastName')[0];
+ *        grouper: {
+ *            groupFn: function(record) {
+ *                return record.get('lastName')[0];
+ *            }
  *        },
  *
  *        data: [
- *            {firstName: 'Tommy',   lastName: 'Maintz'},
- *            {firstName: 'Rob',     lastName: 'Dougan'},
- *            {firstName: 'Ed',      lastName: 'Spencer'},
- *            {firstName: 'Jamie',   lastName: 'Avins'},
- *            {firstName: 'Aaron',   lastName: 'Conran'},
- *            {firstName: 'Dave',    lastName: 'Kaneda'},
- *            {firstName: 'Jacky',   lastName: 'Nguyen'},
- *            {firstName: 'Abraham', lastName: 'Elias'},
- *            {firstName: 'Jay',     lastName: 'Robinson'},
- *            {firstName: 'Nigel',   lastName: 'White'},
- *            {firstName: 'Don',     lastName: 'Griffin'},
- *            {firstName: 'Nico',    lastName: 'Ferrero'},
- *            {firstName: 'Nicolas', lastName: 'Belmonte'},
- *            {firstName: 'Jason',   lastName: 'Johnston'}
+ *            { firstName: 'Tommy',   lastName: 'Maintz'  },
+ *            { firstName: 'Rob',     lastName: 'Dougan'  },
+ *            { firstName: 'Ed',      lastName: 'Spencer' },
+ *            { firstName: 'Jamie',   lastName: 'Avins'   },
+ *            { firstName: 'Aaron',   lastName: 'Conran'  },
+ *            { firstName: 'Dave',    lastName: 'Kaneda'  },
+ *            { firstName: 'Jacky',   lastName: 'Nguyen'  },
+ *            { firstName: 'Abraham', lastName: 'Elias'   },
+ *            { firstName: 'Jay',     lastName: 'Robinson'},
+ *            { firstName: 'Nigel',   lastName: 'White'   },
+ *            { firstName: 'Don',     lastName: 'Griffin' },
+ *            { firstName: 'Nico',    lastName: 'Ferrero' },
+ *            { firstName: 'Nicolas', lastName: 'Belmonte'},
+ *            { firstName: 'Jason',   lastName: 'Johnston'}
  *        ]
  *     });
  *
- *     var list = Ext.create('Ext.List', {
+ *     Ext.create('Ext.List', {
  *        fullscreen: true,
  *        itemTpl: '<div class="contact">{firstName} <strong>{lastName}</strong></div>',
- *        store: store
+ *        store: store,
+ *        grouped: true
  *     });
- *
 */
 Ext.define('Ext.dataview.List', {
     alternateClassName: 'Ext.List',
@@ -50,6 +51,7 @@ Ext.define('Ext.dataview.List', {
     xtype : 'list',
 
     requires: [
+        'Ext.dataview.element.List',
         'Ext.dataview.IndexBar',
         'Ext.dataview.ListItemHeader'
     ],
@@ -58,6 +60,7 @@ Ext.define('Ext.dataview.List', {
      * @event disclose
      * @preventable doDisclose
      * Fires whenever a disclosure is handled
+     * @param {Ext.dataview.List} this The List instance
      * @param {Ext.data.Model} record The record assisciated to the item
      * @param {HTMLElement} target The element doubletapped
      * @param {Number} index The index of the item doubletapped
@@ -74,16 +77,13 @@ Ext.define('Ext.dataview.List', {
          */
         indexBar: false,
 
-        disclosure: null,
-
         icon: null,
 
         /**
          * @cfg {Boolean} clearSelectionOnDeactivate
-         * True to clear any selections on the list when the list is deactivated (defaults to true).
-         * @accessor
+         * True to clear any selections on the list when the list is deactivated.
+         * @removed 2.0.0
          */
-        clearSelectionOnDeactivate: true,
 
         /**
          * @cfg {Boolean} preventSelectionOnDisclose True to prevent the item selection when the user
@@ -92,7 +92,10 @@ Ext.define('Ext.dataview.List', {
          */
         preventSelectionOnDisclose: true,
 
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         baseCls: Ext.baseCSSPrefix + 'list',
 
         /**
@@ -107,22 +110,71 @@ Ext.define('Ext.dataview.List', {
          * Whether or not to group items in the provided Store with a header for each item.
          * @accessor
          */
-        grouped: null,
+        grouped: false,
 
         /**
          * @cfg {Boolean/Function/Object} onItemDisclosure
          * True to display a disclosure icon on each list item.
-         * This won't bind a listener to the tap event. The list
-         * will still fire the disclose event though.
-         * By setting this config to a function, it will automatically
-         * add a tap event listeners to the disclosure buttons which
-         * will fire your function.
+         * The list will still fire the disclose event, and the event can be stopped before itemtap.
+         * By setting this config to a function, the function passed will be called when the disclosure
+         * is tapped.
          * Finally you can specify an object with a 'scope' and 'handler'
          * property defined. This will also be bound to the tap event listener
          * and is useful when you want to change the scope of the handler.
          * @accessor
          */
-        onItemDisclosure: null
+        onItemDisclosure: null,
+
+        /**
+         * @cfg {String} disclosureProperty
+         * A property to check on each record to display the disclosure on a per record basis.  This
+         * property must be false to prevent the disclosure from being displayed on the item.
+         * @accessor
+         */
+        disclosureProperty: 'disclosure',
+
+        /**
+         * @cfg {String} ui
+         * The style of this list. Available options are `normal` and `round`.
+         */
+        ui: 'normal'
+
+        /**
+         * @cfg {Boolean} useComponents
+         * Flag the use a component based DataView implementation.  This allows the full use of components in the
+         * DataView at the cost of some performance.
+         *
+         * Checkout the [DataView Guide](#!/guide/dataview) for more information on using this configuration.
+         * @accessor
+         * @private
+         */
+
+        /**
+         * @cfg {Object} itemConfig
+         * A configuration object that is passed to every item created by a component based DataView. Because each
+         * item that a DataView renders is a Component, we can pass configuration options to each component to
+         * easily customize how each child component behaves.
+         * Note this is only used when useComponents is true.
+         * @accessor
+         * @private
+         */
+
+        /**
+         * @cfg {Number} maxItemCache
+         * Maintains a cache of reusable components when using a component based DataView.  Improveing performance at
+         * the cost of memory.
+         * Note this is currently only used when useComponents is true.
+         * @accessor
+         * @private
+         */
+
+        /**
+         * @cfg {String} defaultType
+         * The xtype used for the component based DataView. Defaults to dataitem.
+         * Note this is only used when useComponents is true.
+         * @accessor
+         * @private
+         */
     },
 
     constructor: function() {
@@ -130,14 +182,56 @@ Ext.define('Ext.dataview.List', {
         this.callParent(arguments);
     },
 
+    // apply to the selection model to maintain visual UI cues
+    onItemTrigger: function(me, index, target, record, e) {
+        if (!(this.getPreventSelectionOnDisclose() && Ext.fly(e.target).hasCls(this.getBaseCls() + '-disclosure'))) {
+            this.callParent(arguments);
+        }
+    },
+
     initialize: function() {
-        var me = this;
-        me.callParent();
-        me.elementContainer.element.on({
+        var me = this,
+            container;
+
+        me.on(me.getTriggerCtEvent(), me.onContainerTrigger, me);
+
+        container = me.container = this.add(new Ext.dataview.element.List({
+            baseCls: this.getBaseCls()
+        }));
+        container.dataview = me;
+
+        me.on(me.getTriggerEvent(), me.onItemTrigger, me);
+
+        container.element.on({
             delegate: '.' + this.getBaseCls() + '-disclosure',
             tap: 'handleItemDisclosure',
             scope: me
         });
+
+        container.on({
+            itemtouchstart: 'onItemTouchStart',
+            itemtouchend: 'onItemTouchEnd',
+            itemtap: 'onItemTap',
+            itemtaphold: 'onItemTapHold',
+            itemtouchmove: 'onItemTouchMove',
+            itemsingletap: 'onItemSingleTap',
+            itemdoubletap: 'onItemDoubleTap',
+            itemswipe: 'onItemSwipe',
+            scope: me
+        });
+
+        if (this.getStore()) {
+            this.refresh();
+        }
+    },
+
+    updateInline: function(newInline) {
+        this.callParent(arguments);
+        if (newInline) {
+            this.setOnItemDisclosure(false);
+            this.setIndexBar(false);
+            this.setGrouped(false);
+        }
     },
 
     applyIndexBar: function(indexBar) {
@@ -146,24 +240,36 @@ Ext.define('Ext.dataview.List', {
 
     updateIndexBar: function(indexBar) {
         if (indexBar && this.getScrollable()) {
-            this.getScrollableBehavior().getScrollView().getElement().appendChild(indexBar.renderElement);
+            this.indexBarElement = this.getScrollableBehavior().getScrollView().getElement().appendChild(indexBar.renderElement);
 
             indexBar.on({
                 index: 'onIndex',
                 scope: this
             });
 
-            this.addCls(this.getBaseCls() + '-indexed');
+            this.element.addCls(this.getBaseCls() + '-indexed');
         }
     },
 
     updateGrouped: function(grouped) {
+        var baseCls = this.getBaseCls(),
+            cls = baseCls + '-grouped',
+            unCls = baseCls + '-ungrouped';
+
         if (grouped) {
+            this.addCls(cls);
+            this.removeCls(unCls);
             this.doRefreshHeaders();
             this.updatePinHeaders(this.getPinHeaders());
         }
         else {
-            this.doRemoveHeaders();
+            this.addCls(unCls);
+            this.removeCls(cls);
+
+            if (this.container) {
+                this.container.doRemoveHeaders();
+            }
+
             this.updatePinHeaders(null);
         }
     },
@@ -192,7 +298,7 @@ Ext.define('Ext.dataview.List', {
             }
         } else {
             scroller.un({
-                refresh: 'onScrollerRefresh',
+                refresh: 'doRefreshHeaders',
                 scroll: 'onScroll',
                 scope: this
             });
@@ -288,13 +394,13 @@ Ext.define('Ext.dataview.List', {
     },
 
     doRefreshHeaders: function() {
-        if (!this.getGrouped()) {
+        if (!this.getGrouped() || !this.container) {
             return false;
         }
 
         var headerIndices = this.findGroupHeaderIndices(),
             ln = headerIndices.length,
-            items = this.getViewItems(),
+            items = this.container.getViewItems(),
             headerInfo = this.pinHeaderInfo = {offsets: []},
             headerOffsets = headerInfo.offsets,
             scrollable = this.getScrollable(),
@@ -329,7 +435,8 @@ Ext.define('Ext.dataview.List', {
     },
 
     getItemHeader: function(item) {
-        return item.childNodes[0];
+        var element = Ext.fly(item).down(this.container.headerClsCache);
+        return element ? element.dom : null;
     },
 
     onScroll: function(scroller, x, y) {
@@ -344,7 +451,7 @@ Ext.define('Ext.dataview.List', {
             return;
         }
 
-        next = closest.next,
+        next = closest.next;
         current = closest.current;
 
         if (!this.header || !this.header.renderElement.dom) {
@@ -392,12 +499,15 @@ Ext.define('Ext.dataview.List', {
         var me = this,
             header = me.header;
         if (header) {
-            if (group) {
+            if (group && group.header) {
                 if (!me.activeGroup || me.activeGroup.header != group.header) {
-                    header.setHtml(group.header.innerHTML);
                     header.show();
+
+                    if (header.element) {
+                        header.setHtml(group.header.innerHTML);
+                    }
                 }
-            } else if (header && header.dom) {
+            } else if (header && header.element) {
                 header.hide();
             }
         }
@@ -405,16 +515,17 @@ Ext.define('Ext.dataview.List', {
         this.activeGroup = group;
     },
 
-    onIndex: function(index) {
-        var key = index.toLowerCase(),
-            store = this.getStore(),
+    onIndex: function(indexBar, index) {
+        var me = this,
+            key = index.toLowerCase(),
+            store = me.getStore(),
             groups = store.getGroups(),
             ln = groups.length,
-            scrollable = this.getScrollable(),
+            scrollable = me.getScrollable(),
             scroller, group, i, closest, id, item;
 
         if (scrollable) {
-            scroller = this.getScrollable().getScroller();
+            scroller = me.getScrollable().getScroller();
         }
         else {
             return;
@@ -433,7 +544,7 @@ Ext.define('Ext.dataview.List', {
         }
 
         if (scrollable && closest) {
-            item = this.getViewItems()[store.indexOf(closest.children[0])];
+            item = me.container.getViewItems()[store.indexOf(closest.children[0])];
 
             //stop the scroller from scrolling
             scroller.stopAnimation();
@@ -455,206 +566,69 @@ Ext.define('Ext.dataview.List', {
                 handler: config
             };
         }
-        if (Ext.isObject(config)) {
-            return config;
-        }
-        return null;
-    },
-
-    getDisclosure: function() {
-        var value = this._disclosure,
-            onItemDisclosure = this.getOnItemDisclosure();
-
-        if (onItemDisclosure && onItemDisclosure != value) {
-            value = true;
-            this.setDisclosure(value);
-        }
-
-        return value;
-    },
-
-    updateOnItemDisclosure: function(newOnItemDisclosure) {
-        // If we have an onItemDisclosure configuration, force disclose config to true
-        if (newOnItemDisclosure) {
-            this.setDisclosure(true);
-        }
+        return config;
     },
 
     handleItemDisclosure: function(e) {
         var me = this,
             item = e.getTarget().parentNode,
-            index = me.getViewItems().indexOf(item),
+            index = me.container.getViewItems().indexOf(item),
             record = me.getStore().getAt(index);
 
-        if (me.getPreventSelectionOnDisclose()) {
-            e.stopEvent();
-        }
-        me.fireAction('disclose', [record, item, index, e], 'doDisclose');
+        me.fireAction('disclose', [me, record, item, index, e], 'doDisclose');
     },
 
-    doDisclose: function(record, item, index, e) {
-        var me = this,
-            onItemDisclosure = me.getOnItemDisclosure();
+    doDisclose: function(me, record, item, index, e) {
+        var onItemDisclosure = me.getOnItemDisclosure();
 
         if (onItemDisclosure && onItemDisclosure.handler) {
-            onItemDisclosure.handler.call(me, record, item, index);
+            onItemDisclosure.handler.call(me, record, item, index, e);
         }
-    },
-
-    updateBaseCls: function(newBaseCls, oldBaseCls) {
-        var me = this;
-        me.callParent(arguments);
-        me.itemClsShortCache = newBaseCls + '-item';
-
-        me.headerClsShortCache = newBaseCls + '-header';
-        me.headerClsCache = '.' + me.headerClsShortCache;
-
-        me.headerItemClsShortCache = newBaseCls + '-header-item';
-
-        me.footerClsShortCache = newBaseCls + '-footer-item';
-        me.footerClsCache = '.' + me.footerClsShortCache;
-
-        me.labelClsShortCache = newBaseCls + '-item-label';
-        me.labelClsCache = '.' + me.labelClsShortCache;
-
-        me.disclosureClsShortCache = newBaseCls + '-disclosure';
-        me.disclosureClsCache = '.' + me.disclosureClsShortCache;
-
-        me.iconClsShortCache = newBaseCls + '-icon';
-        me.iconClsCache = '.' + me.iconClsShortCache;
-    },
-
-    hiddenDisplayCache: Ext.baseCSSPrefix + 'hidden-display',
-
-    updateListItem: function(record, item) {
-        var extItem = Ext.fly(item),
-            innerItem = extItem.down(this.labelClsCache, true),
-            data = record.data,
-            disclosure = data && data.hasOwnProperty('disclosure'),
-            iconSrc = data && data.hasOwnProperty('iconSrc'),
-            disclosureEl, iconEl;
-
-        innerItem.innerHTML = this.getItemTpl().apply(data);
-
-        if (this.getDisclosure() && disclosure) {
-            disclosureEl = extItem.down(this.disclosureClsCache);
-            disclosureEl[disclosure ? 'removeCls' : 'addCls'](this.hiddenDisplayCache);
-        }
-
-        if (this.getIcon()) {
-            iconEl = extItem.down(this.iconClsCache, true);
-            iconEl.style.backgroundImage = iconSrc ? 'url(' + iconSrc + ')' : '';
-        }
-    },
-
-    getItemElementConfig: function(index, data) {
-        var config = {
-                cls: this.itemClsShortCache,
-                children: [{
-                    cls: this.labelClsShortCache,
-                    html: this.getItemTpl().apply(data)
-                }]
-            },
-            iconSrc;
-
-        if (this.getIcon()) {
-            iconSrc = data.iconSrc;
-            config.children.push({
-                cls: this.iconClsShortCache,
-                style: 'background-image: ' + iconSrc ? 'url(' + iconSrc + ')' : ''
-            });
-        }
-
-        if (this.getDisclosure()) {
-            config.children.push({
-                cls: this.disclosureClsShortCache + ((data.disclosure === false) ? this.hiddenDisplayCache : '')
-            });
-        }
-        return config;
     },
 
     findGroupHeaderIndices: function() {
         if (!this.getGrouped()) {
-            return;
+            return [];
         }
         var me = this,
-            store = me.getStore(),
+            store = me.getStore();
+        if (!store) {
+            return [];
+        }
+
+        var container = me.container,
             groups = store.getGroups(),
             groupLn = groups.length,
-            items = me.getViewItems(),
+            items = container.getViewItems(),
             newHeaderItems = [],
-            footerClsShortCache = me.footerClsShortCache,
-            i, firstGroupedRecord, index, item;
+            footerClsShortCache = container.footerClsShortCache,
+            i, firstGroupedRecord, index, item, lastGroup;
 
-        me.doRemoveHeaders();
-        me.doRemoveFooterCls();
+        container.doRemoveHeaders();
+        container.doRemoveFooterCls();
 
         if (items.length) {
             for (i = 0; i < groupLn; i++) {
                 firstGroupedRecord = groups[i].children[0];
                 index = store.indexOf(firstGroupedRecord);
                 item = items[index];
-                me.doAddHeader(item, store.getGroupString(firstGroupedRecord));
+                container.doAddHeader(item, store.getGroupString(firstGroupedRecord));
                 // Skip footer before the first Header
                 if (i) {
                     Ext.fly(item.previousSibling).addCls(footerClsShortCache);
                 }
                 newHeaderItems.push(index);
             }
-            Ext.fly(items[items.length - 2]).addCls(footerClsShortCache);
-
+            // Add footer before the last item
+            lastGroup = groups[--i].children;
+            Ext.fly(items[store.indexOf(lastGroup[lastGroup.length - 1])]).addCls(footerClsShortCache);
         }
 
         return newHeaderItems;
     },
 
-    /*
-        @private
-    */
-    doRemoveHeaders: function() {
-        var me = this,
-            i = 0,
-            existingHeaders = me.elementContainer.element.query(me.headerClsCache),
-            existingHeadersLn = existingHeaders.length,
-            item;
-
-        for (; i < existingHeadersLn; i++) {
-            item = existingHeaders[i];
-            Ext.fly(item.parentNode).removeCls(me.headerItemClsShortCache);
-            Ext.removeNode(item);
-        }
-    },
-
-    /*
-        @private
-    */
-    doRemoveFooterCls: function() {
-        var me = this,
-            i = 0,
-            footerClsCache = me.footerClsCache,
-            existingFooters = me.elementContainer.element.query(footerClsCache),
-            existingFootersLn = existingFooters.length;
-
-        for (; i < existingFootersLn; i++) {
-            Ext.fly(existingFooters[i]).removeCls(footerClsCache);
-        }
-    },
-
-    /*
-        @private
-    */
-    doAddHeader: function(item, html) {
-        item = Ext.fly(item);
-        item.insertFirst(Ext.Element.create({
-            cls: this.headerClsShortCache,
-            html: html
-        }));
-        item.addCls(this.headerItemClsShortCache);
+    destroy: function() {
+        Ext.destroy(this.getIndexBar(), this.indexBarElement, this.header);
+        this.callParent();
     }
-}, function() {
-    //TODO This is hacky, find a better way @Jacky
-    var prototype = this.prototype;
-
-    prototype.cachedConfigList = prototype.cachedConfigList.slice();
-    Ext.Array.remove(prototype.cachedConfigList, 'baseCls');
 });

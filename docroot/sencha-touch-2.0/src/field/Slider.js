@@ -1,18 +1,22 @@
 /**
+ * @aside guide forms
+ *
  * The slider is a way to allow the user to select a value from a given numerical range. You might use it for choosing
  * a percentage, combine two of them to get min and max values, or use three of them to specify the hex values for a
  * color. Each slider contains a single 'thumb' that can be dragged along the slider's length to change the value.
  * Sliders are equally useful inside {@link Ext.form.Panel forms} and standalone. Here's how to quickly create a
  * slider in form, in this case enabling a user to choose a percentage:
  *
+ *     @example
  *     Ext.create('Ext.form.Panel', {
+ *         fullscreen: true,
  *         items: [
  *             {
  *                 xtype: 'sliderfield',
  *                 label: 'Percentage',
  *                 value: 50,
- *                 {@link #minValue}: 0,
- *                 {@link #maxValue}: 100
+ *                 minValue: 0,
+ *                 maxValue: 100
  *             }
  *         ]
  *     });
@@ -25,12 +29,19 @@
  * allows a user to choose the waist measurement of a pair of jeans. Let's say the online store we're making this for
  * sells jeans with waist sizes from 24 inches to 60 inches in 2 inch increments - here's how we might achieve that:
  *
- *     var slider = Ext.create('Ext.field.Slider', {
- *         label: 'Waist Measurement',
- *         minValue: 24,
- *         maxValue: 60,
- *         increment: 2,
- *         value: 32
+ *     @example
+ *     Ext.create('Ext.form.Panel', {
+ *         fullscreen: true,
+ *         items: [
+ *             {
+ *                 xtype: 'sliderfield',
+ *                 label: 'Waist Measurement',
+ *                 minValue: 24,
+ *                 maxValue: 60,
+ *                 increment: 2,
+ *                 value: 32
+ *             }
+ *         ]
  *     });
  *
  * Now that we've got our slider, we can ask it what value it currently has and listen to events that it fires. For
@@ -58,16 +69,22 @@ Ext.define('Ext.field.Slider', {
     /**
      * @event change
      * Fires when an option selection has changed.
-     * @param {Ext.field.Select} me
-     * @param {Mixed} value
+     * @param {Ext.field.Slider} me
+     * @param {Ext.slider.Thumb} thumb
+     * @param {Number} newValue the new value of this thumb
+     * @param {Number} oldValue the old value of this thumb
      */
 
     config: {
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         cls: Ext.baseCSSPrefix + 'slider-field',
 
         /**
-         * @inherit
+         * @cfg
+         * @inheritdoc
          */
         tabIndex: -1
     },
@@ -78,12 +95,6 @@ Ext.define('Ext.field.Slider', {
          * @accessor
          */
         value: 0,
-
-        /**
-         * @cfg {Number/Number[]} values See {@link Ext.slider.Slider#values}
-         * @accessor
-         */
-        values: 0,
 
         /**
          * @cfg {Number} minValue See {@link Ext.slider.Slider#minValue}
@@ -104,6 +115,20 @@ Ext.define('Ext.field.Slider', {
         increment: 1
     },
 
+    /**
+     * @cfg {Number/Number[]} values See {@link Ext.slider.Slider#values}
+     */
+
+    constructor: function(config) {
+        config = config || {};
+
+        if (config.hasOwnProperty('values')) {
+            config.value = config.values;
+        }
+
+        this.callParent([config]);
+    },
+
     // @private
     initialize: function() {
         this.callParent();
@@ -119,15 +144,34 @@ Ext.define('Ext.field.Slider', {
         return Ext.factory(config, Ext.slider.Slider);
     },
 
-    onSliderChange: function(me, value) {
-        this.fireEvent('change', this, value);
+    onSliderChange: function(me, thumb, newValue, oldValue) {
+        this.fireEvent('change', this, thumb, newValue, oldValue);
     },
 
-    // @inherit
+    /**
+     * Convience method. Calls {@link #setValue}
+     */
+    setValues: function(value) {
+        this.setValue(value);
+    },
+
+    /**
+     * Convience method. Calls {@link #getValue}
+     */
+    getValues: function() {
+        return this.getValue();
+    },
+
     reset: function() {
         var config = this.config,
             initialValue = (this.config.hasOwnProperty('values')) ? config.values : config.value;
 
         this.setValue(initialValue);
+    },
+
+    doSetDisabled: function(disabled) {
+        this.callParent(arguments);
+
+        this.getComponent().setDisabled(disabled);
     }
 });

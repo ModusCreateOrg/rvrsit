@@ -1,56 +1,63 @@
 /**
  * @author Ed Spencer
- * @class Ext.data.ResultSet
- * @extends Object
  *
- * <p>Simple wrapper class that represents a set of records returned by a Proxy.</p>
+ * Simple wrapper class that represents a set of records returned by a Proxy.
  */
 Ext.define('Ext.data.ResultSet', {
-    /**
-     * @cfg {Boolean} loaded
-     * True if the records have already been loaded. This is only meaningful when dealing with
-     * SQL-backed proxies
-     */
-    loaded: true,
+    config: {
+        /**
+         * @cfg {Boolean} loaded
+         * True if the records have already been loaded. This is only meaningful when dealing with
+         * SQL-backed proxies.
+         */
+        loaded: true,
 
-    /**
-     * @cfg {Number} count
-     * The number of records in this ResultSet. Note that total may differ from this number
-     */
-    count: 0,
+        /**
+         * @cfg {Number} count
+         * The number of records in this ResultSet. Note that total may differ from this number.
+         */
+        count: null,
 
-    /**
-     * @cfg {Number} total
-     * The total number of records reported by the data source. This ResultSet may form a subset of
-     * those records (see count)
-     */
-    total: 0,
+        /**
+         * @cfg {Number} total
+         * The total number of records reported by the data source. This ResultSet may form a subset of
+         * those records (see {@link #count}).
+         */
+        total: null,
 
-    /**
-     * @cfg {Boolean} success
-     * True if the ResultSet loaded successfully, false if any errors were encountered
-     */
-    success: false,
+        /**
+         * @cfg {Boolean} success
+         * True if the ResultSet loaded successfully, false if any errors were encountered.
+         */
+        success: false,
 
-    /**
-     * @cfg {Ext.data.Model[]} records The array of record instances. Required
-     */
+        /**
+         * @cfg {Ext.data.Model[]} records (required)
+         * The array of record instances.
+         */
+        records: null
+    },
 
     /**
      * Creates the resultSet
-     * @param {Object} config (optional) Config object.
+     * @param {Object} [config] Config object.
      */
     constructor: function(config) {
-        Ext.apply(this, config);
+        this.initConfig(config);
+    },
 
-        /**
-         * DEPRECATED - will be removed in Ext JS 5.0. This is just a copy of this.total - use that instead
-         * @property {Number} totalRecords
-         */
-        this.totalRecords = this.total;
-
-        if (config.count === undefined) {
-            this.count = this.records.length;
+    applyCount: function(count) {
+        if (!count && count !== 0) {
+            return this.getRecords().length;
         }
+        return count;
+    },
+    
+    /**
+     * @private
+     * Make sure we set the right count when new records have been sent in
+     */
+    updateRecords: function(records) {
+        this.setCount(records.length);
     }
 });

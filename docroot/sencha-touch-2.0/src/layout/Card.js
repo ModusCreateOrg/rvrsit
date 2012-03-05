@@ -1,4 +1,5 @@
 /**
+ * @aside guide layouts
  *
  * Sometimes you want to show several screens worth of information but you've only got a small screen to work with.
  * TabPanels and Carousels both enable you to see one screen of many at a time, and underneath they both use a Card
@@ -33,7 +34,7 @@
  *         ]
  *     });
  *
- *     panel.getLayout().{@link Ext.Container#setActiveItem setActiveItem}(1);
+ *     panel.{@link Ext.Container#setActiveItem setActiveItem}(1);
  *
  * Here we create a Panel with a Card Layout and later set the second item active (the active item index is zero-based,
  * so 1 corresponds to the second item). Normally you're better off using a {@link Ext.tab.Panel tab panel} or a
@@ -46,10 +47,13 @@ Ext.define('Ext.layout.Card', {
     extend: 'Ext.layout.Fit',
     alternateClassName: 'Ext.layout.CardLayout',
 
+    isCard: true,
+
     /**
      * @event activeitemchange
      * @preventable doActiveItemChange
      * Fires when an card is made active
+     * @param {Ext.layout.Card} this The layout instance
      * @param {Mixed} newActiveItem The new active item
      * @param {Mixed} oldActiveItem The old active item
      */
@@ -64,13 +68,9 @@ Ext.define('Ext.layout.Card', {
 
     itemCls: Ext.baseCSSPrefix + 'layout-card-item',
 
-    config: {
-        /**
-         * @cfg {Ext.fx.layout.Card} animation Card animation configuration
-         * Controls how card transitions are animated
-         * @accessor
-         */
-        animation: null
+    constructor: function() {
+        this.callParent(arguments);
+        this.container.onInitialized(this.onContainerInitialized, this);
     },
 
     /**
@@ -97,35 +97,45 @@ Ext.define('Ext.layout.Card', {
      * @private
      */
     doItemAdd: function(item, index) {
-        this.callParent(arguments);
-
         if (item.isInnerItem()) {
             item.hide();
         }
+
+        this.callParent(arguments);
     },
 
     /**
      * @private
      */
-    doItemRemove: function(item) {
+    doItemRemove: function(item, index, destroy) {
         this.callParent(arguments);
 
-        if (item.isInnerItem()) {
+        if (!destroy && item.isInnerItem()) {
             item.show();
         }
     },
 
-    /**
-     * @private
-     */
-    onActiveItemChange: function(newActiveItem, oldActiveItem) {
-        this.fireAction(this.eventNames.activeItemChange, [newActiveItem, oldActiveItem], 'doActiveItemChange');
+    onContainerInitialized: function(container) {
+        var activeItem = container.getActiveItem();
+
+        if (activeItem) {
+            activeItem.show();
+        }
+
+        container.on('activeitemchange', 'onContainerActiveItemChange', this);
     },
 
     /**
      * @private
      */
-    doActiveItemChange: function(newActiveItem, oldActiveItem) {
+    onContainerActiveItemChange: function(container) {
+        this.relayEvent(arguments, 'doActiveItemChange');
+    },
+
+    /**
+     * @private
+     */
+    doActiveItemChange: function(me, newActiveItem, oldActiveItem) {
         if (oldActiveItem) {
             oldActiveItem.hide();
         }
@@ -133,5 +143,18 @@ Ext.define('Ext.layout.Card', {
         if (newActiveItem) {
             newActiveItem.show();
         }
+    },
+
+    doItemDockedChange: function(item, docked) {
+        var element = item.element;
+        // See https://sencha.jira.com/browse/TOUCH-1508
+        if (docked) {
+            element.removeCls(this.itemCls);
+        }
+        else {
+            element.addCls(this.itemCls);
+        }
+
+        this.callParent(arguments);
     }
 });

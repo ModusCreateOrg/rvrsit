@@ -1,6 +1,4 @@
 /**
- * # **Does not work. Coming in a future release.**
- *
  * Provides a cross browser class for retrieving location information.
  *
  * Based on the [Geolocation API Specification](http://dev.w3.org/geo/api/spec-source.html)
@@ -16,11 +14,11 @@
  *
  * The below code shows a GeoLocation making a single retrieval of location information.
  *
- *     var geo = new Ext.util.GeoLocation({
+ *     var geo = Ext.create('Ext.util.Geolocation', {
  *         autoUpdate: false,
  *         listeners: {
  *             locationupdate: function(geo) {
- *                 alert('New latitude: ' + geo.latitude);
+ *                 alert('New latitude: ' + geo.getLatitude());
  *             },
  *             locationerror: function(geo, bTimeout, bPermissionDenied, bLocationUnavailable, message) {
  *                 if(bTimeout){
@@ -33,8 +31,9 @@
  *     });
  *     geo.updateLocation();
  */
-Ext.define('Ext.util.GeoLocation', {
-    extend: 'Ext.EventedBase',
+Ext.define('Ext.util.Geolocation', {
+    extend: 'Ext.Evented',
+    alternateClassName: ['Ext.util.GeoLocation'],
 
     config: {
         /**
@@ -43,9 +42,9 @@ Ext.define('Ext.util.GeoLocation', {
          * In the case of calling updateLocation, this event will be raised only once.<br/>
          * If {@link #autoUpdate} is set to true, this event could be raised repeatedly.
          * The first error is relative to the moment {@link #autoUpdate} was set to true
-         * (or this {@link Ext.util.GeoLocation} was initialized with the {@link #autoUpdate} config option set to true).
+         * (or this {@link Ext.util.Geolocation} was initialized with the {@link #autoUpdate} config option set to true).
          * Subsequent errors are relative to the moment when the device determines that it's position has changed.
-         * @param {Ext.util.GeoLocation} this
+         * @param {Ext.util.Geolocation} this
          * @param {Boolean} timeout
          * Boolean indicating a timeout occurred
          * @param {Boolean} permissionDenied
@@ -63,7 +62,7 @@ Ext.define('Ext.util.GeoLocation', {
         /**
          * @event locationupdate
          * Raised when a location retrieval operation has been completed successfully.
-         * @param {Ext.util.GeoLocation} this
+         * @param {Ext.util.Geolocation} this
          * Retrieve the current location information from the GeoLocation object by using the read-only
          * properties latitude, longitude, accuracy, altitude, altitudeAccuracy, heading, and speed.
          */
@@ -72,9 +71,14 @@ Ext.define('Ext.util.GeoLocation', {
          * @cfg {Boolean} autoUpdate
          * When set to true, continually monitor the location of the device (beginning immediately)
          * and fire {@link #locationupdate}/{@link #locationerror} events.
-         * When using google gears, if the user denies access or another error occurs, this will be reset to false.
          */
         autoUpdate: true,
+
+        /**
+         * @cfg {Number} frequency
+         * The frequency of each update if {@link #autoUpdate} is set to true.
+         */
+        frequency: 10000,
 
         /**
          * Read-only property representing the last retrieved
@@ -166,7 +170,7 @@ Ext.define('Ext.util.GeoLocation', {
          * In the case of calling updateLocation, the {@link #locationerror} event will be raised only once.<br/>
          * If {@link #autoUpdate} is set to true, the {@link #locationerror} event could be raised repeatedly.
          * The first timeout is relative to the moment {@link #autoUpdate} was set to true
-         * (or this {@link Ext.util.GeoLocation} was initialized with the {@link #autoUpdate} config option set to true).
+         * (or this {@link Ext.util.Geolocation} was initialized with the {@link #autoUpdate} config option set to true).
          * Subsequent timeouts are relative to the moment when the device determines that it's position has changed.
          */
 
@@ -186,10 +190,6 @@ Ext.define('Ext.util.GeoLocation', {
 
         // @private
         provider : undefined
-    },
-
-    constructor: function(config) {
-        this.initConfig(config);
     },
 
     updateMaximumAge: function() {
@@ -220,6 +220,9 @@ Ext.define('Ext.util.GeoLocation', {
                     config = google.gears.factory.create('beta.geolocation');
                 }
             }
+        }
+        else {
+            this.fireEvent('locationerror', this, false, false, true, 'This device does not support Geolocation.');
         }
         return config;
     },
@@ -264,11 +267,11 @@ Ext.define('Ext.util.GeoLocation', {
                 Ext.bind(me.fireUpdate, me),
                 Ext.bind(me.fireError, me),
                 me.parseOptions()
-            )
+            );
         }
 
         pollPosition();
-        me.watchOperationId = setInterval(pollPosition, 10000);
+        me.watchOperationId = setInterval(pollPosition, this.getFrequency());
     },
 
     /**
@@ -278,7 +281,7 @@ Ext.define('Ext.util.GeoLocation', {
      * @param {Function} callback
      * A callback method to be called when the location retrieval has been completed.<br/>
      * Will be called on both success and failure.<br/>
-     * The method will be passed one parameter, {@link Ext.util.GeoLocation} (<b>this</b> reference),
+     * The method will be passed one parameter, {@link Ext.util.Geolocation} (<b>this</b> reference),
      * set to null on failure.
      * <pre><code>
      geo.updateLocation(function (geo) {
@@ -337,6 +340,8 @@ Ext.define('Ext.util.GeoLocation', {
         var me = this,
             coords = position.coords;
 
+        this.position = position;
+
         me.setConfig({
             timestamp: position.timestamp,
             latitude: coords.latitude,
@@ -371,7 +376,6 @@ Ext.define('Ext.util.GeoLocation', {
             };
 
         //Google doesn't like Infinity
-        // @TODO: Then what does it like?
         if (timeout !== Infinity) {
             ret.timeout = timeout;
         }

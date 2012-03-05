@@ -12,7 +12,10 @@ Ext.define('Ext.tab.Tab', {
     isTab: true,
 
     config: {
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         baseCls: Ext.baseCSSPrefix + 'tab',
 
         /**
@@ -46,6 +49,27 @@ Ext.define('Ext.tab.Tab', {
         title: '&nbsp;'
     },
 
+    // We need to override this so the iconElement is properly hidden using visibilty
+    // when we render it.
+    template: [
+        {
+            tag: 'span',
+            reference: 'badgeElement',
+            hidden: true
+        },
+        {
+            tag: 'span',
+            className: Ext.baseCSSPrefix + 'button-icon',
+            reference: 'iconElement',
+            style: 'visibility: hidden !important'
+        },
+        {
+            tag: 'span',
+            reference: 'textElement',
+            hidden: true
+        }
+    ],
+
     /**
      * @event activate
      * Fires when a tab is activated
@@ -58,19 +82,25 @@ Ext.define('Ext.tab.Tab', {
      * @param {Ext.tab.Tab} this
      */
 
-     // @inherit
     updateTitle: function(title) {
         this.setText(title);
     },
 
-    // @inherit
-    updateActive: function(active) {
+    hideIconElement: function() {
+        this.iconElement.dom.style.setProperty('visibility', 'hidden', '!important');
+    },
+
+    showIconElement: function() {
+        this.iconElement.dom.style.setProperty('visibility', 'visible', '!important');
+    },
+
+    updateActive: function(active, oldActive) {
         var activeCls = this.getActiveCls();
-        if (active) {
-            this.addCls(activeCls);
+        if (active && !oldActive) {
+            this.element.addCls(activeCls);
             this.fireEvent('activate', this);
-        } else {
-            this.removeCls(activeCls);
+        } else if (oldActive) {
+            this.element.removeCls(activeCls);
             this.fireEvent('deactivate', this);
         }
     }

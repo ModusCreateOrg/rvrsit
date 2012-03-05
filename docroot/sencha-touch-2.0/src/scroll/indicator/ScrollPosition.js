@@ -5,7 +5,7 @@ Ext.define('Ext.scroll.indicator.ScrollPosition', {
     extend: 'Ext.scroll.indicator.Abstract',
 
     config: {
-        ui: 'scrollposition'
+        cls: 'scrollposition'
     },
 
     getElementConfig: function() {

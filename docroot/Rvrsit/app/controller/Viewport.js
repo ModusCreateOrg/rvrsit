@@ -7,23 +7,22 @@ Ext.define('Rvrsit.controller.Viewport', {
             '<b>White: </b> {white}<br />'
         )
     },
-    views  : [
-        'Viewport'
-    ],
     turn   : 'white',
+    config : {
+        views  : [
+            'Viewport'
+        ],
 
-    refs : [
-        {
-            ref      : 'titlebar',
-            selector : '#titlebar'
-        },
-        {
-            ref      : 'viewport',
-            selector : 'othelloviewport',
-            xtype    : 'viewport'
+        refs : {
+            titlebar : {
+                selector : '#titlebar'
+            },
+            viewport : {
+                selector : 'othelloviewport',
+                xtype    : 'viewport'
+            }
         }
-    ],
-
+    },
     init : function() {
 
         var me = this;
@@ -95,7 +94,7 @@ Ext.define('Rvrsit.controller.Viewport', {
         Ext.Msg.alert(
             'Single player mode selected',
             'In single player mode, you will be playing against the computer as the black piece.' +
-                'You are first. Press OK to begin!',
+                ' You are first. Press OK to begin!',
             function() {
                 game.setMode('single');
                 game.newGame();
@@ -121,14 +120,12 @@ Ext.define('Rvrsit.controller.Viewport', {
     },
 
     onAppPlay : function() {
-        var user = this.application.getUser();
-
-        if (!user) {
-            this.getController('Register').showView();
-        }
-        else {
-            this.getController('Waiting').showView();
-        }
+        // TODO: Get multi-player working!
+        this.onAppSinglePlayer();
+//        var user = this.application.getUser(),
+//            controller = ! user ? 'Register' : 'Waiting';
+//
+//        this.getController(controller).showView();
     },
 
     onSoundCycle : function(btn) {
@@ -141,13 +138,18 @@ Ext.define('Rvrsit.controller.Viewport', {
     },
 
     onGameChipFlips : function(data) {
+        // TODO: Get multi-player working!
+
+//        if (this.application.user.name == 'Slave') {
+//            return;
+//        }
 //        console.log('onGameChipFlips', data);
-        this.application.rpc('updateGame', {
-            params : {
-                id       : 1,
-                user     : this.user,
-                chipData : Ext.encode(data)
-            }
-        })
+//        this.application.rpc('updateGame', {
+//            params : {
+//                id       : 1,
+//                user     : Ext.encode(this.user),
+//                chipData : Ext.encode(data)
+//            }
+//        })
     }
 });

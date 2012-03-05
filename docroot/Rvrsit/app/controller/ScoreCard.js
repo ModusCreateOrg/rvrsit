@@ -1,16 +1,17 @@
 Ext.define('Rvrsit.controller.ScoreCard', {
     extend : 'Ext.app.Controller',
 
-    views : [
-        'ScoreCard'
-    ],
+    config : {
+        views : [
+            'ScoreCard'
+        ],
 
-    refs : [
-        {
-            ref      : 'scorecard',
-            selector : '[itemId="scoreCard"]'
+        refs : {
+            scorecard : {
+                selector : '[itemId="scoreCard"]'
+            }
         }
-    ],
+    },
 
     init : function() {
         this.application.on({
@@ -29,6 +30,7 @@ Ext.define('Rvrsit.controller.ScoreCard', {
     onScoreCardPanelPlay : function() {
         this.application.fireEvent('play');
     },
+
     onScoreCardPanelSettings : function() {
         this.application.fireEvent('settings');
     },

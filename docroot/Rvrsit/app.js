@@ -36,57 +36,62 @@
         init        : function() {
             Rvrsit.app = this;
             Rvrsit.heartbeat = new silk.Heartbeat();
+
+            this.on({
+                gameInitialized : this.onGameInitialized,
+                scope : this
+            });
+
         },
         launch      : function() {
-            silk.heartbeat_enabled = false;
 
-//            var n = 0;
-//            Rvrsit.heartbeat.addMethod('echo', {
-//                method   : 'echo',
-//                params   : function() {
-//                    n++;
-//                    return {
-//                        message : 'Hello from client ' + n
-//                    };
-//                },
-//                scope    : this,
-//                callback : function(o) {
-////                    console.log('echo callback executed');
-////                    console.log('Echo', o);
-////                    console.log('this', this)
-//                }
-//            });
 
-//            callbacks have a unique key
-//            they are called after the heartbeat methods are all called
-//            so a method might store to a global variable or add records
-//            to a data store, and the callback can do some sort of update
-//            based on that global/store.  Multiple callbacks might look at
-//            the same global.
-//            Rvrsit.heartbeat.addCallback('echo', function() {
-////                console.log('ech callback ' + n);
-//            });
-
-            this.initHeartBeats();
         },
 
+        onGameInitialized : function(game) {
+            Rvrsit.game = this.game = game;
+            this.initHeartBeats();
+
+        },
         initHeartBeats : function() {
-            var me = this;
-            //            var n = 0;
-//            Rvrsit.heartbeat.addMethod('gameStatus', {
-//                method   : 'gameStatus',
-//                params   : function() {
-//                    return {
-//                        gameId : 'test'
-//                    };
-//                },
-//                scope    : this,
-//                callback : function(o) {
-//                    console.log('gameStatus');
-//                    console.log('Echo', o);
-//                    console.log('this', this)
-//                }
-//            });
+            return;
+            silk.heartbeat_enabled = true;
+            var me = this,
+                game = Rvrsit.game;
+
+            me.user = me.getUser();
+            if (me.user.name == 'Slave') {
+                game.newGame();
+            }
+            if (me.user && ! me.hearbeatInitialized) {
+                console.log('initializing heartbeat for ' + me.user.name)
+                //            var n = 0;
+                Rvrsit.heartbeat.addMethod('gameStatus', {
+                    scope    : this,
+                    method   : 'gameStatus',
+                    params   : function() {
+                        var data = Ext.apply({}, me.user);
+                        data.status = game && game.halt ? 'halt' : 'playing';
+//                        console.log('params', data);
+                        return data;
+                    },
+                    callback : function(turns) {
+                        if (me.user.name == 'Slave') {
+                            console.log('>> gameStatus', turns);
+                            var game = Rvrsit.game;
+                            if (! game) {
+                                return;
+                            }
+                            Ext.each(turns, function(turn) {
+                                console.log(turn.turnColor, turn.chipItemIds);
+                                game.forceFlipChips(turn);
+                            });
+                        }
+                    }
+                });
+
+                me.hearbeatInitialized = false;
+            }
         },
 
         rpc : function(method, config) {
@@ -97,7 +102,6 @@
                 params  : Ext.apply(config.params || {}, { method : method }),
                 success : function(response) {
                     console.log('RPC RESPONSE:', response.responseText);
-                    console.log(arguments);
                     var data = Ext.decode(response.responseText);
                     config.handler && config.handler.call(config.scope || window, data);
                 }

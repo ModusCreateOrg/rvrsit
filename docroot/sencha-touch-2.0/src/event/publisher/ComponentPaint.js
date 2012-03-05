@@ -1,3 +1,6 @@
+/**
+ * @private
+ */
 Ext.define('Ext.event.publisher.ComponentPaint', {
 
     extend: 'Ext.event.publisher.Publisher',
@@ -5,8 +8,6 @@ Ext.define('Ext.event.publisher.ComponentPaint', {
     targetType: 'component',
 
     handledEvents: ['painted', 'erased'],
-
-    idSelectorRegex: /^#([\w\-]+)$/i,
 
     eventNames: {
         painted: 'painted',
@@ -16,7 +17,8 @@ Ext.define('Ext.event.publisher.ComponentPaint', {
     constructor: function() {
         this.callParent(arguments);
 
-        this.subscribers = {};
+        this.hiddenQueue = {};
+        this.renderedQueue = {};
     },
 
     getSubscribers: function(eventName, createIfNotExist) {
@@ -38,62 +40,147 @@ Ext.define('Ext.event.publisher.ComponentPaint', {
     setDispatcher: function(dispatcher) {
         var targetType = this.targetType;
 
-        dispatcher.doAddListener(targetType, '*', 'renderedchange', 'onComponentRenderedChange', this);
-        dispatcher.doAddListener(targetType, '*', 'hiddenchange', 'onComponentHiddenChange', this);
+        dispatcher.doAddListener(targetType, '*', 'renderedchange', 'onBeforeComponentRenderedChange', this, null, 'before');
+        dispatcher.doAddListener(targetType, '*', 'hiddenchange', 'onBeforeComponentHiddenChange', this, null, 'before');
+        dispatcher.doAddListener(targetType, '*', 'renderedchange', 'onComponentRenderedChange', this, null, 'after');
+        dispatcher.doAddListener(targetType, '*', 'hiddenchange', 'onComponentHiddenChange', this, null, 'after');
 
         return this.callParent(arguments);
     },
 
     subscribe: function(target, eventName) {
         var match = target.match(this.idSelectorRegex),
-            subscribers;
+            subscribers,
+            id;
 
         if (!match) {
             return false;
         }
 
+        id = match[1];
+
         subscribers = this.getSubscribers(eventName, true);
-        subscribers[match[1]] = true;
+
+        if (subscribers.hasOwnProperty(id)) {
+            subscribers[id]++;
+            return true;
+        }
+
+        subscribers[id] = 1;
         subscribers.$length++;
 
         return true;
     },
 
-    unsubscribe: function(target, eventName) {
+    unsubscribe: function(target, eventName, all) {
         var match = target.match(this.idSelectorRegex),
-            subscribers;
+            subscribers,
+            id;
 
         if (!match || !(subscribers = this.getSubscribers(eventName))) {
             return false;
         }
 
-        delete subscribers[match[1]];
-        subscribers.$length--;
+        id = match[1];
+
+        if (!subscribers.hasOwnProperty(id) || (!all && --subscribers[id] > 0)) {
+            return true;
+        }
+
+        delete subscribers[id];
+
+        if (--subscribers.$length === 0) {
+            delete this.subscribers[eventName];
+        }
 
         return true;
     },
 
-    onComponentRenderedChange: function(component, rendered) {
+    onBeforeComponentRenderedChange: function(container, component, rendered) {
         var eventNames = this.eventNames,
             eventName = rendered ? eventNames.painted : eventNames.erased,
-            subscribers = this.getSubscribers(eventName);
+            subscribers = this.getSubscribers(eventName),
+            queue;
 
         if (subscribers && subscribers.$length > 0) {
-            this.publish(subscribers, component, eventName);
+            this.renderedQueue[component.getId()] = queue = [];
+            this.publish(subscribers, component, eventName, queue);
         }
     },
 
-    onComponentHiddenChange: function(component, hidden) {
+    onBeforeComponentHiddenChange: function(component, hidden) {
         var eventNames = this.eventNames,
             eventName = hidden ? eventNames.erased : eventNames.painted,
-            subscribers = this.getSubscribers(eventName);
+            subscribers = this.getSubscribers(eventName),
+            queue;
 
         if (subscribers && subscribers.$length > 0) {
-            this.publish(subscribers, component, eventName);
+            this.hiddenQueue[component.getId()] = queue = [];
+            this.publish(subscribers, component, eventName, queue);
         }
     },
 
-    publish: function(subscribers, component, eventName) {
+    onComponentRenderedChange: function(container, component) {
+        var renderedQueue = this.renderedQueue,
+            id = component.getId(),
+            queue;
+
+        if (!renderedQueue.hasOwnProperty(id)) {
+            return;
+        }
+
+        queue = renderedQueue[id];
+        delete renderedQueue[id];
+
+        if (queue.length > 0) {
+            this.dispatchQueue(queue);
+        }
+    },
+
+    onComponentHiddenChange: function(component) {
+        var hiddenQueue = this.hiddenQueue,
+            id = component.getId(),
+            queue;
+
+        if (!hiddenQueue.hasOwnProperty(id)) {
+            return;
+        }
+
+        queue = hiddenQueue[id];
+        delete hiddenQueue[id];
+
+        if (queue.length > 0) {
+            this.dispatchQueue(queue);
+        }
+    },
+
+    dispatchQueue: function(dispatchingQueue) {
+        var dispatcher = this.dispatcher,
+            targetType = this.targetType,
+            eventNames = this.eventNames,
+            queue = dispatchingQueue.slice(),
+            ln = queue.length,
+            i, item, component, eventName, isPainted;
+
+        dispatchingQueue.length = 0;
+
+        if (ln > 0) {
+            for (i = 0; i < ln; i++) {
+                item = queue[i];
+                component = item.component;
+                eventName = item.eventName;
+                isPainted = component.isPainted();
+
+                if ((eventName === eventNames.painted && isPainted) || eventName === eventNames.erased && !isPainted) {
+                    dispatcher.doDispatchEvent(targetType, '#' + item.id, eventName, [component]);
+                }
+            }
+            queue.length = 0;
+        }
+
+    },
+
+    publish: function(subscribers, component, eventName, dispatchingQueue) {
         var id = component.getId(),
             needsDispatching = false,
             eventNames, items, i, ln, isPainted;
@@ -103,7 +190,7 @@ Ext.define('Ext.event.publisher.ComponentPaint', {
 
             isPainted = component.isPainted();
 
-            if ((eventName === eventNames.painted && isPainted) || eventName === eventNames.erased && !isPainted) {
+            if ((eventName === eventNames.painted && !isPainted) || eventName === eventNames.erased && isPainted) {
                 needsDispatching = true;
             }
             else {
@@ -115,15 +202,19 @@ Ext.define('Ext.event.publisher.ComponentPaint', {
             items = component.getItems().items;
 
             for (i = 0,ln = items.length; i < ln; i++) {
-                this.publish(subscribers, items[i], eventName);
+                this.publish(subscribers, items[i], eventName, dispatchingQueue);
             }
         }
         else if (component.isDecorator) {
-            this.publish(subscribers, component.getComponent(), eventName);
+            this.publish(subscribers, component.getComponent(), eventName, dispatchingQueue);
         }
 
         if (needsDispatching) {
-            this.dispatcher.doDispatchEvent(this.targetType, '#' + id, eventName, [component]);
+            dispatchingQueue.push({
+                id: id,
+                eventName: eventName,
+                component: component
+            });
         }
     }
 });

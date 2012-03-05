@@ -1,5 +1,6 @@
 /**
- *
+ * @private
+ * Base class for iOS and Andorid viewports.
  */
 Ext.define('Ext.viewport.Default', {
     extend: 'Ext.Container',
@@ -10,19 +11,27 @@ Ext.define('Ext.viewport.Default', {
 
     LANDSCAPE: 'landscape',
 
+    requires: [
+        'Ext.LoadMask'
+    ],
+
     /**
      * @event ready
-     * Fires when the ViewPort is in the DOM and ready
+     * Fires when the Viewport is in the DOM and ready
+     * @param {Ext.Viewport} this
      */
 
     /**
      * @event maximize
-     * Fires when the ViewPort is maximized
+     * Fires when the Viewport is maximized
+     * @param {Ext.Viewport} this
      */
 
     /**
-     * @event resize
-     * Fires when the ViewPort is resized
+     * @event orientationchange
+     * Fires when the Viewport orientation has changed
+     * @param {Ext.Viewport} this
+     * @param {String} newOrientation The new orientation
      * @param {Number} width The width of the Viewport
      * @param {Number} height The height of the Viewport
      */
@@ -30,11 +39,22 @@ Ext.define('Ext.viewport.Default', {
     config: {
         /**
          * @cfg {Boolean} autoMaximize
-         * Whether or not to always automatically maximize the viewport on
-         * first load and all subsequent orientation changes
+         * Whether or not to always automatically maximize the viewport on first load and all subsequent orientation changes.
+         *
+         * This is set to `false` by default for a number of reasons:
+         *
+         * - Orientation change performance is drastically reduced when this is enabled, on all devices.
+         * - On some devices (mostly Android) this can sometimes cause issues when the default browser zoom setting is changed.
+         * - When wrapping your phone in a native shell, you may get a blank screen.
+         *
          * @accessor
          */
-        autoMaximize: Ext.browser.is.WebView ? false : true,
+        autoMaximize: false,
+
+        /**
+         * @private
+         */
+        autoBlurInput: true,
 
         /**
          * @cfg {Boolean} preventPanning
@@ -45,22 +65,63 @@ Ext.define('Ext.viewport.Default', {
         preventPanning: true,
 
         /**
-         * @cfg {Boolean} preventZooming
-         * Whether or not to always prevent default zooming feature of the
-         * browser's viewport via finger gestures such as pinching and / or double-tapping
-         * @accessor
+         * @cfg
+         * @private
          */
         preventZooming: true,
 
+        /**
+         * @cfg
+         * @private
+         */
         autoRender: true,
 
+        /**
+         * @cfg {Object/String} layout Configuration for this Container's layout. Example:
+         *
+         *    Ext.create('Ext.Container', {
+         *        layout: {
+         *            type: 'hbox',
+         *            align: 'middle'
+         *        },
+         *        items: [
+         *            {
+         *                xtype: 'panel',
+         *                flex: 1,
+         *                style: 'background-color: red;'
+         *            },
+         *            {
+         *                xtype: 'panel',
+         *                flex: 2,
+         *                style: 'background-color: green'
+         *            }
+         *        ]
+         *    });
+         *
+         * See the layouts guide for more information
+         *
+         * Defaults to {@link Ext.layout.Card card}
+         * @accessor
+         */
         layout: 'card',
 
+        /**
+         * @cfg
+         * @private
+         */
         width: '100%',
 
+        /**
+         * @cfg
+         * @private
+         */
         height: '100%'
     },
 
+    /**
+     * @property {Boolean} isReady
+     * True if the DOM is ready
+     */
     isReady: false,
 
     isViewport: true,
@@ -69,7 +130,7 @@ Ext.define('Ext.viewport.Default', {
 
     id: 'ext-viewport',
 
-    isInputRegex: /^(input|textarea|select)$/i,
+    isInputRegex: /^(input|textarea|select|a)$/i,
 
     focusedElement: null,
 
@@ -83,6 +144,7 @@ Ext.define('Ext.viewport.Default', {
 
         this.doPreventPanning = bind(this.doPreventPanning, this);
         this.doPreventZooming = bind(this.doPreventZooming, this);
+        this.doBlurInput = bind(this.doBlurInput, this);
 
         this.maximizeOnEvents = ['ready', 'orientationchange'];
 
@@ -118,7 +180,8 @@ Ext.define('Ext.viewport.Default', {
 
     onDomReady: function() {
         this.isReady = true;
-        this.fireEvent('ready');
+        this.updateSize();
+        this.fireEvent('ready', this);
     },
 
     onReady: function() {
@@ -142,12 +205,12 @@ Ext.define('Ext.viewport.Default', {
                 classList = [],
                 osEnv = Ext.os,
                 osName = osEnv.name.toLowerCase(),
+                browserName = Ext.browser.name.toLowerCase(),
                 osMajorVersion = osEnv.version.getMajor(),
                 orientation = this.getOrientation();
 
             this.renderTo(body);
 
-            //TODO Clean me up, this is not good
             classList.push(clsPrefix + osEnv.deviceType.toLowerCase());
 
             if (osEnv.is.iPad) {
@@ -155,6 +218,7 @@ Ext.define('Ext.viewport.Default', {
             }
 
             classList.push(clsPrefix + osName);
+            classList.push(clsPrefix + browserName);
 
             if (osMajorVersion) {
                 classList.push(clsPrefix + osName + '-' + osMajorVersion);
@@ -172,6 +236,19 @@ Ext.define('Ext.viewport.Default', {
 
             body.addCls(classList);
         }
+    },
+
+    applyAutoBlurInput: function(autoBlurInput) {
+        var touchstart = (Ext.feature.has.Touch) ? 'touchstart' : 'mousedown';
+
+        if (autoBlurInput) {
+            this.addWindowListener(touchstart, this.doBlurInput, false);
+        }
+        else {
+            this.removeWindowListener(touchstart, this.doBlurInput, false);
+        }
+
+        return autoBlurInput;
     },
 
     applyAutoMaximize: function(autoMaximize) {
@@ -199,11 +276,13 @@ Ext.define('Ext.viewport.Default', {
     },
 
     applyPreventZooming: function(preventZooming) {
+        var touchstart = (Ext.feature.has.Touch) ? 'touchstart' : 'mousedown';
+
         if (preventZooming) {
-            this.addWindowListener('touchstart', this.doPreventZooming, false);
+            this.addWindowListener(touchstart, this.doPreventZooming, false);
         }
         else {
-            this.removeWindowListener('touchstart', this.doPreventZooming, false);
+            this.removeWindowListener(touchstart, this.doPreventZooming, false);
         }
 
         return preventZooming;
@@ -223,7 +302,7 @@ Ext.define('Ext.viewport.Default', {
 
             controller.resume();
 
-            this.fireEvent('ready');
+            this.fireEvent('ready', this);
         }, this, { single: true });
 
         this.maximize();
@@ -251,11 +330,26 @@ Ext.define('Ext.viewport.Default', {
         this.maximize();
     },
 
+    doBlurInput: function(e) {
+        var target = e.target,
+            focusedElement = this.focusedElement;
+
+        if (focusedElement && !this.isInputRegex.test(target.tagName)) {
+            delete this.focusedElement;
+            focusedElement.blur();
+        }
+    },
+
     doPreventPanning: function(e) {
         e.preventDefault();
     },
 
     doPreventZooming: function(e) {
+        // Don't prevent right mouse event
+        if ('button' in e && e.button !== 0) {
+            return;
+        }
+
         var target = e.target;
 
         if (target && target.nodeType === 1 && !this.isInputRegex.test(target.tagName)) {
@@ -264,11 +358,11 @@ Ext.define('Ext.viewport.Default', {
     },
 
     addWindowListener: function(eventName, fn, capturing) {
-        window.addEventListener(eventName, fn, capturing);
+        window.addEventListener(eventName, fn, Boolean(capturing));
     },
 
     removeWindowListener: function(eventName, fn, capturing) {
-        window.removeEventListener(eventName, fn, capturing);
+        window.removeEventListener(eventName, fn, Boolean(capturing));
     },
 
     doAddListener: function(eventName, fn, scope, options) {
@@ -292,18 +386,9 @@ Ext.define('Ext.viewport.Default', {
             currentOrientation = this.getOrientation(),
             newOrientation = this.determineOrientation();
 
-        if (oldWidth !== width || oldHeight !== height) {
-            this.fireResizeEvent(width, height);
-
-            if (currentOrientation !== newOrientation) {
-                this.fireOrientationChangeEvent(newOrientation, currentOrientation);
-            }
+        if ((oldWidth !== width || oldHeight !== height) && currentOrientation !== newOrientation) {
+            this.fireOrientationChangeEvent(newOrientation, currentOrientation);
         }
-    },
-
-    fireResizeEvent: function(width, height) {
-        this.updateSize(width, height);
-        this.fireEvent('resize', width, height);
     },
 
     onOrientationChange: function() {
@@ -312,7 +397,6 @@ Ext.define('Ext.viewport.Default', {
 
         if (newOrientation !== currentOrientation) {
             this.fireOrientationChangeEvent(newOrientation, currentOrientation);
-            this.fireResizeEvent(this.windowWidth, this.windowHeight);
         }
     },
 
@@ -323,7 +407,7 @@ Ext.define('Ext.viewport.Default', {
         this.orientation = newOrientation;
 
         this.updateSize();
-        this.fireEvent('orientationchange', newOrientation, this.windowWidth, this.windowHeight);
+        this.fireEvent('orientationchange', this, newOrientation, this.windowWidth, this.windowHeight);
     },
 
     updateSize: function(width, height) {
@@ -372,7 +456,7 @@ Ext.define('Ext.viewport.Default', {
 
     fireMaximizeEvent: function() {
         this.updateSize();
-        this.fireEvent('maximize');
+        this.fireEvent('maximize', this);
     },
 
     doSetHeight: function(height) {
@@ -391,10 +475,18 @@ Ext.define('Ext.viewport.Default', {
         window.scrollTo(0, -1);
     },
 
+    /**
+     * Retrieves the document width.
+     * @return {Number} width in pixels.
+     */
     getWindowWidth: function() {
         return window.innerWidth;
     },
 
+    /**
+     * Retrieves the document height.
+     * @return {Number} height in pixels.
+     */
     getWindowHeight: function() {
         return window.innerHeight;
     },
@@ -407,6 +499,10 @@ Ext.define('Ext.viewport.Default', {
         return window.orientation;
     },
 
+    /**
+     * Returns the current orientation.
+     * @return {String} `portrait` or `landscape`
+     */
     getOrientation: function() {
         return this.orientation;
     },
@@ -441,33 +537,5 @@ Ext.define('Ext.viewport.Default', {
     onItemFullscreenChange: function(item) {
         item.addCls(this.fullscreenItemCls);
         this.add(item);
-    },
-    
-    keyboardHideField: null,
-
-    hideKeyboard: function() {
-        var me = this;
-
-        if (Ext.os.is.iOS) {
-            document.activeElement.blur();
-            
-            setTimeout(function() {
-                Ext.Viewport.scrollToTop();
-            }, 50);
-        } else {
-            if (!me.keyboardHideField) {
-                me.keyboardHideField = document.createElement('input');
-                me.keyboardHideField.setAttribute('type', 'text');
-                me.keyboardHideField.setAttribute('style', 'position:absolute;top:-1000px');
-                document.body.appendChild(me.keyboardHideField);
-            }
-
-            setTimeout(function() {
-                me.keyboardHideField.focus();
-                setTimeout(function() {
-                    me.keyboardHideField.setAttribute('style', 'display:none;');
-                }, 50);
-            }, 50);
-        }
     }
 });

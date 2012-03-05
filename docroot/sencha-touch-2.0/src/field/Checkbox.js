@@ -1,65 +1,69 @@
 /**
-The checkbox field is an enhanced version of the native browser checkbox and is great for enabling your user to
-choose one or more items from a set (for example choosing toppings for a pizza order). It works like any other
-{@link Ext.field.Field field} and is usually found in the context of a form:
-
-## Example
-
-    @example preview
-    var form = Ext.create('Ext.form.Panel', {
-        fullscreen: true,
-        items: [
-            {
-                xtype: 'checkboxfield',
-                name : 'tomato',
-                label: 'Tomato',
-                value: 'tomato',
-                checked: true
-            },
-            {
-                xtype: 'checkboxfield',
-                name : 'salami',
-                label: 'Salami'
-            },
-            {
-                xtype: 'toolbar',
-                docked: 'bottom',
-                items: [
-                    { xtype: 'spacer' },
-                    {
-                        text: 'getValues',
-                        handler: function() {
-                            var form = Ext.ComponentQuery.query('formpanel')[0],
-                                values = form.getValues();
-
-                            Ext.Msg.alert(null,
-                                "Tomato: " + ((values.tomato) ? "yes" : "no")
-                                + "<br />Salami: " + ((values.salami) ? "yes" : "no")
-                            );
-                        }
-                    },
-                    { xtype: 'spacer' }
-                ]
-            }
-        ]
-    });
-
-
-The form above contains two check boxes - one for Tomato, one for Salami. We configured the Tomato checkbox to be
-checked immediately on load, and the Salami checkbox to be unchecked. We also specified an optional text
-{@link #value} that will be sent when we submit the form. We can get this value using the Form's
-{@link Ext.form.Panel#getValues getValues} function, or have it sent as part of the data that is sent when the
-form is submitted:
-
-    form.getValues(); //contains a key called 'tomato' if the Tomato field is still checked
-    form.submit(); //will send 'tomato' in the form submission data
-
+ * @aside guide forms
+ *
+ * The checkbox field is an enhanced version of the native browser checkbox and is great for enabling your user to
+ * choose one or more items from a set (for example choosing toppings for a pizza order). It works like any other
+ * {@link Ext.field.Field field} and is usually found in the context of a form:
+ *
+ * ## Example
+ *
+ *     @example miniphone preview
+ *     var form = Ext.create('Ext.form.Panel', {
+ *         fullscreen: true,
+ *         items: [
+ *             {
+ *                 xtype: 'checkboxfield',
+ *                 name : 'tomato',
+ *                 label: 'Tomato',
+ *                 value: 'tomato',
+ *                 checked: true
+ *             },
+ *             {
+ *                 xtype: 'checkboxfield',
+ *                 name : 'salami',
+ *                 label: 'Salami'
+ *             },
+ *             {
+ *                 xtype: 'toolbar',
+ *                 docked: 'bottom',
+ *                 items: [
+ *                     { xtype: 'spacer' },
+ *                     {
+ *                         text: 'getValues',
+ *                         handler: function() {
+ *                             var form = Ext.ComponentQuery.query('formpanel')[0],
+ *                                 values = form.getValues();
+ *
+ *                             Ext.Msg.alert(null,
+ *                                 "Tomato: " + ((values.tomato) ? "yes" : "no")
+ *                                 + "<br />Salami: " + ((values.salami) ? "yes" : "no")
+ *                             );
+ *                         }
+ *                     },
+ *                     { xtype: 'spacer' }
+ *                 ]
+ *             }
+ *         ]
+ *     });
+ *
+ *
+ * The form above contains two check boxes - one for Tomato, one for Salami. We configured the Tomato checkbox to be
+ * checked immediately on load, and the Salami checkbox to be unchecked. We also specified an optional text
+ * {@link #value} that will be sent when we submit the form. We can get this value using the Form's
+ * {@link Ext.form.Panel#getValues getValues} function, or have it sent as part of the data that is sent when the
+ * form is submitted:
+ *
+ *     form.getValues(); //contains a key called 'tomato' if the Tomato field is still checked
+ *     form.submit(); //will send 'tomato' in the form submission data
+ *
  */
 Ext.define('Ext.field.Checkbox', {
     extend: 'Ext.field.Field',
     alternateClassName: 'Ext.form.Checkbox',
 
     xtype: 'checkboxfield',
+    qsaLeftRe: /[\[]/g,
+    qsaRightRe: /[\]]/g,
 
     isCheckbox: true,
 
@@ -78,7 +82,10 @@ Ext.define('Ext.field.Checkbox', {
      */
 
     config: {
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         ui: 'checkbox',
 
         /**
@@ -99,7 +106,10 @@ Ext.define('Ext.field.Checkbox', {
          */
         tabIndex: -1,
 
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         component: {
             xtype   : 'input',
             type    : 'checkbox',
@@ -116,6 +126,7 @@ Ext.define('Ext.field.Checkbox', {
 
         me.getComponent().on({
             scope: me,
+            order: 'before',
             masktap: 'onMaskTap'
         });
     },
@@ -158,12 +169,8 @@ Ext.define('Ext.field.Checkbox', {
      * @return {Mixed} The field value
      */
     getChecked: function() {
-        var component = this.getComponent();
-
         // we need to get the latest value from the {@link #input} and then update the value
-        var checked = component.getChecked();
-        this._checked = checked;
-
+        this._checked = this.getComponent().getChecked();
         return this._checked;
     },
 
@@ -171,31 +178,34 @@ Ext.define('Ext.field.Checkbox', {
         return this.getChecked();
     },
 
-    setValue: function(value) {
-        return this.setChecked(value);
+    /**
+     * Returns the submit value for the checkbox which can be used when submitting forms.
+     * @return {Boolean/String} value The value of {@link #value} or true, if {@link #checked}.
+     */
+    getSubmitValue: function() {
+        return (this.getChecked()) ? this._value || true : false;
     },
 
     setChecked: function(newChecked) {
-        this.getChecked(); //we do this to sync the input field and field values
         this.updateChecked(newChecked);
         this._checked = newChecked;
     },
 
     updateChecked: function(newChecked) {
-        var component = this.getComponent();
-        component.setChecked(newChecked);
+        this.getComponent().setChecked(newChecked);
     },
 
     // @private
     onMaskTap: function(component, e) {
-        var me = this;
+        var me = this,
+            dom = component.input.dom;
 
         if (me.getDisabled()) {
             return false;
         }
 
         //we must manually update the input dom with the new checked value
-        component.input.dom.checked = !component.input.dom.checked;
+        dom.checked = !dom.checked;
 
         //continue as normal, like a normal tap
         // this.onTap(component, e);
@@ -249,13 +259,32 @@ Ext.define('Ext.field.Checkbox', {
     },
 
     getSameGroupFields: function() {
-        var component = this.up('formpanel') || this.up('fieldset');
+        var component = this.up('formpanel') || this.up('fieldset'),
+            name = this.getName(),
+            replaceLeft = this.qsaLeftRe,
+            replaceRight = this.qsaRightRe,
+            components = [],
+            elements, element, i, ln;
+
 
         if (!component) {
             return null;
         }
 
-        return component.query('[name=' + this.getName() + ']');
+        // This is to handle ComponentQuery's lack of handling [name=foo[bar]] properly
+        name = name.replace(replaceLeft, '\\[');
+        name = name.replace(replaceRight, '\\]');
+
+        elements = Ext.query('[name=' + name + ']', component.element.dom);
+        ln = elements.length;
+        for (i = 0; i < ln; i++) {
+            element = elements[i];
+            element = Ext.fly(element).up('.x-field-' + element.getAttribute('type'));
+            if (element && element.id) {
+                components.push(Ext.getCmp(element.id));
+            }
+        }
+        return components;
     },
 
     /**
@@ -289,7 +318,6 @@ Ext.define('Ext.field.Checkbox', {
 
     /**
      * Resets the status of all matched checkboxes in the same group to checked
-     * @param {Array} values An array of values
      * @return {Ext.field.Checkbox} This checkbox
      */
     resetGroupValues: function() {
@@ -300,9 +328,8 @@ Ext.define('Ext.field.Checkbox', {
         return this;
     },
 
-    // @inherit
     reset: function() {
-        this.callParent(arguments);
-        this.resetGroupValues();
+        this.setChecked(this.originalState);
+        return this;
     }
 });

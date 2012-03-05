@@ -1,12 +1,17 @@
 /**
+ * @aside guide forms
+ *
  * Wraps an HTML5 number field. Example usage:
  *
- *     new Ext.field.Spinner({
+ *     @example miniphone
+ *     var spinner = Ext.create('Ext.field.Spinner', {
+ *         label: 'Spinner Field',
  *         minValue: 0,
  *         maxValue: 100,
- *         incrementValue: 2,
+ *         increment: 2,
  *         cycle: true
  *     });
+ *     Ext.Viewport.add(spinner);
  *
  */
 Ext.define('Ext.field.Spinner', {
@@ -22,12 +27,14 @@ Ext.define('Ext.field.Spinner', {
      * @param {Number} value
      * @param {String} direction 'up' or 'down'
      */
+
     /**
      * @event spindown
      * Fires when the value is changed via the spinner down button
      * @param {Ext.field.Spinner} this
      * @param {Number} value
      */
+
     /**
      * @event spinup
      * Fires when the value is changed via the spinner up button
@@ -35,8 +42,26 @@ Ext.define('Ext.field.Spinner', {
      * @param {Number} value
      */
 
+    /**
+     * @event change
+     * @hide
+     */
+
+    /**
+     * @event updatedata
+     * @hide
+     */
+
+    /**
+     * @event action
+     * @hide
+     */
+
     config: {
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         cls: Ext.baseCSSPrefix + 'spinner',
 
         /**
@@ -44,6 +69,7 @@ Ext.define('Ext.field.Spinner', {
          * @accessor
          */
         minValue: Number.NEGATIVE_INFINITY,
+
         /**
          * @cfg {Number} [maxValue=infinity] The maximum allowed value.
          * @accessor
@@ -54,7 +80,7 @@ Ext.define('Ext.field.Spinner', {
          * @cfg {Number} increment Value that is added or subtracted from the current value when a spinner is used.
          * @accessor
          */
-        increment: .1,
+        increment: 0.1,
 
         /**
          * @cfg {Boolean} accelerateOnTapHold True if autorepeating should start slowly and accelerate.
@@ -76,13 +102,31 @@ Ext.define('Ext.field.Spinner', {
          */
         clearIcon: false,
 
+        /**
+         * @cfg {Number} defaultValue The default value for this field when no value has been set. It is also used when
+         *                            the value is set to `NaN`.
+         */
         defaultValue: 0,
 
         /**
          * @cfg {Number} tabIndex
          * @hide
          */
-        tabIndex: -1
+        tabIndex: -1,
+
+        /**
+         * @cfg {Boolean} groupButtons
+         * True if you want to group the buttons to the right of the fields. False if you want the buttons to be at either side of the field.
+         */
+        groupButtons: true,
+
+        /**
+         * @cfg
+         * @inheritdoc
+         */
+        component: {
+            disabled: true
+        }
     },
 
     constructor: function() {
@@ -93,23 +137,24 @@ Ext.define('Ext.field.Spinner', {
         }
     },
 
+    syncEmptyCls: Ext.emptyFn,
+
     /**
      * Updates the {@link #component} configuration
      */
     updateComponent: function(newComponent) {
         this.callParent(arguments);
 
-        var cls = this.getCls();
+        var innerElement = this.innerElement,
+            cls = this.getCls();
 
         if (newComponent) {
-            this.spinDownButton = newComponent.element.createChild({
+            this.spinDownButton = Ext.Element.create({
                 cls : cls + '-button ' + cls + '-button-down',
                 html: '-'
             });
 
-            newComponent.element.insertFirst(this.spinDownButton);
-
-            this.spinUpButton = newComponent.element.createChild({
+            this.spinUpButton = Ext.Element.create({
                 cls : cls + '-button ' + cls + '-button-up',
                 html: '+'
             });
@@ -119,10 +164,29 @@ Ext.define('Ext.field.Spinner', {
         }
     },
 
-    // @inherit
+    updateGroupButtons: function(newGroupButtons, oldGroupButtons) {
+        var me = this,
+            innerElement = me.innerElement,
+            cls = me.getBaseCls() + '-grouped-buttons';
+
+        me.getComponent();
+
+        if (newGroupButtons != oldGroupButtons) {
+            if (newGroupButtons) {
+                this.addCls(cls);
+                innerElement.appendChild(me.spinDownButton);
+                innerElement.appendChild(me.spinUpButton);
+            } else {
+                this.removeCls(cls);
+                innerElement.insertFirst(me.spinDownButton);
+                innerElement.appendChild(me.spinUpButton);
+            }
+        }
+    },
+
     applyValue: function(value) {
         value = parseFloat(value);
-        if (isNaN(value)) {
+        if (isNaN(value) || value === null) {
             value = this.getDefaultValue();
         }
 
@@ -179,22 +243,50 @@ Ext.define('Ext.field.Spinner', {
     // @private
     spin: function(down) {
         var me = this,
-            value = me.getValue(),
+            originalValue = me.getValue(),
             increment = me.getIncrement(),
-            direction = down ? 'down' : 'up';
+            direction = down ? 'down' : 'up',
+            minValue = me.getMinValue(),
+            maxValue = me.getMaxValue(),
+            value;
 
         if (down) {
-            value -= increment;
+            value = originalValue - increment;
         }
         else {
-            value += increment;
+            value = originalValue + increment;
+        }
+
+        //if cycle is true, then we need to check fi the value hasn't changed and we cycle the value
+        if (me.getCycle()) {
+            if (originalValue == minValue && value < minValue) {
+                value = maxValue;
+            }
+
+            if (originalValue == maxValue && value > maxValue) {
+                value = minValue;
+            }
         }
 
         me.setValue(value);
-        value = me._value;
+        value = me.getValue();
 
         me.fireEvent('spin', me, value, direction);
         me.fireEvent('spin' + direction, me, value);
+    },
+
+    /**
+     * @private
+     */
+    doSetDisabled: function(disabled) {
+        Ext.Component.prototype.doSetDisabled.apply(this, arguments);
+    },
+
+    /**
+     * @private
+     */
+    setDisabled: function() {
+        Ext.Component.prototype.setDisabled.apply(this, arguments);
     },
 
     reset: function() {
@@ -204,9 +296,30 @@ Ext.define('Ext.field.Spinner', {
     // @private
     destroy: function() {
         var me = this;
-        Ext.destroy(me.downRepeater, me.upRepeater);
+        Ext.destroy(me.downRepeater, me.upRepeater, me.spinDownButton, me.spinUpButton);
         me.callParent(arguments);
     }
 }, function() {
-    //incrementValue
+    //<deprecated product=touch since=2.0>
+    this.override({
+        constructor: function(config) {
+            if (config) {
+                /**
+                 * @cfg {String} incrementValue
+                 * The increment value of this spinner field.
+                 * @deprecated 2.0.0 Please use {@link #increment} instead
+                 */
+                if (config.hasOwnProperty('incrementValue')) {
+                    //<debug warn>
+                    Ext.Logger.deprecate("'incrementValue' config is deprecated, please use 'increment' config instead", this);
+                    //</debug>
+                    config.increment = config.incrementValue;
+                    delete config.incrementValue;
+                }
+            }
+
+            this.callParent([config]);
+        }
+    });
+    //</deprecated>
 });

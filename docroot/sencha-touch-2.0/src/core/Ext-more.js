@@ -28,7 +28,7 @@
  *
  * [getting_started]: #!/guide/getting_started
  */
-Ext.setVersion('touch', '2.0.0.pr3');
+Ext.setVersion('touch', '2.0.0');
 
 Ext.apply(Ext, {
     /**
@@ -50,7 +50,7 @@ Ext.apply(Ext, {
             cls: Ext.baseCSSPrefix + 'mask ' + Ext.baseCSSPrefix + 'mask-transparent'
         });
         setTimeout(function() {
-            mask.remove();
+            mask.destroy();
         }, 0);
     },
 
@@ -134,28 +134,61 @@ Ext.apply(Ext, {
     },
 
     /**
+     * Copies a set of named properties fom the source object to the destination object.
+     *
+     * Example:
+     *
+     *     ImageComponent = Ext.extend(Ext.Component, {
+     *         initComponent: function() {
+     *             this.autoEl = { tag: 'img' };
+     *             MyComponent.superclass.initComponent.apply(this, arguments);
+     *             this.initialBox = Ext.copyTo({}, this.initialConfig, 'x,y,width,height');
+     *         }
+     *     });
+     *
+     * Important note: To borrow class prototype methods, use {@link Ext.Base#borrow} instead.
+     *
+     * @param {Object} dest The destination object.
+     * @param {Object} source The source object.
+     * @param {String/String[]} names Either an Array of property names, or a comma-delimited list
+     * of property names to copy.
+     * @param {Boolean} usePrototypeKeys (Optional) Defaults to false. Pass true to copy keys off of the prototype as well as the instance.
+     * @return {Object} The modified object.
+     */
+    copyTo : function(dest, source, names, usePrototypeKeys) {
+        if (typeof names == 'string') {
+            names = names.split(/[,;\s]/);
+        }
+        Ext.each (names, function(name) {
+            if (usePrototypeKeys || source.hasOwnProperty(name)) {
+                dest[name] = source[name];
+            }
+        }, this);
+        return dest;
+    },
+
+    /**
      * Attempts to destroy any objects passed to it by removing all event listeners, removing them from the
      * DOM (if applicable) and calling their destroy functions (if available).  This method is primarily
-     * intended for arguments of type {@link Ext.Element} and {@link Ext.Component}, but any subclass of
-     * {@link Ext.util.Observable} can be passed in.  Any number of elements and/or components can be
-     * passed into this function in a single call as separate arguments.
+     * intended for arguments of type {@link Ext.Element} and {@link Ext.Component}.
+     * Any number of elements and/or components can be passed into this function in a single
+     * call as separate arguments.
      * @param {Mixed...} args An {@link Ext.Element}, {@link Ext.Component}, or an Array of either of these to destroy
      */
     destroy: function() {
-        var ln = arguments.length,
-            i, arg;
+        var args = arguments,
+            ln = args.length,
+            i, item;
 
         for (i = 0; i < ln; i++) {
-            arg = arguments[i];
-            if (arg) {
-                if (Ext.isArray(arg)) {
-                    this.destroy.apply(this, arg);
+            item = args[i];
+
+            if (item) {
+                if (Ext.isArray(item)) {
+                    this.destroy.apply(this, item);
                 }
-                else if (Ext.isFunction(arg.destroy)) {
-                    arg.destroy();
-                }
-                else if (arg.dom) {
-                    arg.remove();
+                else if (Ext.isFunction(item.destroy)) {
+                    item.destroy();
                 }
             }
         }
@@ -203,6 +236,9 @@ function(el){
         }
     },
 
+    /**
+     * @private
+     */
     defaultSetupConfig: {
         eventPublishers: {
             dom: {
@@ -239,6 +275,9 @@ function(el){
             },
             componentPaint: {
                 xclass: 'Ext.event.publisher.ComponentPaint'
+            },
+            componentSize: {
+                xclass: 'Ext.event.publisher.ComponentSize'
             }
         },
 
@@ -268,11 +307,30 @@ function(el){
         }
     },
 
-    //<feature logger>
-    log: function(msg) {
-        return Ext.Logger.log(msg);
+    /**
+     * @private
+     */
+    isSetup: false,
+
+    /**
+     * @private
+     */
+    setupListeners: [],
+
+    /**
+     * @private
+     */
+    onSetup: function(fn, scope) {
+        if (Ext.isSetup) {
+            fn.call(scope);
+        }
+        else {
+            Ext.setupListeners.push({
+                fn: fn,
+                scope: scope
+            });
+        }
     },
-    //</feature>
 
     /**
      * Ext.setup is used to launch a basic application. It handles creating an {@link Ext.Viewport} instance for you.
@@ -311,6 +369,53 @@ function(el){
      *             });
      *         }
      *     });
+     *
+     * @param {String/Object} config.icon
+     * A icon configuration for this application. This will only apply to iOS applications which are saved to the homescreen.
+     *
+     * You can either pass a string which will be applied to all different sizes:
+     *
+     *     Ext.setup({
+     *         icon: 'icon.png',
+     *         onReady: function() {
+     *             console.log('Launch...');
+     *         }
+     *     });
+     *
+     * Or an object which has a location for different sizes:
+     *
+     *     Ext.setup({
+     *         icon: {
+     *             '57': 'icon57.png',
+     *             '77': 'icon77.png',
+     *             '114': 'icon114.png'
+     *         },
+     *         onReady: function() {
+     *             console.log('Launch...');
+     *         }
+     *     });
+     *
+     * @param {String} config.icon.57 The icon to be used on non-retna display devices (iPhone 3GS and below).
+     * @param {String} config.icon.77 The icon to be used on the iPad.
+     * @param {String} config.icon.114 The icon to be used on retna display devices (iPhone 4 and above).
+     *
+     * @param {Boolean} glossOnIcon
+     * True to add a gloss effect to the icon.
+     *
+     * @param {String} phoneStartupScreen
+     * Sets the apple-touch-icon `<meta>` tag so your home screen application can have a startup screen on phones.
+     * Please look here for more information: http://developer.apple.com/library/IOs/#documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html
+     *
+     * @param {String} tabletStartupScreen
+     * Sets the apple-touch-icon `<meta>` tag so your home screen application can have a startup screen on tablets.
+     * Please look here for more information: http://developer.apple.com/library/IOs/#documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html
+     *
+     * @param {String} statusBarStyle
+     * The style of status bar to be shown on applications added to the iOS homescreen. Valid options are:
+     *
+     * * `default`
+     * * `black`
+     * * `black-translucent`
      *
      * @param {String[]} config.requires
      * An array of required classes for your application which will be automatically loaded if {@link Ext.Loader#enabled} is set
@@ -364,11 +469,14 @@ function(el){
      */
     setup: function(config) {
         var defaultSetupConfig = Ext.defaultSetupConfig,
-            onReady = config.onReady || Ext.emptyFn,
+            emptyFn = Ext.emptyFn,
+            onReady = config.onReady || emptyFn,
+            onUpdated = config.onUpdated || emptyFn,
             scope = config.scope,
             requires = Ext.Array.from(config.requires),
             extOnReady = Ext.onReady,
-            callback, viewport;
+            icon = config.icon,
+            callback, viewport, precomposed;
 
         Ext.setup = function() {
             throw new Error("Ext.setup has already been called before");
@@ -376,30 +484,41 @@ function(el){
 
         delete config.requires;
         delete config.onReady;
+        delete config.onUpdated;
         delete config.scope;
 
-        requires.push('Ext.event.Dispatcher');
-        requires.push('Ext.dom.CompositeElementLite'); // this is so Ext.select exists
-
-        Ext.require(requires);
+        Ext.require(['Ext.event.Dispatcher', 'Ext.MessageBox']);
 
         callback = function() {
+            var listeners = Ext.setupListeners,
+                ln = listeners.length,
+                i, listener;
+
+            delete Ext.setupListeners;
+            Ext.isSetup = true;
+
+            for (i = 0; i < ln; i++) {
+                listener = listeners[i];
+                listener.fn.call(listener.scope);
+            }
+
             Ext.onReady = extOnReady;
             Ext.onReady(onReady, scope);
         };
 
+        Ext.onUpdated = onUpdated;
         Ext.onReady = function(fn, scope) {
             var origin = onReady;
 
             onReady = function() {
                 origin();
                 Ext.onReady(fn, scope);
-            }
+            };
         };
 
         config = Ext.merge({}, defaultSetupConfig, config);
 
-        Ext.onDocumentReady(function(){
+        Ext.onDocumentReady(function() {
             Ext.factoryConfig(config, function(data) {
                 Ext.event.Dispatcher.getInstance().setPublishers(data.eventPublishers);
 
@@ -414,37 +533,99 @@ function(el){
                 if (data.viewport) {
                     Ext.Viewport = viewport = data.viewport;
 
-                    //<deprecated product=touch since=2.0>
-                    Ext.getOrientation = function() {
-                        //<debug warn>
-                        Ext.Logger.deprecate("Ext.getOrientation() is deprecated, use Ext.Viewport.getOrientation() instead", 2);
-                        //</debug>
-                        return viewport.getOrientation();
-                    };
-                    //</deprecated>
+                    if (!scope) {
+                        scope = viewport;
+                    }
 
-                    Ext.Viewport.on('ready', callback, null, {single: true});
+                    Ext.require(requires, function() {
+                        Ext.Viewport.on('ready', callback, null, {single: true});
+                    });
                 }
                 else {
-                    callback();
+                    Ext.require(requires, callback);
                 }
             });
         });
 
-        if (!document.body) {
-            // Inject meta viewport tag
-            document.write(
-                '<meta id="extViewportMeta" ' +
-                       'name="viewport" ' +
-                       'content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />');
-            document.write(
-                '<meta name="apple-mobile-web-app-capable" content="yes">');
-            document.write(
-                '<meta name="apple-touch-fullscreen" content="yes">');
+        function addMeta(name, content) {
+            var meta = document.createElement('meta');
+            meta.setAttribute('name', name);
+            meta.setAttribute('content', content);
+            Ext.getHead().append(meta);
+        }
+
+        function addLink(rel, href, sizes) {
+            var link = document.createElement('link');
+            link.setAttribute('rel', rel);
+            link.setAttribute('href', href);
+            if (sizes) {
+                link.setAttribute('sizes', sizes);
+            }
+            Ext.getHead().append(link);
+        }
+
+        var phoneIcon = config.phoneIcon,
+            tabletIcon = config.tabletIcon,
+            tabletStartupScreen = config.tabletStartupScreen,
+            statusBarStyle = config.statusBarStyle,
+            phoneStartupScreen = config.phoneStartupScreen,
+            isIpad = Ext.os.is.iPad,
+            retina = window.devicePixelRatio > 1;
+
+        addMeta('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no');
+        addMeta('apple-mobile-web-app-capable', 'yes');
+        addMeta('apple-touch-fullscreen', 'yes');
+
+        //status bar style
+        if (Ext.isString(statusBarStyle)) {
+            addMeta('apple-mobile-web-app-status-bar-style', 'statusBarStyle');
+        }
+
+        //startup screens
+        if (tabletStartupScreen && isIpad) {
+            addLink('apple-touch-startup-image', tabletStartupScreen);
+        }
+
+        if (phoneStartupScreen && !isIpad) {
+            addLink('apple-touch-startup-image', phoneStartupScreen);
+        }
+
+        // icon
+        if (Ext.isString(icon) || Ext.isString(phoneIcon) || Ext.isString(tabletIcon)) {
+            icon = {
+                '57': phoneIcon || tabletIcon || icon,
+                '72': tabletIcon || phoneIcon || icon,
+                '114': phoneIcon || tabletIcon || icon
+            };
+        }
+
+        precomposed = (config.glossOnIcon === false) ? '-precomposed' : '';
+
+        if (icon) {
+            var icon57 = icon['57'],
+                icon72 = icon['72'],
+                icon114 = icon['114'],
+                iconString = 'apple-touch-icon' + precomposed;
+
+            // If we are on an iPad and we have a 72px icon defined, use it
+            if (isIpad && (icon72 || icon57 || icon114)) {
+                addLink(iconString, icon72 || icon114 || icon57, '72x72');
+            } else {
+                if (retina && (icon72 || icon114)) {
+                    // Other wise, check if we are a retina device and we have a 114 icon
+                    addLink(iconString, icon114 || icon72, '114x114');
+                } else {
+                    // And resort to the default 57px icon
+                    addLink(iconString, icon57);
+                }
+            }
         }
     },
 
     /**
+     * @member Ext
+     * @method application
+     *
      * Loads Ext.app.Application class and starts it up with given configuration after the page is ready.
      *
      *     Ext.application({
@@ -481,6 +662,53 @@ function(el){
      *             });
      *         }
      *     });
+     *
+     * @param {String/Object} config.icon
+     * A icon configuration for this application. This will only apply to iOS applications which are saved to the homescreen.
+     *
+     * You can either pass a string which will be applied to all different sizes:
+     *
+     *     Ext.setup({
+     *         icon: 'icon.png',
+     *         onReady: function() {
+     *             console.log('Launch...');
+     *         }
+     *     });
+     *
+     * Or an object which has a location for different sizes:
+     *
+     *     Ext.setup({
+     *         icon: {
+     *             '57': 'icon57.png',
+     *             '77': 'icon77.png',
+     *             '114': 'icon114.png'
+     *         },
+     *         onReady: function() {
+     *             console.log('Launch...');
+     *         }
+     *     });
+     *
+     * @param {String} config.icon.57 The icon to be used on non-retna display devices (iPhone 3GS and below).
+     * @param {String} config.icon.77 The icon to be used on the iPad.
+     * @param {String} config.icon.114 The icon to be used on retna display devices (iPhone 4 and above).
+     *
+     * @param {Boolean} glossOnIcon
+     * True to add a gloss effect to the icon.
+     *
+     * @param {String} phoneStartupScreen
+     * Sets the apple-touch-icon `<meta>` tag so your home screen application can have a startup screen on phones.
+     * Please look here for more information: http://developer.apple.com/library/IOs/#documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html
+     *
+     * @param {String} tabletStartupScreen
+     * Sets the apple-touch-icon `<meta>` tag so your home screen application can have a startup screen on tablets.
+     * Please look here for more information: http://developer.apple.com/library/IOs/#documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html
+     *
+     * @param {String} statusBarStyle
+     * The style of status bar to be shown on applications added to the iOS homescreen. Valid options are:
+     *
+     * * `default`
+     * * `black`
+     * * `black-translucent`
      *
      * @param {String[]} config.requires
      * An array of required classes for your application which will be automatically loaded if {@link Ext.Loader#enabled} is set
@@ -533,20 +761,25 @@ function(el){
      *     });
      */
     application: function(config) {
-        var onReady,
-            scope;
+        var appName = config.name,
+            onReady, scope, requires;
 
         if (!config) {
             config = {};
         }
 
-        config.requires = Ext.Array.from(config.requires);
-        config.requires.push('Ext.app.Application');
+        if (!Ext.Loader.config.paths[appName]) {
+            Ext.Loader.setPath(appName, config.appFolder || 'app');
+        }
+
+        requires = Ext.Array.from(config.requires);
+        config.requires = ['Ext.app.Application'];
 
         onReady = config.onReady;
         scope = config.scope;
 
         config.onReady = function() {
+            config.requires = requires;
             new Ext.app.Application(config);
 
             if (onReady) {
@@ -561,6 +794,7 @@ function(el){
      * @private
      * @param config
      * @param callback
+     * @member Ext
      */
     factoryConfig: function(config, callback) {
         var isSimpleObject = Ext.isSimpleObject(config);
@@ -604,7 +838,7 @@ function(el){
                 }
             }
 
-            i = 0,
+            i = 0;
             ln = keys.length;
 
             if (ln === 0) {
@@ -641,10 +875,11 @@ function(el){
      * @private
      * @param config
      * @param classReference
-     * @param instance
+     * @member Ext
      */
     factory: function(config, classReference, instance, aliasNamespace) {
-        var manager = Ext.ClassManager;
+        var manager = Ext.ClassManager,
+            newInstance;
 
         // If config is falsy or a valid instance, destroy the current instance
         // (if it exists) and replace with the new one
@@ -662,7 +897,7 @@ function(el){
                 return manager.instantiateByAlias(aliasNamespace + '.' + config);
             }
             // Same if 'type' is given in config
-            else if ('type' in config) {
+            else if (Ext.isObject(config) && 'type' in config) {
                 return manager.instantiateByAlias(aliasNamespace + '.' + config.type, config);
             }
         }
@@ -686,11 +921,19 @@ function(el){
         //</debug>
 
         if ('xtype' in config) {
-            return manager.instantiateByAlias('widget.' + config.xtype, config);
+            newInstance = manager.instantiateByAlias('widget.' + config.xtype, config);
         }
 
         if ('xclass' in config) {
-            return manager.instantiate(config.xclass, config);
+            newInstance = manager.instantiate(config.xclass, config);
+        }
+
+        if (newInstance) {
+            if (instance) {
+                instance.destroy();
+            }
+
+            return newInstance;
         }
 
         if (instance) {
@@ -702,13 +945,15 @@ function(el){
 
     /**
      * @private
+     * @member Ext
      */
     deprecateClassMember: function(cls, oldName, newName, message) {
         return this.deprecateProperty(cls.prototype, oldName, newName, message);
     },
 
-   /**
+    /**
      * @private
+     * @member Ext
      */
     deprecateClassMembers: function(cls, members) {
        var prototype = cls.prototype,
@@ -725,55 +970,90 @@ function(el){
 
     /**
      * @private
+     * @member Ext
      */
     deprecateProperty: function(object, oldName, newName, message) {
         if (!message) {
-            message = "'" + oldName + "' is deprecated, please use '" + newName + "' instead";
+            message = "'" + oldName + "' is deprecated";
+        }
+        if (newName) {
+            message += ", please use '" + newName + "' instead";
         }
 
-        Ext.Object.redefineProperty(object, oldName,
-            function() {
-                //<debug warn>
-                Ext.Logger.deprecate(message, 1);
-                //</debug>
+        if (newName) {
+            Ext.Object.defineProperty(object, oldName, {
+                get: function() {
+                    //<debug warn>
+                    Ext.Logger.deprecate(message, 1);
+                    //</debug>
+                    return this[newName];
+                },
+                set: function(value) {
+                    //<debug warn>
+                    Ext.Logger.deprecate(message, 1);
+                    //</debug>
 
-                return this[newName];
-            },
-            function(value) {
-                //<debug warn>
-                Ext.Logger.deprecate(message, 1);
-                //</debug>
-                this[newName] = value;
-            }
-        );
+                    this[newName] = value;
+                },
+                configurable: true
+            });
+        }
     },
 
     /**
      * @private
+     * @member Ext
+     */
+    deprecatePropertyValue: function(object, name, value, message) {
+        Ext.Object.defineProperty(object, name, {
+            get: function() {
+                //<debug warn>
+                Ext.Logger.deprecate(message, 1);
+                //</debug>
+                return value;
+            },
+            configurable: true
+        });
+    },
+
+    /**
+     * @private
+     * @member Ext
      */
     deprecateMethod: function(object, name, method, message) {
         object[name] = function() {
             //<debug warn>
             Ext.Logger.deprecate(message, 2);
             //</debug>
-            return method.apply(this, arguments);
+            if (method) {
+                return method.apply(this, arguments);
+            }
         };
     },
 
     /**
      * @private
+     * @member Ext
      */
     deprecateClassMethod: function(cls, name, method, message) {
+        if (typeof name != 'string') {
+            var from, to;
+
+            for (from in name) {
+                if (name.hasOwnProperty(from)) {
+                    to = name[from];
+                    Ext.deprecateClassMethod(cls, from, to);
+                }
+            }
+            return;
+        }
+
         var isLateBinding = typeof method == 'string',
             member;
 
         if (!message) {
-            if (isLateBinding) {
-                message = "'" + name + "()' is deprecated, please use '" + method + "()' instead";
-            }
-            else {
-                message = "'" + name + "()' is deprecated.";
-            }
+            message = "'" + name + "()' is deprecated, please use '" + (isLateBinding ? method : method.name) +
+                "()' instead";
         }
 
         if (isLateBinding) {
@@ -795,124 +1075,57 @@ function(el){
             };
         }
 
+        if (name in cls.prototype) {
+            Ext.Object.defineProperty(cls.prototype, name, {
+                value: null,
+                writable: true,
+                configurable: true
+            });
+        }
+
         cls.addMember(name, member);
     },
 
+    //<debug>
     /**
+     * Useful snippet to show an exact, narrowed-down list of top-level Components that are not yet destroyed.
      * @private
-     * @param cls
      */
-    deprecateClassConfigDirectAccess: function(cls, data) {
-        var prototype = cls.prototype,
-            config = prototype.config;
+    showLeaks: function() {
+        var map = Ext.ComponentManager.all.map,
+            leaks = [],
+            parent;
 
-        if (config) {
-            Ext.Object.each(config, function(key) {
-                if (!(key in prototype)) {
-                    var capitalizedKey = Ext.String.capitalize(key),
-                        getterName = 'get' + capitalizedKey,
-                        setterName = 'set' + capitalizedKey;
+        Ext.Object.each(map, function(id, component) {
+            while ((parent = component.getParent()) && map.hasOwnProperty(parent.getId())) {
+                component = parent;
+            }
 
-                    function getter() {
-                        //<debug warn>
-                        Ext.Logger.deprecate("Access to config '" + key + "' directly is deprecated, please use " + getterName + "() instead", 1);
-                        //</debug>
+            if (leaks.indexOf(component) === -1) {
+                leaks.push(component);
+            }
+        });
 
-                        var fn = this[getterName];
-
-                        //<debug error>
-                        if (fn === getter.caller) {
-                            throw new Error("Infinite recursion detected: accessing '" + key + "' config inside of " + getterName + "()");
-                        }
-                        //</debug>
-
-                        return fn.apply(this, arguments);
-                    }
-
-                    function setter() {
-                        //<debug warn>
-                        Ext.Logger.deprecate("Setting config '" + key + "' value directly is deprecated, please use " + setterName + "() instead", 1);
-                        //</debug>
-
-                        var fn = this[setterName];
-
-                        //<debug error>
-                        if (fn === setter.caller) {
-                            throw new Error("Infinite recursion detected: setting '" + key + "' config inside of " + setterName + "()");
-                        }
-                        //</debug>
-
-                        return fn.apply(this, arguments);
-                    }
-
-                    if ('defineProperty' in Object) {
-                        Object.defineProperty(object, oldName, {
-                            get: getter,
-                            set: setter
-                        });
-                    }
-                    else {
-                        object.__defineGetter__(oldName, getter);
-                        object.__defineSetter__(oldName, setter);
-                    }
-                    Object.defineProperty(prototype, key, {
-                        get: function getter() {
-                            //<debug warn>
-                            Ext.Logger.deprecate("Access to config '" + key + "' directly is deprecated, please use " + getterName + "() instead", 1);
-                            //</debug>
-
-                            var fn = this[getterName];
-
-                            //<debug error>
-                            if (fn === getter.caller) {
-                                throw new Error("Infinite recursion detected: accessing '" + key + "' config inside of " + getterName + "()");
-                            }
-                            //</debug>
-
-                            return fn.apply(this, arguments);
-                        },
-
-                        set: function setter() {
-                            //<debug warn>
-                            Ext.Logger.deprecate("Setting config '" + key + "' value directly is deprecated, please use " + setterName + "() instead", 1);
-                            //</debug>
-
-                            var fn = this[setterName];
-
-                            //<debug error>
-                            if (fn === setter.caller) {
-                                throw new Error("Infinite recursion detected: setting '" + key + "' config inside of " + setterName + "()");
-                            }
-                            //</debug>
-
-                            return fn.apply(this, arguments);
-                        }
-                    });
-
-                }
-
-                //<debug error>
-                if (data && key in data && key in config) {
-                    throw new Error("["+Ext.getClassName(cls)+"] Defining class property: '" + key + "' with an already existing config item with the same name. Move it inside the 'config' object instead.");
-                }
-                //</debug>
-            });
-        }
+        console.log(leaks);
     },
+    //</debug>
 
     /**
      * True when the document is fully initialized and ready for action
      * @type Boolean
+     * @member Ext
      */
     isReady : false,
 
     /**
      * @private
+     * @member Ext
      */
     readyListeners: [],
 
     /**
      * @private
+     * @member Ext
      */
     triggerReady: function() {
         var listeners = Ext.readyListeners,
@@ -921,20 +1134,17 @@ function(el){
         if (!Ext.isReady) {
             Ext.isReady = true;
 
-            // We need to defer calling these methods until the browser is done executing
-            // it's ready code. Other we can end up firing too early.
-            Ext.Function.defer(function() {
-                for (i = 0, ln = listeners.length; i < ln; i++) {
-                    listener = listeners[i];
-                    listener.fn.call(listener.scope);
-                }
-                delete Ext.readyListeners;
-            }, 1);
+            for (i = 0,ln = listeners.length; i < ln; i++) {
+                listener = listeners[i];
+                listener.fn.call(listener.scope);
+            }
+            delete Ext.readyListeners;
         }
     },
 
     /**
      * @private
+     * @member Ext
      */
     onDocumentReady: function(fn, scope) {
         if (Ext.isReady) {
@@ -948,7 +1158,7 @@ function(el){
                 scope: scope
             });
 
-            if (Ext.browser.is.PhoneGap) {
+            if (Ext.browser.is.PhoneGap && !Ext.os.is.Desktop) {
                 if (!Ext.readyListenerAttached) {
                     Ext.readyListenerAttached = true;
                     document.addEventListener('deviceready', triggerFn, false);
@@ -967,10 +1177,12 @@ function(el){
     },
 
     /**
+     * Calls function after specified delay, or right away when delay == 0.
      * @param {Function} callback The callback to execute
      * @param {Object} scope (optional) The scope to execute in
      * @param {Array} args (optional) The arguments to pass to the function
      * @param {Number} delay (optional) Pass a number to delay the call by a number of milliseconds.
+     * @member Ext
      */
     callback: function(callback, scope, args, delay) {
         if (Ext.isFunction(callback)) {
@@ -986,20 +1198,131 @@ function(el){
 });
 
 //<deprecated product=touch since=2.0>
+Ext.deprecateMethod(Ext, 'getOrientation', function() {
+    return Ext.Viewport.getOrientation();
+}, "Ext.getOrientation() is deprecated, use Ext.Viewport.getOrientation() instead");
+
+Ext.deprecateMethod(Ext, 'log', function(message) {
+    return Ext.Logger.log(message);
+}, "Ext.log() is deprecated, please use Ext.Logger.log() instead");
+
 /**
  * @member Ext.Function
  * @method createDelegate
+ * @inheritdoc Ext.Function#bind
  * @deprecated 2.0.0
- * createDelegate is deprecated, please use {@link Ext.Function#bind bind} instead
+ * Please use {@link Ext.Function#bind bind} instead
  */
 Ext.deprecateMethod(Ext.Function, 'createDelegate', Ext.Function.bind, "Ext.createDelegate() is deprecated, please use Ext.Function.bind() instead");
 
 /**
- * @member Ext.Function
+ * @member Ext
  * @method createInterceptor
+ * @inheritdoc Ext.Function#createInterceptor
  * @deprecated 2.0.0
- * createInterceptor is deprecated, please use {@link Ext.Function#createInterceptor createInterceptor} instead
+ * Please use {@link Ext.Function#createInterceptor createInterceptor} instead
  */
 Ext.deprecateMethod(Ext, 'createInterceptor', Ext.Function.createInterceptor, "Ext.createInterceptor() is deprecated, " +
     "please use Ext.Function.createInterceptor() instead");
+
+/**
+ * @member Ext
+ * @property {Boolean} SSL_SECURE_URL
+ * URL to a blank file used by Ext when in secure mode for iframe src and onReady
+ * src to prevent the IE insecure content warning.
+ * @removed 2.0.0
+ */
+Ext.deprecateProperty(Ext, 'SSL_SECURE_URL', null, "Ext.SSL_SECURE_URL has been removed");
+
+/**
+ * @member Ext
+ * @property {Boolean} enableGarbageCollector
+ * True to automatically uncache orphaned Ext.Elements periodically.
+ * @removed 2.0.0
+ */
+Ext.deprecateProperty(Ext, 'enableGarbageCollector', null, "Ext.enableGarbageCollector has been removed");
+
+/**
+ * @member Ext
+ * @property {Boolean} enableListenerCollection
+ * True to automatically purge event listeners during garbageCollection.
+ * @removed 2.0.0
+ */
+Ext.deprecateProperty(Ext, 'enableListenerCollection', null, "Ext.enableListenerCollection has been removed");
+
+/**
+ * @member Ext
+ * @property {Boolean} isSecure
+ * True if the page is running over SSL.
+ * @removed 2.0.0 Please use {@link Ext.env.Browser#isSecure} instead
+ */
+Ext.deprecateProperty(Ext, 'isSecure', null, "Ext.enableListenerCollection has been removed, please use Ext.env.Browser.isSecure instead");
+
+/**
+ * @member Ext
+ * @method dispatch
+ * Dispatches a request to a controller action.
+ * @removed 2.0.0 Please use {@link Ext.app.Application#dispatch} instead
+ */
+Ext.deprecateMethod(Ext, 'dispatch', null, "Ext.dispatch() is deprecated, please use Ext.app.Application.dispatch() instead");
+
+/**
+ * @member Ext
+ * @method getOrientation
+ * Returns the current orientation of the mobile device.
+ * @removed 2.0.0
+ * Please use {@link Ext.Viewport#getOrientation getOrientation} instead
+ */
+Ext.deprecateMethod(Ext, 'getOrientation', null, "Ext.getOrientation() has been removed, " +
+    "please use Ext.Viewport.getOrientation() instead");
+
+/**
+ * @member Ext
+ * @method reg
+ * Registers a new xtype.
+ * @removed 2.0.0
+ */
+Ext.deprecateMethod(Ext, 'reg', null, "Ext.reg() has been removed");
+
+/**
+ * @member Ext
+ * @method preg
+ * Registers a new ptype.
+ * @removed 2.0.0
+ */
+Ext.deprecateMethod(Ext, 'preg', null, "Ext.preg() has been removed");
+
+/**
+ * @member Ext
+ * @method redirect
+ * Dispatches a request to a controller action, adding to the History stack
+ * and updating the page url as necessary.
+ * @removed 2.0.0
+ */
+Ext.deprecateMethod(Ext, 'redirect', null, "Ext.redirect() has been removed");
+
+/**
+ * @member Ext
+ * @method regApplication
+ * Creates a new Application class from the specified config object.
+ * @removed 2.0.0
+ */
+Ext.deprecateMethod(Ext, 'regApplication', null, "Ext.regApplication() has been removed");
+
+/**
+ * @member Ext
+ * @method regController
+ * Creates a new Controller class from the specified config object.
+ * @removed 2.0.0
+ */
+Ext.deprecateMethod(Ext, 'regController', null, "Ext.regController() has been removed");
+
+/**
+ * @member Ext
+ * @method regLayout
+ * Registers new layout type.
+ * @removed 2.0.0
+ */
+Ext.deprecateMethod(Ext, 'regLayout', null, "Ext.regLayout() has been removed");
+
 //</deprecated>

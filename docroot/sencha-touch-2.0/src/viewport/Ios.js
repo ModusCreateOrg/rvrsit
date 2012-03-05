@@ -1,3 +1,7 @@
+/**
+ * @private
+ * iOS version of viewport.
+ */
 Ext.define('Ext.viewport.Ios', {
     extend: 'Ext.viewport.Default',
 
@@ -12,7 +16,9 @@ Ext.define('Ext.viewport.Ios', {
     constructor: function() {
         this.callParent(arguments);
 
-        this.addWindowListener('touchstart', Ext.Function.bind(this.onTouchStart, this));
+        if (this.getAutoMaximize() && !this.isFullscreen()) {
+            this.addWindowListener('touchstart', Ext.Function.bind(this.onTouchStart, this));
+        }
     },
 
     maximize: function() {
@@ -56,7 +62,10 @@ Ext.define('Ext.viewport.Ios', {
                 //<debug error>
                 Ext.Logger.error("Timeout waiting for window.innerHeight to change", this);
                 //</debug>
-            });
+                height = stretchHeights[orientation] = this.getWindowHeight();
+                this.setHeight(height);
+                this.fireMaximizeEvent();
+            }, 50, 1000);
         }
     },
 
@@ -65,13 +74,17 @@ Ext.define('Ext.viewport.Ios', {
     },
 
     onElementFocus: function() {
-        clearTimeout(this.scrollToTopTimer);
+        if (this.getAutoMaximize() && !this.isFullscreen()) {
+            clearTimeout(this.scrollToTopTimer);
+        }
 
         this.callParent(arguments);
     },
 
     onElementBlur: function() {
-        this.scrollToTopTimer = setTimeout(this.scrollToTop, 500);
+        if (this.getAutoMaximize() && !this.isFullscreen()) {
+            this.scrollToTopTimer = setTimeout(this.scrollToTop, 500);
+        }
 
         this.callParent(arguments);
     },

@@ -6,8 +6,9 @@
  *
  * - {@link #allowMultiple}
  *
- * # Example usage:
+ * ## Example usage:
  *
+ *     @example
  *     var segmentedButton = new Ext.SegmentedButton({
  *         allowMultiple: true,
  *         items: [
@@ -16,8 +17,7 @@
  *             },
  *             {
  *                 text   : 'Option 2',
- *                 pressed: true,
- *                 handler: tappedFn
+ *                 pressed: true
  *             },
  *             {
  *                 text: 'Option 3'
@@ -29,14 +29,19 @@
  *             }
  *         }
  *     });
+ *     Ext.Viewport.add(segmentedButton);
  *
  */
 Ext.define('Ext.SegmentedButton', {
     extend: 'Ext.Container',
     xtype : 'segmentedbutton',
+    requires: ['Ext.Button'],
 
     config: {
-        // @inherited
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         baseCls: Ext.baseCSSPrefix + 'segmentedbutton',
 
         /**
@@ -64,17 +69,25 @@ Ext.define('Ext.SegmentedButton', {
         /**
          * @cfg {Array} pressedButtons
          * The pressed buttons for this segmented button.
+         *
+         * You can remove all pressed buttons by calling {@link #setPressedButtons} with an empty array.
          * @accessor
          */
-        pressedButtons: null,
+        pressedButtons: [],
 
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         layout: {
             type : 'hbox',
             align: 'stretch'
         },
 
-        // @inherited
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         defaultType: 'button'
     },
 
@@ -82,27 +95,26 @@ Ext.define('Ext.SegmentedButton', {
      * @event toggle
      * Fires when any child button's pressed state has changed.
      * @param {Ext.SegmentedButton} this
-     * @param {Ext.Button[]} pressedButtons The new pressed buttons
+     * @param {Ext.Button} button The toggled button
+     * @param {Boolean} isPressed Boolean to indicate if the button was pressed or not
      */
 
     initialize: function() {
         var me = this;
 
+        me.callParent();
+
         me.on({
             delegate: '> button',
             scope   : me,
-
-            release: 'onButtonRelease'
+            tap: 'onButtonRelease'
         });
 
         me.onAfter({
             delegate: '> button',
             scope   : me,
-
             hiddenchange: 'onButtonHiddenChange'
         });
-
-        me.callParent();
     },
 
     updateAllowMultiple: function() {
@@ -144,31 +156,31 @@ Ext.define('Ext.SegmentedButton', {
      */
     onButtonRelease: function(button) {
         var me             = this,
-            pressedButtons = me.getPressedButtons(),
+            pressedButtons = me.getPressedButtons() || [],
             buttons        = [],
             alreadyPressed;
 
-        if (!me.getDisabled()) {
+        if (!me.getDisabled() && !button.getDisabled()) {
             //if we allow for multiple pressed buttons, use the existing pressed buttons
             if (me.getAllowMultiple()) {
-                buttons = buttons.concat(pressedButtons);
+                buttons = pressedButtons.concat(buttons);
             }
 
-            alreadyPressed = buttons.indexOf(button) !== -1;
+            alreadyPressed = (buttons.indexOf(button) !== -1) || (pressedButtons.indexOf(button) !== -1);
 
             //if we allow for depressing buttons, and the new pressed button is currently pressed, remove it
             if (alreadyPressed && me.getAllowDepress()) {
                 Ext.Array.remove(buttons, button);
-            } else if (!alreadyPressed) {
+            } else if (!alreadyPressed || !me.getAllowDepress()) {
                 buttons.push(button);
             }
 
             me.setPressedButtons(buttons);
 
-            me.fireEvent('toggle', me, button, me.isPressed(button));
+            Ext.defer(function() {
+                me.fireEvent('toggle', me, button, me.isPressed(button));
+            }, 50);
         }
-
-        return false;
     },
 
     // @private
@@ -179,13 +191,14 @@ Ext.define('Ext.SegmentedButton', {
     // @private
     updateFirstAndLastCls: function(items) {
         var ln = items.length,
-        item, i;
+            basePrefix = Ext.baseCSSPrefix,
+            item, i;
 
         //add a first cls to the first non-hidden button
         for (i = 0; i < ln; i++) {
             item = items.items[i];
             if (!item.isHidden()) {
-                item.addCls(Ext.baseCSSPrefix + 'first');
+                item.addCls(basePrefix + 'first');
                 break;
             }
         }
@@ -194,7 +207,7 @@ Ext.define('Ext.SegmentedButton', {
         for (i = ln - 1; i >= 0; i--) {
             item = items.items[i];
             if (!item.isHidden()) {
-                item.addCls(Ext.baseCSSPrefix + 'last');
+                item.addCls(basePrefix + 'last');
                 break;
             }
         }
@@ -203,7 +216,7 @@ Ext.define('Ext.SegmentedButton', {
     /**
      * @private
      */
-    applyPressedButtons: function(newButtons, oldButtons) {
+    applyPressedButtons: function(newButtons) {
         var me    = this,
             array = [],
             button, ln, i;
@@ -230,23 +243,24 @@ Ext.define('Ext.SegmentedButton', {
      * Updates the pressed buttons.
      * @private
      */
-    updatePressedButtons: function(newButtons, oldButtons) {
+    updatePressedButtons: function(newButtons) {
         var me    = this,
             items = me.getItems(),
+            pressedCls = me.getPressedCls(),
             item, button, ln, i;
 
         //loop through existing items and remove the pressed cls from them
         ln = items.length;
         for (i = 0; i < ln; i++) {
             item = items.items[i];
-            item.removeCls(me.getPressedCls());
+            item.removeCls([pressedCls, item.getPressedCls()]);
         }
 
         //loop through the new pressed buttons and add the pressed cls to them
         ln = newButtons.length;
         for (i = 0; i < ln; i++) {
             button = newButtons[i];
-            button.addCls(me.getPressedCls());
+            button.addCls(pressedCls);
         }
     },
 
@@ -261,7 +275,7 @@ Ext.define('Ext.SegmentedButton', {
     },
 
     /**
-     *
+     * @private
      */
     doSetDisabled: function(disabled) {
         var me = this;
@@ -284,20 +298,16 @@ Ext.define('Ext.SegmentedButton', {
      * @param {Boolean} suppressEvents true to suppress toggle events during the action.
      * If allowMultiple is true, then setPressed will toggle the button state.
      * @method setPressed
-     * @deprecated 2.0.0
+     * @deprecated 2.0.0 Please use {@link #setPressedButtons} instead
      */
-    Ext.deprecateClassMethod(me, 'setPressed', me.prototype.setPressedButtons, '[Ext.SegmentedButton] setPressed is now deprecated, please use setPressedButtons instead');
+    Ext.deprecateClassMethod(me, 'setPressed', 'setPressedButtons');
 
     /**
      * Gets the currently pressed button(s).
      * @method getPressed
-     * @deprecated 2.0.0
+     * @deprecated 2.0.0 Please use {@link #getPressedButtons} instead
      */
-    Ext.deprecateClassMethod(me,
-        'getPressed',
-        me.prototype.getPressedButtons,
-        '[Ext.SegmentedButton] getPressed is now deprecated. Please use getPressedButtons instead.'
-    );
+    Ext.deprecateClassMethod(me, 'getPressed', 'getPressedButtons');
 
     //</deprecated>
 });

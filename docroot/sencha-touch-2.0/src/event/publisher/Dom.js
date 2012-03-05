@@ -1,3 +1,6 @@
+/**
+ * @private
+ */
 Ext.define('Ext.event.publisher.Dom', {
     extend: 'Ext.event.publisher.Publisher',
 
@@ -13,7 +16,7 @@ Ext.define('Ext.event.publisher.Dom', {
 
     handledEvents: ['click', 'focus', 'blur',
                     'mousemove', 'mousedown', 'mouseup', 'mouseover', 'mouseout',
-                    'keyup', 'keydown', 'keypress',
+                    'keyup', 'keydown', 'keypress', 'submit',
                     'transitionend', 'animationstart', 'animationend'],
 
     classNameSplitRegex: /\s+/,
@@ -27,6 +30,7 @@ Ext.define('Ext.event.publisher.Dom', {
 
         this.doBubbleEventsMap = {
             'click': true,
+            'submit': true,
             'mousedown': true,
             'mousemove': true,
             'mouseup': true,
@@ -36,8 +40,6 @@ Ext.define('Ext.event.publisher.Dom', {
         };
 
         this.onEvent = Ext.Function.bind(this.onEvent, this);
-
-        this.subscribers = {};
 
         for (i = 0,ln = eventNames.length; i < ln; i++) {
             eventName = eventNames[i];
@@ -65,6 +67,7 @@ Ext.define('Ext.event.publisher.Dom', {
                     $length: 0
                 },
                 selector: [],
+                all: 0,
                 $length: 0
             }
         }
@@ -119,29 +122,37 @@ Ext.define('Ext.event.publisher.Dom', {
             value = idOrClassSelectorMatch[2];
 
             if (type === '#') {
-                if (idSubscribers[value]) {
+                if (idSubscribers.hasOwnProperty(value)) {
+                    idSubscribers[value]++;
                     return true;
                 }
 
-                idSubscribers[value] = true;
+                idSubscribers[value] = 1;
                 idSubscribers.$length++;
             }
             else {
-                if (classNameSubscribers[value]) {
+                if (classNameSubscribers.hasOwnProperty(value)) {
+                    classNameSubscribers[value]++;
                     return true;
                 }
 
-                classNameSubscribers[value] = true;
+                classNameSubscribers[value] = 1;
                 classNameSubscribers.$length++;
             }
         }
         else {
-            if (selectorSubscribers[target]) {
-                return true;
+            if (target === this.SELECTOR_ALL) {
+                subscribers.all++;
             }
+            else {
+                if (selectorSubscribers.hasOwnProperty(target)) {
+                    selectorSubscribers[target]++;
+                    return true;
+                }
 
-            selectorSubscribers[target] = true;
-            selectorSubscribers.push(target);
+                selectorSubscribers[target] = 1;
+                selectorSubscribers.push(target);
+            }
         }
 
         subscribers.$length++;
@@ -149,7 +160,7 @@ Ext.define('Ext.event.publisher.Dom', {
         return true;
     },
 
-    unsubscribe: function(target, eventName) {
+    unsubscribe: function(target, eventName, all) {
         if (!this.handles(eventName)) {
             return false;
         }
@@ -161,12 +172,14 @@ Ext.define('Ext.event.publisher.Dom', {
             selectorSubscribers = subscribers.selector,
             type, value;
 
+        all = Boolean(all);
+
         if (idOrClassSelectorMatch !== null) {
             type = idOrClassSelectorMatch[1];
             value = idOrClassSelectorMatch[2];
 
             if (type === '#') {
-                if (!idSubscribers[value]) {
+                if (!idSubscribers.hasOwnProperty(value) || (!all && --idSubscribers[value] > 0)) {
                     return true;
                 }
 
@@ -174,7 +187,7 @@ Ext.define('Ext.event.publisher.Dom', {
                 idSubscribers.$length--;
             }
             else {
-                if (!classNameSubscribers[value]) {
+                if (!classNameSubscribers.hasOwnProperty(value) || (!all && --classNameSubscribers[value] > 0)) {
                     return true;
                 }
 
@@ -183,12 +196,22 @@ Ext.define('Ext.event.publisher.Dom', {
             }
         }
         else {
-            if (!selectorSubscribers[target]) {
-                return true;
+            if (target === this.SELECTOR_ALL) {
+                if (all) {
+                    subscribers.all = 0;
+                }
+                else {
+                    subscribers.all--;
+                }
             }
+            else {
+                if (!selectorSubscribers.hasOwnProperty(target) || (!all && --selectorSubscribers[target] > 0)) {
+                    return true;
+                }
 
-            delete selectorSubscribers[target];
-            Ext.Array.remove(selectorSubscribers, target);
+                delete selectorSubscribers[target];
+                Ext.Array.remove(selectorSubscribers, target);
+            }
         }
 
         subscribers.$length--;
@@ -225,9 +248,7 @@ Ext.define('Ext.event.publisher.Dom', {
     },
 
     dispatch: function(target, eventName, args) {
-        //TODO: Deprecate this
         args.push(args[0].target);
-
         this.callParent(arguments);
     },
 
@@ -253,11 +274,11 @@ Ext.define('Ext.event.publisher.Dom', {
             hasIdSubscribers = idSubscribers.$length > 0,
             hasClassNameSubscribers = classNameSubscribers.$length > 0,
             hasSelectorSubscribers = selectorSubscribers.length > 0,
+            hasAllSubscribers = subscribers.all > 0,
             isClassNameHandled = {},
             args = [event],
             hasDispatched = false,
             classNameSplitRegex = this.classNameSplitRegex,
-            allSelector = this.SELECTOR_ALL,
             i, ln, j, subLn, target, id, className, classNames, selector;
 
         for (i = 0,ln = targets.length; i < ln; i++) {
@@ -268,7 +289,7 @@ Ext.define('Ext.event.publisher.Dom', {
                 id = target.id;
 
                 if (id) {
-                    if (idSubscribers[id] === true) {
+                    if (idSubscribers.hasOwnProperty(id)) {
                         hasDispatched = true;
                         this.dispatch('#' + id, eventName, args);
                     }
@@ -287,7 +308,7 @@ Ext.define('Ext.event.publisher.Dom', {
                         if (!isClassNameHandled[className]) {
                             isClassNameHandled[className] = true;
 
-                            if (classNameSubscribers[className] === true) {
+                            if (classNameSubscribers.hasOwnProperty(className)) {
                                 hasDispatched = true;
                                 this.dispatch('.' + className, eventName, args);
                             }
@@ -302,33 +323,31 @@ Ext.define('Ext.event.publisher.Dom', {
             }
         }
 
+        if (hasAllSubscribers && !hasDispatched) {
+            event.setDelegatedTarget(event.browserEvent.target);
+            hasDispatched = true;
+            this.dispatch(this.SELECTOR_ALL, eventName, args);
+            if (event.isStopped) {
+                return hasDispatched;
+            }
+        }
+
         if (hasSelectorSubscribers) {
-            for (i = 0,ln = selectorSubscribers.length; i < ln; i++) {
-                selector = selectorSubscribers[i];
+            for (j = 0,subLn = targets.length; j < subLn; j++) {
+                target = targets[j];
 
-                if (selector === allSelector && !hasDispatched) {
-                    event.setDelegatedTarget(event.browserEvent.target);
-                    hasDispatched = true;
-                    this.dispatch(allSelector, eventName, args);
-                }
-                else {
-                    for (j = 0,subLn = targets.length; j < subLn; j++) {
-                        target = targets[j];
+                for (i = 0,ln = selectorSubscribers.length; i < ln; i++) {
+                    selector = selectorSubscribers[i];
 
-                        if (this.matchesSelector(target, selector)) {
-                            event.setDelegatedTarget(target);
-                            hasDispatched = true;
-                            this.dispatch(selector, eventName, args);
-                        }
-
-                        if (event.isStopped) {
-                            return hasDispatched;
-                        }
+                    if (this.matchesSelector(target, selector)) {
+                        event.setDelegatedTarget(target);
+                        hasDispatched = true;
+                        this.dispatch(selector, eventName, args);
                     }
-                }
 
-                if (event.isStopped) {
-                    return hasDispatched;
+                    if (event.isStopped) {
+                        return hasDispatched;
+                    }
                 }
             }
         }
@@ -383,14 +402,14 @@ Ext.define('Ext.event.publisher.Dom', {
             value = match[2];
 
             if (type === '#') {
-                return !!subscribers.id[value];
+                return subscribers.id.hasOwnProperty(value);
             }
             else {
-                return !!subscribers.className[value];
+                return subscribers.className.hasOwnProperty(value);
             }
         }
         else {
-            return (!!subscribers.selector[target] && Ext.Array.indexOf(subscribers.selector, target) !== -1);
+            return (subscribers.selector.hasOwnProperty(target) && Ext.Array.indexOf(subscribers.selector, target) !== -1);
         }
 
         return false;

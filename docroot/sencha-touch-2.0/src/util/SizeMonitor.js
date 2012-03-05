@@ -1,6 +1,9 @@
+/**
+ * @private
+ */
 Ext.define('Ext.util.SizeMonitor', {
 
-    extend: 'Ext.EventedBase',
+    extend: 'Ext.Evented',
 
     config: {
         element: null,
@@ -9,7 +12,9 @@ Ext.define('Ext.util.SizeMonitor', {
 
         callback: Ext.emptyFn,
 
-        scope: null
+        scope: null,
+
+        args: []
     },
 
     constructor: function(config) {
@@ -38,9 +43,6 @@ Ext.define('Ext.util.SizeMonitor', {
         element.appendChild(expandDetector);
         element.appendChild(shrinkDetector);
 
-        expandDetector.addEventListener('scroll', expandListener, true);
-        shrinkDetector.addEventListener('scroll', shrinkListener, true);
-
         this.detectors = {
             expand: expandDetector,
             shrink: shrinkDetector
@@ -63,6 +65,9 @@ Ext.define('Ext.util.SizeMonitor', {
         };
 
         this.refresh();
+
+        expandDetector.addEventListener('scroll', expandListener, true);
+        shrinkDetector.addEventListener('scroll', shrinkListener, true);
     },
 
     applyElement: function(element) {
@@ -105,10 +110,7 @@ Ext.define('Ext.util.SizeMonitor', {
     },
 
     doFireSizeChangeEvent: function() {
-        var callback = this.getCallback(),
-            scope = this.getScope();
-
-        callback.call(scope);
+        this.getCallback().apply(this.getScope(), this.getArgs());
     },
 
     destroyDetector: function(name) {

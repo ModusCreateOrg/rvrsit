@@ -3,29 +3,30 @@
  * like any other component. This component typically takes between 1 and 3 configurations - a {@link #src}, and
  * optionally a {@link #height} and a {@link #width}:
  *
- *     Ext.create('Ext.Img', {
- *         src: 'path/to/my/image.jpg',
- *         height: 300,
- *         width: 400
+ *     @example miniphone
+ *     var img = Ext.create('Ext.Img', {
+ *         src: 'http://www.sencha.com/assets/images/sencha-avatar-64x64.png',
+ *         height: 64,
+ *         width: 64
  *     });
+ *     Ext.Viewport.add(img);
  *
  * It's also easy to add an image into a panel or other container using its xtype:
  *
+ *     @example miniphone
  *     Ext.create('Ext.Panel', {
- *         layout: '{@link Ext.layout.HBox hbox}',
+ *         fullscreen: true,
+ *         layout: 'hbox',
  *         items: [
  *             {
  *                 xtype: 'image',
- *                 src: 'path/to/my/profilePicture.jpg',
+ *                 src: 'http://www.sencha.com/assets/images/sencha-avatar-64x64.png',
  *                 flex: 1
  *             },
  *             {
- *                 xtype: 'textareafield',
+ *                 xtype: 'panel',
  *                 flex: 2,
- *                 label: {
- *                     text: 'My Profile',
- *                     align: 'top'
- *                 }
+ *                 html: 'Sencha Inc.<br/>1700 Seaport Boulevard Suite 120, Redwood City, CA'
  *             }
  *         ]
  *     });
@@ -37,7 +38,7 @@
  */
 Ext.define('Ext.Img', {
     extend: 'Ext.Component',
-    xtype : 'image',
+    xtype: ['image', 'img'],
 
     /**
      * @event tap
@@ -46,16 +47,40 @@ Ext.define('Ext.Img', {
      * @param {Ext.EventObject} e The event object
      */
 
+    /**
+     * @event load
+     * Fires when the image is loaded
+     * @param {Ext.Img} this The Image instance
+     * @param {Ext.EventObject} e The event object
+     */
+
+    /**
+     * @event error
+     * Fires if an error occured when trying to load the image
+     * @param {Ext.Img} this The Image instance
+     * @param {Ext.EventObject} e The event object
+     */
+
     config: {
         /**
          * @cfg {String} src The source of this image
+         * @accessor
          */
         src: null,
 
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         baseCls: Ext.baseCSSPrefix + 'img',
 
         mode: 'background'
+    },
+
+    beforeInitialize: function() {
+        var me = this;
+        me.onLoad = Ext.Function.bind(me.onLoad, me);
+        me.onError = Ext.Function.bind(me.onError, me);
     },
 
     initialize: function() {
@@ -109,32 +134,68 @@ Ext.define('Ext.Img', {
      * @private
      */
     updateSrc: function(newSrc) {
-        if (this.getMode() === 'background') {
-            this.element.dom.style.backgroundImage = newSrc ? 'url(' + newSrc + ')' : '';
+        var me = this,
+            dom;
+
+        if (me.getMode() === 'background') {
+            dom = this.imageObject || new Image();
         }
         else {
-            this.imageElement.dom.setAttribute('src', newSrc);
+            dom = me.imageElement.dom;
+        }
+
+        this.imageObject = dom;
+
+        dom.setAttribute('src', Ext.isString(newSrc) ? newSrc : '');
+        dom.addEventListener('load', me.onLoad, false);
+        dom.addEventListener('error', me.onError, false);
+    },
+
+    detachListeners: function() {
+        var dom = this.imageObject;
+
+        if (dom) {
+            dom.removeEventListener('load', this.onLoad, false);
+            dom.removeEventListener('error', this.onError, false);
         }
     },
 
-    doSetWidth: function(width) {
+    onLoad : function(e) {
+        this.detachListeners();
+
         if (this.getMode() === 'background') {
-            this.imageElement.setWidth(width);
+            this.element.dom.style.backgroundImage = 'url("' + this.imageObject.src + '")';
         }
+
+        this.fireEvent('load', this, e);
+    },
+
+    onError : function(e) {
+        this.detachListeners();
+        this.fireEvent('error', this, e);
+    },
+
+    doSetWidth: function(width) {
+        var sizingElement = (this.getMode() === 'background') ? this.element : this.imageElement;
+
+        sizingElement.setWidth(width);
 
         this.callParent(arguments);
     },
 
     doSetHeight: function(height) {
-        if (this.getMode() === 'background') {
-            this.imageElement.setHeight(height);
-        }
+        var sizingElement = (this.getMode() === 'background') ? this.element : this.imageElement;
+
+        sizingElement.setHeight(height);
 
         this.callParent(arguments);
     },
 
     destroy: function() {
-        this.imageElement.destroy();
+        this.detachListeners();
+
+        Ext.destroy(this.imageObject);
+        delete this.imageObject;
 
         this.callParent();
     }

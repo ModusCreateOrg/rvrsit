@@ -1,5 +1,6 @@
 /**
  * @author Ed Spencer
+ * @aside guide proxies
  *
  * Proxy which uses HTML5 session storage as its data storage/retrieval mechanism. If this proxy is used in a browser
  * where session storage is not supported, the constructor will throw an error. A session storage proxy requires a
@@ -31,7 +32,7 @@ Ext.define('Ext.data.proxy.SessionStorage', {
     extend: 'Ext.data.proxy.WebStorage',
     alias: 'proxy.sessionstorage',
     alternateClassName: 'Ext.data.SessionStorageProxy',
-    
+
     //inherit docs
     getStorageObject: function() {
         return window.sessionStorage;

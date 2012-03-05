@@ -1,7 +1,7 @@
 // Heartbeat.js
 Ext.namespace('Ext', 'silk');
 
-silk.HEARTBEAT_TIME = .5; // heartbeat frequency in seconds
+silk.HEARTBEAT_TIME = .25; // heartbeat frequency in seconds
 silk.heartbeatUrl = '/Heartbeat';
 
 silk.heartbeats = 0;
@@ -19,7 +19,7 @@ silk.Heartbeat = function() {
 
     this.addCallback = function(key, func, scope) {
         callbacks[key] = func;
-        scope[key] = scope || window;
+        scopes[key] = scope || window;
 
     };
     this.removeCallback = function(key) {
@@ -74,8 +74,7 @@ silk.Heartbeat = function() {
                 if (data.data) {
                     data = data.data;
                 }
-
-//                debugger;
+                // why?
                 for (key in data) {
                     queueItem = queue[key];
                     if (queueItem && queueItem.callback) {
@@ -84,7 +83,7 @@ silk.Heartbeat = function() {
                 }
 
                 for (key in callbacks) {
-                    callbacks[key].call();
+                    callbacks[key].call(scopes[key] || window, data);
                 }
 
                 silk.heartbeat_inprogress = false;
@@ -100,15 +99,15 @@ silk.Heartbeat = function() {
         DoHeartbeat();
     };
 
-    this.addMethod('servertime', {
-        method   : 'serverTime',
-        params   : function() {
-            return {}; // no params
-        },
-        callback : function(data) {
-            silk.servertime = parseInt(data);
-        }
-    });
+//    this.addMethod('servertime', {
+//        method   : 'serverTime',
+//        params   : function() {
+//            return {}; // no params
+//        },
+//        callback : function(data) {
+//            silk.servertime = parseInt(data);
+//        }
+//    });
 
     var hbTask = null;
     this.newHeartbeatTime = function(hbTime) {

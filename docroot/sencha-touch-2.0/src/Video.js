@@ -1,19 +1,24 @@
 /**
  * Provides a simple Container for HTML5 Video.
  *
- * # Useful Properties
+ * ## Notes
+ *
+ * - There are quite a few issues with the `<video>` tag on Android devices. On Android 2+, the video will
+ * appear and play on first attempt, but any attempt afterwards will not work.
+ *
+ * ## Useful Properties
  *
  * - {@link #url}
  * - {@link #autoPause}
  * - {@link #autoResume}
  *
- * # Useful Methods
+ * ## Useful Methods
  *
  * - {@link #pause}
- * - {@link #play}
+ * - {@link #method-play}
  * - {@link #toggle}
  *
- * # Example code:
+ * ## Example
  *
  *     var panel = new Ext.Panel({
  *         fullscreen: true,
@@ -37,7 +42,7 @@ Ext.define('Ext.Video', {
 
     config: {
         /**
-         * @cfg {String} url
+         * @cfg {String/Array} urls
          * Location of the video to play. This should be in H.264 format and in a .mov file format.
          * @accessor
          */
@@ -49,22 +54,86 @@ Ext.define('Ext.Video', {
          */
         posterUrl: null,
 
-        // @inherited
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         cls: Ext.baseCSSPrefix + 'video'
     },
 
+    template: [{
+        /**
+         * @property {Ext.dom.Element} ghost
+         * @private
+         */
+        reference: 'ghost',
+        classList: [Ext.baseCSSPrefix + 'video-ghost']
+    }, {
+        tag: 'video',
+        reference: 'media',
+        classList: [Ext.baseCSSPrefix + 'media']
+    }],
+
     initialize: function() {
-        this.callParent();
-        if (Ext.os.is.Android) {
-            var ghost = this.ghost = this.element.append(Ext.Element.create({
-                cls: Ext.baseCSSPrefix + 'video-ghost',
-                style: 'background-image: url(' + this.getPosterUrl() + ');'
-            }));
-            ghost.on({
-                tap: 'onGhostTap',
-                scope: this
-            });
+        var me = this;
+
+        me.callParent();
+
+        me.media.hide();
+
+        me.onBefore({
+            erased: 'onErased',
+            scope: me
+        });
+
+        me.ghost.on({
+            tap: 'onGhostTap',
+            scope: me
+        });
+
+        me.media.on({
+            pause: 'onPause',
+            scope: me
+        });
+
+        if (Ext.os.is.Android4 || Ext.os.is.iPad) {
+            this.isInlineVideo = true;
         }
+    },
+
+    applyUrl: function(url) {
+        return [].concat(url);
+    },
+
+    updateUrl: function(newUrl) {
+        var me = this,
+            media = me.media,
+            newLn = newUrl.length,
+            existingSources = media.query('source'),
+            oldLn = existingSources.length,
+            i;
+
+
+        for (i = 0; i < oldLn; i++) {
+            Ext.fly(existingSources[i]).destroy();
+        }
+
+        for (i = 0; i < newLn; i++) {
+            media.appendChild(Ext.Element.create({
+                tag: 'source',
+                src: newUrl[i]
+            }));
+        }
+
+        if (me.getPlaying()) {
+            me.play();
+        }
+    },
+
+    onErased: function() {
+        this.pause();
+        this.media.setTop(-2000);
+        this.ghost.show();
     },
 
     /**
@@ -72,23 +141,43 @@ Ext.define('Ext.Video', {
      * Called when the {@link #ghost} element is tapped.
      */
     onGhostTap: function() {
+        var me = this,
+            media = this.media,
+            ghost = this.ghost;
 
-        //on android we need to continue to show the ghost, as the video player popups out
-        //and we need to set a timeout and play the video later, to make it work.
-        //it shows a popup, instead of inline
-
-        var me = this;
-        setTimeout(function() {
+        media.show();
+        if (Ext.os.is.Android2) {
+            setTimeout(function() {
+                me.play();
+                setTimeout(function() {
+                    media.hide();
+                }, 10);
+            }, 10);
+        } else {
+            // Browsers which support native video tag display only, move the media down so
+            // we can control the Viewport
+            ghost.hide();
             me.play();
-            me.media.hide();
-        }, 200);
+            setTimeout(function() {
+                me.play();
+            }, 10);
+        }
     },
 
-    template: [{
-        tag: 'video',
-        reference: 'media',
-        classList: [Ext.baseCSSPrefix + 'media']
-    }],
+    // native video tag display only only, move the media down so we can control the Viewport
+    onPause: function() {
+        this.callParent(arguments);
+        if (!this.isInlineVideo) {
+            this.media.setTop(-2000);
+            this.ghost.show();
+        }
+    },
+
+    // native video tag display only only, move the media down so we can control the Viewport
+    onPlay: function() {
+        this.callParent(arguments);
+        this.media.setTop(0);
+    },
 
     /**
      * Updates the URL to the poster, even if it is rendered.
@@ -97,7 +186,7 @@ Ext.define('Ext.Video', {
     updatePosterUrl: function(newUrl) {
         var ghost = this.ghost;
         if (ghost) {
-            ghost.dom.style.backgroundImage = newUrl ? 'url(' + newUrl + ')' : '';
+            ghost.setStyle('background-image', 'url(' + newUrl + ')');
         }
     }
 });

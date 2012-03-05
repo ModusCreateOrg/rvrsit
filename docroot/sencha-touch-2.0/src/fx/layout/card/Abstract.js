@@ -2,9 +2,16 @@
  * @private
  */
 Ext.define('Ext.fx.layout.card.Abstract', {
+    extend: 'Ext.Evented',
     isAnimation: true,
 
     config: {
+        direction: 'left',
+
+        duration: null,
+
+        reverse: null,
+
         layout: null
     },
 
@@ -16,15 +23,19 @@ Ext.define('Ext.fx.layout.card.Abstract', {
         var layout = this.getLayout();
 
         if (layout) {
-            layout.on(layout.eventNames.activeItemChange, 'onActiveItemChange', this);
+            layout.onBefore('activeitemchange', 'onActiveItemChange', this);
         }
     },
 
     disable: function() {
         var layout = this.getLayout();
 
+        if (this.isAnimating) {
+            this.stopAnimation();
+        }
+
         if (layout) {
-            layout.un(layout.eventNames.activeItemChange, 'onActiveItemChange', this);
+            layout.unBefore('activeitemchange', 'onActiveItemChange', this);
         }
     },
 
@@ -33,9 +44,13 @@ Ext.define('Ext.fx.layout.card.Abstract', {
     destroy: function() {
         var layout = this.getLayout();
 
-        if (layout) {
-            this._layout = null;
-            layout.un(layout.eventNames.activeItemChange, 'onActiveItemChange', this);
+        if (this.isAnimating) {
+            this.stopAnimation();
         }
+
+        if (layout) {
+            layout.unBefore('activeitemchange', 'onActiveItemChange', this);
+        }
+        this.setLayout(null);
     }
 });

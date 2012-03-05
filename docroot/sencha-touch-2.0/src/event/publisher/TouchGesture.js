@@ -1,3 +1,6 @@
+/**
+ * @private
+ */
 Ext.define('Ext.event.publisher.TouchGesture', {
 
     extend: 'Ext.event.publisher.Dom',
@@ -67,7 +70,9 @@ Ext.define('Ext.event.publisher.TouchGesture', {
             if (recognizers.hasOwnProperty(i)) {
                 recognizer = recognizers[i];
 
-                this.registerRecognizer(recognizer);
+                if (recognizer) {
+                    this.registerRecognizer(recognizer);
+                }
             }
         }
 
@@ -394,8 +399,7 @@ Ext.define('Ext.event.publisher.TouchGesture', {
             currentTouches = this.currentTouches,
             changedTouches = e.changedTouches,
             ln = changedTouches.length,
-            isEnded = false,
-            identifier, i, touch;
+            isEnded, identifier, i, touch;
 
         e.setTargets(currentTargets);
 

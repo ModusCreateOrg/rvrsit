@@ -12,7 +12,7 @@ Remember, {@link Ext.picker.Slot} class extends from {@link Ext.dataview.DataVie
 
 ## Examples
 
-    @example preview
+    @example miniphone preview
     var picker = Ext.create('Ext.Picker', {
         slots: [
             {
@@ -27,11 +27,12 @@ Remember, {@link Ext.picker.Slot} class extends from {@link Ext.dataview.DataVie
             }
         ]
     });
+    Ext.Viewport.add(picker);
     picker.show();
 
 You can also customize the top toolbar on the {@link Ext.picker.Picker} by changing the {@link #doneButton} and {@link #cancelButton} configurations:
 
-    @example preview
+    @example miniphone preview
     var picker = Ext.create('Ext.Picker', {
         doneButton: 'I\'m done!',
         cancelButton: false,
@@ -48,38 +49,42 @@ You can also customize the top toolbar on the {@link Ext.picker.Picker} by chang
             }
         ]
     });
+    Ext.Viewport.add(picker);
     picker.show();
 
 Or by passing a custom {@link #toolbar} configuration:
 
-        @example preview
-        var picker = Ext.create('Ext.Picker', {
-            doneButton: false,
-            cancelButton: false,
-            toolbar: {
-                ui: 'light',
-                title: 'My Picker!'
-            },
-            slots: [
-                {
-                    name : 'limit_speed',
-                    title: 'Speed',
-                    data : [
-                        {text: '50 KB/s', value: 50},
-                        {text: '100 KB/s', value: 100},
-                        {text: '200 KB/s', value: 200},
-                        {text: '300 KB/s', value: 300}
-                    ]
-                }
-            ]
-        });
-        picker.show();
+    @example miniphone preview
+    var picker = Ext.create('Ext.Picker', {
+        doneButton: false,
+        cancelButton: false,
+        toolbar: {
+            ui: 'light',
+            title: 'My Picker!'
+        },
+        slots: [
+            {
+                name : 'limit_speed',
+                title: 'Speed',
+                data : [
+                    {text: '50 KB/s', value: 50},
+                    {text: '100 KB/s', value: 100},
+                    {text: '200 KB/s', value: 200},
+                    {text: '300 KB/s', value: 300}
+                ]
+            }
+        ]
+    });
+    Ext.Viewport.add(picker);
+    picker.show();
  */
 Ext.define('Ext.picker.Picker', {
     extend: 'Ext.Sheet',
     alias : 'widget.picker',
     alternateClassName: 'Ext.Picker',
     requires: ['Ext.picker.Slot', 'Ext.Toolbar', 'Ext.data.Model'],
+
+    isPicker: true,
 
     /**
      * @event pick
@@ -91,9 +96,9 @@ Ext.define('Ext.picker.Picker', {
 
     /**
      * @event change
-     * Fired when the picked value has changed
-     * @param {Ext.Picker} this This Picker
-     * @param {Object} The values of this picker's slots, in {name:'value'} format
+     * Fired when the value of this picker has changed the Done button has been pressed.
+     * @param {Ext.picker.Picker} this This Picker
+     * @param {Object} value The values of this picker's slots, in {name:'value'} format
      */
 
     /**
@@ -104,7 +109,10 @@ Ext.define('Ext.picker.Picker', {
      */
 
     config: {
-        // @inherited
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         cls: Ext.baseCSSPrefix + 'picker',
 
         /**
@@ -115,7 +123,7 @@ Ext.define('Ext.picker.Picker', {
          * <li>false or null to hide it</li></ul>
          * @accessor
          */
-        doneButton: 'Done',
+        doneButton: true,
 
         /**
          * @cfg {String/Mixed} cancelButton
@@ -125,7 +133,7 @@ Ext.define('Ext.picker.Picker', {
          * <li>false or null to hide it</li></ul>
          * @accessor
          */
-        cancelButton: 'Cancel',
+        cancelButton: true,
 
         /**
          * @cfg {Boolean} useTitles
@@ -133,7 +141,7 @@ Ext.define('Ext.picker.Picker', {
          * the title configuration of the slot.
          * @accessor
          */
-        useTitles: true,
+        useTitles: false,
 
         /**
          * @cfg {Array} slots
@@ -160,32 +168,81 @@ Ext.define('Ext.picker.Picker', {
          */
         height: 220,
 
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         layout: {
             type : 'hbox',
             align: 'stretch'
         },
 
         /**
+         * @cfg
          * @hide
          */
         centered: false,
 
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         left : 0,
 
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         right: 0,
 
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         bottom: 0,
 
         // @private
         defaultType: 'pickerslot',
 
         /**
-         * @cfg {Ext.Toolbar} toolbar
+         * @cfg {Ext.TitleBar/Ext.Toolbar/Object} toolbar
          * The toolbar which contains the {@link #doneButton} and {@link #cancelButton} buttons.
+         * You can override this if you wish, and add your own configurations. Just ensure that you take into account
+         * the {@link #doneButton} and {@link #cancelButton} configurations.
+         *
+         * The default xtype is a {@link Ext.TitleBar}:
+         *
+         *     toolbar: {
+         *         items: [
+         *             {
+         *                 xtype: 'button',
+         *                 text: 'Left',
+         *                 align: 'left'
+         *             },
+         *             {
+         *                 xtype: 'button',
+         *                 text: 'Right',
+         *                 align: 'left'
+         *             }
+         *         ]
+         *     }
+         *
+         * Or to use a {@link Ext.Toolbar instead}:
+         *
+         *     toolbar: {
+         *         xtype: 'toolbar',
+         *         items: [
+         *             {
+         *                 xtype: 'button',
+         *                 text: 'Left'
+         *             },
+         *             {
+         *                 xtype: 'button',
+         *                 text: 'Left Two'
+         *             }
+         *         ]
+         *     }
+         *
          * @accessor
          */
         toolbar: true
@@ -210,13 +267,11 @@ Ext.define('Ext.picker.Picker', {
         me.on({
             scope   : this,
             delegate: 'pickerslot',
-
-            slotpick    : 'onSlotPick'
+            slotpick: 'onSlotPick'
         });
 
         me.on({
             scope: this,
-
             show: 'onShow'
         });
     },
@@ -233,7 +288,7 @@ Ext.define('Ext.picker.Picker', {
             docked: 'top'
         });
 
-        return Ext.factory(config, 'Ext.Toolbar', this.getToolbar());
+        return Ext.factory(config, 'Ext.TitleBar', this.getToolbar());
     },
 
     /**
@@ -253,30 +308,32 @@ Ext.define('Ext.picker.Picker', {
      * Updates the {@link #doneButton} configuration. Will change it into a button when appropriate, or just update the text if needed.
      */
     applyDoneButton: function(config) {
-        if (typeof config == "string") {
-            config = {
-                text: config
-            };
-        }
+        if (config) {
+            if (Ext.isBoolean(config)) {
+                config = {};
+            }
 
-        Ext.applyIf(config, {
-            ui: 'action'
-        });
+            if (typeof config == "string") {
+                config = {
+                    text: config
+                };
+            }
+
+            Ext.applyIf(config, {
+                ui: 'action',
+                align: 'right',
+                text: 'Done'
+            });
+        }
 
         return Ext.factory(config, 'Ext.Button', this.getDoneButton());
     },
 
     updateDoneButton: function(newDoneButton, oldDoneButton) {
-        var toolbar = this.getToolbar(),
-            //done to make sure it is inserted at the left
-            //@todo remove this when toolbarlayout is fixed
-            cancelButton = this.getCancelButton();
+        var toolbar = this.getToolbar();
 
         if (newDoneButton) {
-            toolbar.add([
-                { xtype: 'spacer' },
-                newDoneButton
-            ]);
+            toolbar.add(newDoneButton);
             newDoneButton.on('tap', this.onDoneButtonTap, this);
         } else if (oldDoneButton) {
             toolbar.remove(oldDoneButton);
@@ -287,10 +344,21 @@ Ext.define('Ext.picker.Picker', {
      * Updates the {@link #cancelButton} configuration. Will change it into a button when appropriate, or just update the text if needed.
      */
     applyCancelButton: function(config) {
-        if (typeof config == "string") {
-            config = {
-                text: config
-            };
+        if (config) {
+            if (Ext.isBoolean(config)) {
+                config = {};
+            }
+
+            if (typeof config == "string") {
+                config = {
+                    text: config
+                };
+            }
+
+            Ext.applyIf(config, {
+                align: 'left',
+                text: 'Cancel'
+            });
         }
 
         return Ext.factory(config, 'Ext.Button', this.getCancelButton());
@@ -308,15 +376,28 @@ Ext.define('Ext.picker.Picker', {
     },
 
     /**
-     *
+     * @private
      */
     updateUseTitles: function(useTitles) {
         var innerItems = this.getInnerItems(),
             ln = innerItems.length,
-            i;
+            cls = Ext.baseCSSPrefix + 'use-titles',
+            i, innerItem;
 
+        //add a cls onto the picker
+        if (useTitles) {
+            this.addCls(cls);
+        } else {
+            this.removeCls(cls);
+        }
+
+        //show the titme on each of the slots
         for (i = 0; i < ln; i++) {
-            innerItems[i].setShowTitle(useTitles);
+            innerItem = innerItems[i];
+
+            if (innerItem.isSlot) {
+                innerItem.setShowTitle(useTitles);
+            }
         }
     },
 
@@ -339,19 +420,19 @@ Ext.define('Ext.picker.Picker', {
      * @private
      */
     updateSlots: function(newSlots) {
-        var innerItems = this.getInnerItems(),
-            ln, i;
+        var bcss = Ext.baseCSSPrefix,
+            innerItems;
 
-        if (innerItems) {
-            ln = innerItems.length;
-
-            for (i = 0; i < ln; i++) {
-                this.remove(innerItems[i]);
-            }
-        }
+        this.removeAll();
 
         if (newSlots) {
             this.add(newSlots);
+        }
+
+        innerItems = this.getInnerItems();
+        if (innerItems.length > 0) {
+            innerItems[0].addCls(bcss + 'first');
+            innerItems[innerItems.length - 1].addCls(bcss + 'last');
         }
 
         this.updateUseTitles(this.getUseTitles());
@@ -362,14 +443,13 @@ Ext.define('Ext.picker.Picker', {
      * Called when the done button has been tapped.
      */
     onDoneButtonTap: function() {
-        // var anim = this.animSheet('exit');
-        // Ext.apply(anim, {
-        //     after: function() {
-        //
-        //     },
-        //     scope: this
-        // });
-        this.fireEvent('change', this, this.getValue());
+        var oldValue = this._value,
+            newValue = this.getValue();
+
+        if (newValue != oldValue) {
+            this.fireEvent('change', this, newValue);
+        }
+
         this.hide();
     },
 
@@ -378,15 +458,6 @@ Ext.define('Ext.picker.Picker', {
      * Called when the cancel button has been tapped.
      */
     onCancelButtonTap: function() {
-        // var anim = this.animSheet('exit');
-        // Ext.apply(anim, {
-        //     after: function() {
-        //         // Set the value back to what it was previously
-        //         this.setValue(this.values);
-        //         this.fireEvent('cancel', this);
-        //     },
-        //     scope: this
-        // });
         this.fireEvent('cancel', this);
         this.hide();
     },
@@ -412,34 +483,42 @@ Ext.define('Ext.picker.Picker', {
      * @return {Ext.Picker} this This picker
      */
     setValue: function(values, animated) {
-        var slot,
-            me = this,
-            items = me.items.items,
-            ln = items.length;
+        var me = this,
+            slots = me.getInnerItems(),
+            ln = slots.length,
+            key, slot, loopSlot, i;
 
-        // Value is an object with keys mapping to slot names
         if (!values) {
-            return this;
+            values = {};
+            for (i = 0; i < ln; i++) {
+                //set the value to false so the slot will return null when getValue is set
+                values[slots[i].config.name] = false;
+            }
         }
 
-        if (this.rendered && !this.isHidden()) {
-            Ext.iterate(values, function(key, value) {
-                slot = me.child('[_name=' + key + ']');
-
-                if (slot) {
-                    if (animated) {
-                        slot.setValueAnimated(value);
-                    } else {
-                        slot.setValue(value);
-                    }
+        for (key in values) {
+            value = values[key];
+            for (i = 0; i < slots.length; i++) {
+                loopSlot = slots[i];
+                if (loopSlot.config.name == key) {
+                    slot = loopSlot;
+                    break;
                 }
-            }, this);
+            }
+
+            if (slot) {
+                if (animated) {
+                    slot.setValueAnimated(value);
+                } else {
+                    slot.setValue(value);
+                }
+            }
         }
 
-        me._value = values;
-        me._values = values;
+        me._value = this.getValue();
+        me._values = me._value;
 
-        return this;
+        return me;
     },
 
     setValueAnimated: function(values) {
@@ -458,14 +537,14 @@ Ext.define('Ext.picker.Picker', {
 
         for (i = 0; i < ln; i++) {
             item = items[i];
-            if (item instanceof Ext.picker.Slot) {
+            if (item && item.isSlot) {
                 values[item.getName()] = item.getValue();
             }
         }
 
         this._values = values;
 
-        return values;
+        return this._values;
     },
 
     /**
@@ -474,10 +553,43 @@ Ext.define('Ext.picker.Picker', {
      */
     getValues: function() {
         return this.getValue();
+    },
+
+    destroy: function() {
+        this.callParent();
+        Ext.destroy(this.mask, this.bar);
     }
 }, function() {
+    //<deprecated product=touch since=2.0>
+    /**
+     * @member Ext.picker.Picker
+     * @cfg {String} activeCls
+     * CSS class to be applied to individual list items when they have been chosen.
+     * @removed 2.0.0
+     */
+    Ext.deprecateProperty(this, 'activeCls', null, "Ext.picker.Picker.activeCls has been removed");
+
+    /**
+     * @method getCard
+     * @inheritdoc Ext.picker.Picker#getActiveItem
+     * @deprecated 2.0.0 Please use {@link #getActiveItem} instead
+     */
+    Ext.deprecateClassMethod(this, 'getCard', 'getActiveItem');
+
+    /**
+     * @method setCard
+     * @inheritdoc Ext.picker.Picker#setActiveItem
+     * @deprecated 2.0.0 Please use {@link #setActiveItem} instead
+     */
+    Ext.deprecateClassMethod(this, 'setCard', 'setActiveItem');
+
+    //</deprecated>
+
     Ext.define('x-textvalue', {
         extend: 'Ext.data.Model',
-        fields: ['text', 'value']
+        config: {
+            fields: ['text', 'value']
+        }
     });
 });
+

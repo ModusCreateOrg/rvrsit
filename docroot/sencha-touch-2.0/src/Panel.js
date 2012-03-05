@@ -1,48 +1,49 @@
 /**
- * Panel is a container that has specific functionality and structural components that make it the perfect building
- * block for application-oriented user interfaces.
+ * @aside guide floating_components
  *
- * Panels are, by virtue of their inheritance from {@link Ext.Container}, capable of being configured with a {@link
- * Ext.Container#layout layout}, and containing child Components.
+ * Panels are most useful as Overlays - containers that float over your application. They contain extra styling such
+ * that when you {@link #showBy} another component, the container will appear in a rounded black box with a 'tip'
+ * pointing to a reference component.
  *
- * When either specifying child {@link Ext.Container#cfg-items items} of a Panel, or dynamically {@link Ext.Container#method-add
- * adding} Components to a Panel, remember to consider how you wish the Panel to arrange those child elements, and
- * whether those child elements need to be sized using one of Ext's built-in `**{@link Ext.Container#layout layout}**`
- * schemes.
+ * If you don't need this extra functionality, you should use {@link Ext.Container} instead. See the
+ * [Overlays example](#!/example/overlays) for more use cases.
  *
- * # Example:
+ *      @example miniphone preview
  *
- *     @example preview
- *     var panel = Ext.create('Ext.Panel', {
- *         fullscreen: true,
+ *      var button = Ext.create('Ext.Button', {
+ *           text: 'Button',
+ *           id: 'rightButton'
+ *      });
  *
- *         items: [
- *             {
- *                 dock : 'top',
- *                 xtype: 'toolbar',
- *                 title: 'Standard Titlebar'
- *             },
- *             {
- *                 dock : 'top',
- *                 xtype: 'toolbar',
- *                 ui   : 'light',
- *                 items: [
- *                     {
- *                         text: 'Test Button'
- *                     }
- *                 ]
- *             }
- *         ],
+ *      Ext.create('Ext.Container', {
+ *          fullscreen: true,
+ *          items: [
+ *              {
+ *                   docked: 'top',
+ *                   xtype: 'titlebar',
+ *                   items: [
+ *                       button
+ *                   ]
+ *               }
+ *          ]
+ *      });
  *
- *         html: 'Testing'
- *     });
+ *      Ext.create('Ext.Panel', {
+ *          html: 'Floating Panel',
+ *          left: 0,
+ *          padding: 10
+ *      }).showBy(button);
  *
  */
 Ext.define('Ext.Panel', {
-    isPanel: true,
-    extend : 'Ext.Container',
-    xtype  : 'panel',
+    extend: 'Ext.Container',
+    requires: ['Ext.util.LineSegment'],
+
     alternateClassName: 'Ext.lib.Panel',
+
+    xtype: 'panel',
+
+    isPanel: true,
 
     config: {
         baseCls: Ext.baseCSSPrefix + 'panel',
@@ -51,7 +52,7 @@ Ext.define('Ext.Panel', {
          * @cfg {Number/Boolean/String} bodyPadding
          * A shortcut for setting a padding style on the body element. The value can either be
          * a number to be applied to all sides, or a normal css string describing padding.
-         * @deprecated 2.0 bodyPadding is deprecated and will be removed in a future version of Sencha Touch.
+         * @deprecated 2.0.0
          */
         bodyPadding: null,
 
@@ -59,7 +60,7 @@ Ext.define('Ext.Panel', {
          * @cfg {Number/Boolean/String} bodyMargin
          * A shortcut for setting a margin style on the body element. The value can either be
          * a number to be applied to all sides, or a normal css string describing margins.
-         * @deprecated 2.0 bodyMargin is deprecated and will be removed in a future version of Sencha Touch.
+         * @deprecated 2.0.0
          */
         bodyMargin: null,
 
@@ -67,9 +68,21 @@ Ext.define('Ext.Panel', {
          * @cfg {Number/Boolean/String} bodyBorder
          * A shortcut for setting a border style on the body element. The value can either be
          * a number to be applied to all sides, or a normal css string describing borders.
-         * @deprecated 2.0 bodyBorder is deprecated and will be removed in a future version of Sencha Touch.
+         * @deprecated 2.0.0
          */
         bodyBorder: null
+    },
+
+    getElementConfig: function() {
+        var config = this.callParent();
+
+        config.children.push({
+            reference: 'tipElement',
+            className: 'x-anchor',
+            hidden: true
+        });
+
+        return config;
     },
 
     applyBodyPadding: function(bodyPadding) {
@@ -77,7 +90,9 @@ Ext.define('Ext.Panel', {
             bodyPadding = 5;
         }
 
-        bodyPadding = Ext.dom.Element.unitizeBox(bodyPadding);
+        if (bodyPadding) {
+            bodyPadding = Ext.dom.Element.unitizeBox(bodyPadding);
+        }
 
         return bodyPadding;
     },
@@ -91,7 +106,9 @@ Ext.define('Ext.Panel', {
             bodyMargin = 5;
         }
 
-        bodyMargin = Ext.dom.Element.unitizeBox(bodyMargin);
+        if (bodyMargin) {
+            bodyMargin = Ext.dom.Element.unitizeBox(bodyMargin);
+        }
 
         return bodyMargin;
     },
@@ -105,12 +122,92 @@ Ext.define('Ext.Panel', {
             bodyBorder = 1;
         }
 
-        bodyBorder = Ext.dom.Element.unitizeBox(bodyBorder);
+        if (bodyBorder) {
+            bodyBorder = Ext.dom.Element.unitizeBox(bodyBorder);
+        }
 
         return bodyBorder;
     },
 
     updateBodyBorder: function(newBodyBorder) {
         this.element.setStyle('border-width', newBodyBorder);
+    },
+
+    alignTo: function(component) {
+        var tipElement = this.tipElement;
+
+        tipElement.hide();
+
+        if (this.currentTipPosition) {
+            tipElement.removeCls('x-anchor-' + this.currentTipPosition);
+        }
+
+        this.callParent(arguments);
+
+        var LineSegment = Ext.util.LineSegment,
+            alignToElement = component.isComponent ? component.renderElement : component,
+            element = this.renderElement,
+            alignToBox = alignToElement.getPageBox(),
+            box = element.getPageBox(),
+            left = box.left,
+            top = box.top,
+            right = box.right,
+            bottom = box.bottom,
+            centerX = left + (box.width / 2),
+            centerY = top + (box.height / 2),
+            leftTopPoint = { x: left, y: top },
+            rightTopPoint = { x: right, y: top },
+            leftBottomPoint = { x: left, y: bottom },
+            rightBottomPoint = { x: right, y: bottom },
+            boxCenterPoint = { x: centerX, y: centerY },
+            alignToCenterX = alignToBox.left + (alignToBox.width / 2),
+            alignToCenterY = alignToBox.top + (alignToBox.height / 2),
+            alignToBoxCenterPoint = { x: alignToCenterX, y: alignToCenterY },
+            centerLineSegment = new LineSegment(boxCenterPoint, alignToBoxCenterPoint),
+            offsetLeft = 0,
+            offsetTop = 0,
+            tipSize, tipWidth, tipHeight, tipPosition, tipX, tipY;
+
+        tipElement.setVisibility(false);
+        tipElement.show();
+        tipSize = tipElement.getSize();
+        tipWidth = tipSize.width;
+        tipHeight = tipSize.height;
+
+        if (centerLineSegment.intersects(new LineSegment(leftTopPoint, rightTopPoint))) {
+            tipX = Math.min(Math.max(alignToCenterX, left), right - (tipWidth / 2));
+            tipY = top;
+            offsetTop = tipHeight + 10;
+            tipPosition = 'top';
+        }
+        else if (centerLineSegment.intersects(new LineSegment(leftTopPoint, leftBottomPoint))) {
+            tipX = left;
+            tipY = Math.min(Math.max(alignToCenterY + (tipWidth / 2), top), bottom);
+            offsetLeft = tipHeight + 10;
+            tipPosition = 'left';
+        }
+        else if (centerLineSegment.intersects(new LineSegment(leftBottomPoint, rightBottomPoint))) {
+            tipX = Math.min(Math.max(alignToCenterX, left), right - (tipWidth / 2));
+            tipY = bottom;
+            offsetTop = -tipHeight - 10;
+            tipPosition = 'bottom';
+        }
+        else if (centerLineSegment.intersects(new LineSegment(rightTopPoint, rightBottomPoint))) {
+            tipX = right;
+            tipY = Math.min(Math.max(alignToCenterY - (tipWidth / 2), top), bottom);
+            offsetLeft = -tipHeight - 10;
+            tipPosition = 'right';
+        }
+
+        if (tipX || tipY) {
+            this.currentTipPosition = tipPosition;
+            tipElement.addCls('x-anchor-' + tipPosition);
+            tipElement.setLeft(tipX - left);
+            tipElement.setTop(tipY - top);
+            tipElement.setVisibility(true);
+
+            this.setLeft(this.getLeft() + offsetLeft);
+            this.setTop(this.getTop() + offsetTop);
+        }
     }
 });

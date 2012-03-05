@@ -36,7 +36,7 @@ rpcMethods = {
         var user = DataApi.findUser(data);
 
         if (user) {
-            var waitinngList = DataApi.getWaitingList(data);
+            var waitingList = DataApi.getWaitingList(data);
             Json.success({
                 message     : 'User authenticated',
                 waitingList : waitingList,
@@ -65,8 +65,9 @@ rpcMethods = {
     updateGame : function(data) {
         console.log('updateGame called');
         console.log(Util.print_r(data));
-        DataApi.writeFile('data/games/test.json', data.chipData);
-        Json.success({ message : 'OK', data: data.chipData})
+        var chipData = Json.decode(data.chipData);
+        DataApi.updateGame('test', chipData);
+        Json.success({ message : 'OK', chipData: chipData})
     }
 };
 

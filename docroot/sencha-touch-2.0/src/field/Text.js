@@ -1,23 +1,29 @@
 /**
+ * @aside guide forms
+ *
  * The text field is the basis for most of the input fields in Sencha Touch. It provides a baseline of shared
  * functionality such as input validation, standard events, state management and look and feel. Typically we create
  * text fields inside a form, like this:
  *
+ *     @example
  *     Ext.create('Ext.form.Panel', {
- *         tbar: {
- *             text: 'Enter your name'
- *         },
- *
+ *         fullscreen: true,
  *         items: [
  *             {
- *                 xtype: 'textfield',
- *                 label: 'First Name',
- *                 name: 'firstName'
- *             },
- *             {
- *                 xtype: 'textfield',
- *                 label: 'Last Name',
- *                 name: 'lastName'
+ *                 xtype: 'fieldset',
+ *                 title: 'Enter your name',
+ *                 items: [
+ *                     {
+ *                         xtype: 'textfield',
+ *                         label: 'First Name',
+ *                         name: 'firstName'
+ *                     },
+ *                     {
+ *                         xtype: 'textfield',
+ *                         label: 'Last Name',
+ *                         name: 'lastName'
+ *                     }
+ *                 ]
  *             }
  *         ]
  *     });
@@ -126,10 +132,16 @@ Ext.define('Ext.field.Text', {
      */
 
     config: {
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         ui: 'text',
 
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         clearIcon: true,
 
         /**
@@ -174,6 +186,7 @@ Ext.define('Ext.field.Text', {
 
         /**
          * @cfg {Object} component The inner component for this field, which defaults to an input text.
+         * @accessor
          */
         component: {
             xtype: 'input',
@@ -198,21 +211,45 @@ Ext.define('Ext.field.Text', {
             mousedown   : 'onMouseDown',
             clearicontap: 'onClearIconTap'
         });
+
+        // set the originalValue of the textfield, if one exists
+        me.originalValue = me.originalValue || "";
+        me.getComponent().originalValue = me.originalValue;
+
+        me.syncEmptyCls();
+    },
+
+    syncEmptyCls: function() {
+        var empty = (this._value) ? this._value.length : false,
+            cls = Ext.baseCSSPrefix + 'empty';
+
+        if (empty) {
+            this.removeCls(cls);
+        } else {
+            this.addCls(cls);
+        }
     },
 
     // @private
     updateValue: function(newValue) {
         var component = this.getComponent();
+
         if (component) {
             component.setValue(newValue);
         }
 
         this[newValue ? 'showClearIcon' : 'hideClearIcon']();
+
+        this.syncEmptyCls();
     },
 
     getValue: function() {
         var me = this;
+
         me._value = me.getComponent().getValue();
+
+        me.syncEmptyCls();
+
         return me._value;
     },
 
@@ -276,7 +313,17 @@ Ext.define('Ext.field.Text', {
         }
     },
 
-    // @inherit
+    /**
+     * Updates the {@link #inputCls} configuration on this fields {@link #component}
+     * @private
+     */
+    updateInputCls: function(newInputCls, oldInputCls) {
+        var component = this.getComponent();
+        if (component) {
+            component.replaceCls(oldInputCls, newInputCls);
+        }
+    },
+
     doSetDisabled: function(disabled) {
         var me = this;
 
@@ -317,7 +364,7 @@ Ext.define('Ext.field.Text', {
     },
 
     /**
-     * Called when a key has been pressed in the {@link #input}
+     * Called when a key has been pressed in the `<input>`
      * @private
      */
     doKeyUp: function(me, e) {
@@ -332,7 +379,9 @@ Ext.define('Ext.field.Text', {
         }
     },
 
-    doAction: Ext.emptyFn,
+    doAction: function() {
+        this.blur();
+    },
 
     onClearIconTap: function(e) {
         this.fireAction('clearicontap', [this, e], 'doClearIconTap');
@@ -341,6 +390,9 @@ Ext.define('Ext.field.Text', {
     // @private
     doClearIconTap: function(me, e) {
         me.setValue('');
+
+        //sync with the input
+        me.getValue();
     },
 
     onChange: function(me, value, startValue) {
@@ -348,11 +400,20 @@ Ext.define('Ext.field.Text', {
     },
 
     onFocus: function(e) {
+        this.isFocused = true;
         this.fireEvent('focus', this, e);
     },
 
     onBlur: function(e) {
-        this.fireEvent('blur', this, e);
+        var me = this;
+
+        this.isFocused = false;
+
+        me.fireEvent('blur', me, e);
+
+        setTimeout(function() {
+            me.isFocused = false;
+        }, 50);
     },
 
     onPaste: function(e) {
@@ -381,7 +442,15 @@ Ext.define('Ext.field.Text', {
         return this;
     },
 
-    // @inherit
+    /**
+     * Attempts to forcefully select all the contents of the input field.
+     * @return {Ext.field.Text} this
+     */
+    select: function() {
+        this.getComponent().select();
+        return this;
+    },
+
     reset: function() {
         this.getComponent().reset();
 
@@ -391,7 +460,6 @@ Ext.define('Ext.field.Text', {
         this[this._value ? 'showClearIcon' : 'hideClearIcon']();
     },
 
-    // @inherit
     isDirty: function() {
         var component = this.getComponent();
         if (component) {
@@ -405,8 +473,8 @@ Ext.define('Ext.field.Text', {
 /**
  * @property startValue
  * @type String/Number
- * Deprecated, used to contain the previous value of the field before the edit
- * @deprecated 2.0.0
+ * Used to contain the previous value of the field before the edit
+ * @removed 2.0.0
  * @member Ext.field.Text
  */
 //</deprecated>

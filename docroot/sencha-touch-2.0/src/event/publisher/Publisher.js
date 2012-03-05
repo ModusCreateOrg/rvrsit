@@ -1,5 +1,10 @@
+/**
+ * @private
+ */
 Ext.define('Ext.event.publisher.Publisher', {
     targetType: '',
+
+    idSelectorRegex: /^#([\w\-]+)$/i,
 
     constructor: function() {
         var handledEvents = this.handledEvents,
@@ -13,6 +18,8 @@ Ext.define('Ext.event.publisher.Publisher', {
 
             handledEventsMap[event] = true;
         }
+
+        this.subscribers = {};
 
         return this;
     },
@@ -37,6 +44,13 @@ Ext.define('Ext.event.publisher.Publisher', {
 
     unsubscribe: function() {
         return false;
+    },
+
+    unsubscribeAll: function() {
+        delete this.subscribers;
+        this.subscribers = {};
+
+        return this;
     },
 
     notify: function() {

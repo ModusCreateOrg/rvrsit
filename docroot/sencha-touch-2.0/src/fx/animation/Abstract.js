@@ -3,6 +3,8 @@
  */
 Ext.define('Ext.fx.animation.Abstract', {
 
+    extend: 'Ext.Evented',
+
     isAnimation: true,
 
     requires: [
@@ -14,6 +16,10 @@ Ext.define('Ext.fx.animation.Abstract', {
 
         element: null,
 
+        /**
+         * @cfg
+         * Before configuration.
+         */
         before: null,
 
         from: {},
@@ -26,6 +32,10 @@ Ext.define('Ext.fx.animation.Abstract', {
 
         duration:  300,
 
+        /**
+         * @cfg
+         * Easing type.
+         */
         easing: 'linear',
 
         iteration: 1,
@@ -34,13 +44,19 @@ Ext.define('Ext.fx.animation.Abstract', {
 
         delay: 0,
 
+        onBeforeStart: null,
+
         onEnd: null,
 
         onBeforeEnd: null,
 
         scope: null,
 
-        preserveEndState: true
+        reverse: null,
+
+        preserveEndState: false,
+
+        replacePrevious: true
     },
 
     STATE_FROM: '0%',
@@ -57,10 +73,10 @@ Ext.define('Ext.fx.animation.Abstract', {
 
     stateNameRegex: /^(?:[\d\.]+)%$/,
 
-    constructor: function(config) {
+    constructor: function() {
         this.states = {};
 
-        this.initConfig(config);
+        this.callParent(arguments);
 
         return this;
     },
@@ -172,8 +188,10 @@ Ext.define('Ext.fx.animation.Abstract', {
             delay: this.getDelay(),
             onEnd: this.getOnEnd(),
             onBeforeEnd: this.getOnBeforeEnd(),
+            onBeforeStart: this.getOnBeforeStart(),
             scope: this.getScope(),
-            preserveEndState: this.getPreserveEndState()
+            preserveEndState: this.getPreserveEndState(),
+            replacePrevious: this.getReplacePrevious()
         };
     }
 });

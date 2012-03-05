@@ -11,17 +11,13 @@ Ext.define('Ext.tab.Bar', {
     alternateClassName: 'Ext.TabBar',
     xtype : 'tabbar',
 
-    // @TODO: Implement sortable tabs again
     requires: ['Ext.tab.Tab'],
 
     config: {
         /**
-         * @cfg {Ext.Component} activeTab
-         * @accessor
+         * @cfg
+         * @inheritdoc
          */
-        activeTab: null,
-
-        // @inherit
         baseCls: Ext.baseCSSPrefix + 'tabbar',
 
         // @private
@@ -29,14 +25,25 @@ Ext.define('Ext.tab.Bar', {
 
         // @private
         layout: {
-            type : 'hbox',
-            align: 'middle',
-            pack : 'left'
+            type: 'hbox',
+            align: 'middle'
         }
+    },
+
+    eventedConfig: {
+        /**
+         * @cfg {Number/String/Ext.Component} activeTab
+         * The initially activated tab. Can be specified as numeric index,
+         * component ID or as the component instance itself.
+         * @accessor
+         * @evented
+         */
+        activeTab: null
     },
 
     /**
      * @event tabchange
+     * Fired when active tab changes.
      * @param {Ext.tab.Bar} this
      * @param {Ext.tab.Tab} newTab The new Tab
      * @param {Ext.tab.Tab} oldTab The old Tab
@@ -62,15 +69,18 @@ Ext.define('Ext.tab.Bar', {
     /**
      * @private
      */
-    applyActiveTab: function(activeTab) {
+    applyActiveTab: function(activeTab, oldActiveTab) {
         if (!activeTab && activeTab !== 0) {
             return;
         }
 
         var activeTabInstance = this.parseActiveTab(activeTab);
+
         if (!activeTabInstance) {
             // <debug warn>
-            Ext.Logger.warn('Trying to set a non-existent activeTab');
+            if (oldActiveTab) {
+                Ext.Logger.warn('Trying to set a non-existent activeTab');
+            }
             // </debug>
             return;
         }
@@ -95,17 +105,9 @@ Ext.define('Ext.tab.Bar', {
 
     /**
      * @private
-     * Fires off the tabchange action
-     */
-    updateActiveTab: function(newTab, oldTab) {
-        this.fireAction('tabchange', [this, newTab, oldTab], 'doActiveTabChange');
-    },
-
-    /**
-     * @private
      * Sets the active tab
      */
-    doActiveTabChange: function(me, newTab, oldTab) {
+    doSetActiveTab: function(newTab, oldTab) {
         if (newTab) {
             newTab.setActive(true);
         }
@@ -121,11 +123,10 @@ Ext.define('Ext.tab.Bar', {
      */
     parseActiveTab: function(tab) {
         //we need to call getItems to initialize the items, otherwise they will not exist yet.
-        var items = this.getItems();
-
         if (typeof tab == 'number') {
             return this.getInnerItems()[tab];
-        } else if (typeof tab == 'string') {
+        }
+        else if (typeof tab == 'string') {
             tab = Ext.getCmp(tab);
         }
         return tab;

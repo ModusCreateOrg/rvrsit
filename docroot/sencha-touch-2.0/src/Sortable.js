@@ -9,7 +9,10 @@ Ext.define('Ext.Sortable', {
     requires: ['Ext.util.Draggable'],
 
     config: {
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         baseCls: Ext.baseCSSPrefix + 'sortable',
 
         /**
@@ -92,14 +95,6 @@ Ext.define('Ext.Sortable', {
 
     /**
      * Read-only value representing whether the Draggable can be moved vertically.
-     * This is automatically calculated by Draggable by the direction configuration.
-     * @type Boolean
-     * @private
-     */
-    vertical: false,
-
-    /**
-     * Read-only value representing whether the Draggable can be moved horizontally.
      * This is automatically calculated by Draggable by the direction configuration.
      * @type Boolean
      * @private

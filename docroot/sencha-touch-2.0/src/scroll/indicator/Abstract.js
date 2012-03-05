@@ -7,23 +7,23 @@ Ext.define('Ext.scroll.indicator.Abstract', {
     config: {
         baseCls: 'x-scroll-indicator',
 
-        /**
-         * @cfg {String} axis The current indicator axis
-         * @accessor
-         */
         axis: 'x',
 
         value: 0,
 
         length: null,
 
-        hidden: true
+        hidden: true,
+
+        ui: 'dark'
     },
 
     cachedConfig: {
         ratio: 1,
 
-        barCls: 'x-scroll-bar'
+        barCls: 'x-scroll-bar',
+
+        active: true
     },
 
     barElement: null,
@@ -77,6 +77,10 @@ Ext.define('Ext.scroll.indicator.Abstract', {
         this.setOffset(this.gapLength * value);
     },
 
+    updateActive: function(active) {
+        this.barElement[active ? 'addCls' : 'removeCls']('active');
+    },
+
     doSetHidden: function(hidden) {
         var elementDomStyle = this.element.dom.style;
 
@@ -89,13 +93,14 @@ Ext.define('Ext.scroll.indicator.Abstract', {
     },
 
     updateLength: function(length) {
-        var axis = this.getAxis();
+        var axis = this.getAxis(),
+            element = this.element;
 
         if (axis === 'x') {
-            this.element.setWidth(length);
+            element.setWidth(length);
         }
         else {
-            this.element.setHeight(length);
+            element.setHeight(length);
         }
     },
 

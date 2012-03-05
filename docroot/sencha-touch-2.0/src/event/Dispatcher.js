@@ -1,3 +1,6 @@
+/**
+ * @private
+ */
 Ext.define('Ext.event.Dispatcher', {
 
     requires: [
@@ -48,9 +51,11 @@ Ext.define('Ext.event.Dispatcher', {
             map = listenerStacks[targetType],
             listenerStack;
 
+        createIfNotExist = Boolean(createIfNotExist);
+
         if (!map) {
             if (createIfNotExist) {
-                map = listenerStacks[targetType] = {};
+                listenerStacks[targetType] = map = {};
             }
             else {
                 return null;
@@ -61,7 +66,7 @@ Ext.define('Ext.event.Dispatcher', {
 
         if (!map) {
             if (createIfNotExist) {
-                map = listenerStacks[targetType][target] = {};
+                listenerStacks[targetType][target] = map = {};
             }
             else {
                 return null;
@@ -72,7 +77,7 @@ Ext.define('Ext.event.Dispatcher', {
 
         if (!listenerStack) {
             if (createIfNotExist) {
-                listenerStack = map[eventName] = new Ext.event.ListenerStack();
+                map[eventName] = listenerStack = new Ext.event.ListenerStack();
             }
             else {
                 return null;
@@ -91,7 +96,7 @@ Ext.define('Ext.event.Dispatcher', {
             };
 
         if (!controller) {
-            controller = this.controller = new Ext.event.Controller();
+            this.controller = controller = new Ext.event.Controller();
         }
 
         if (controller.isFiring) {
@@ -111,7 +116,7 @@ Ext.define('Ext.event.Dispatcher', {
         var i, publisher;
 
         this.publishersCache = {};
-        
+
         for (i in publishers) {
             if (publishers.hasOwnProperty(i)) {
                 publisher = publishers[i];
@@ -124,11 +129,12 @@ Ext.define('Ext.event.Dispatcher', {
     },
 
     registerPublisher: function(publisher) {
-        var targetType = publisher.getTargetType(),
-            publishers = this.activePublishers[targetType];
+        var activePublishers = this.activePublishers,
+            targetType = publisher.getTargetType(),
+            publishers = activePublishers[targetType];
 
         if (!publishers) {
-            publishers = this.activePublishers[targetType] = [];
+            activePublishers[targetType] = publishers = [];
         }
 
         publishers.push(publisher);
@@ -245,22 +251,56 @@ Ext.define('Ext.event.Dispatcher', {
 
     clearListeners: function(targetType, target, eventName) {
         var listenerStacks = this.listenerStacks,
-            ln = arguments.length;
+            ln = arguments.length,
+            stacks, publishers, i, publisherGroup;
 
         if (ln === 3) {
             if (listenerStacks[targetType] && listenerStacks[targetType][target]) {
+                this.removeListener(targetType, target, eventName);
                 delete listenerStacks[targetType][target][eventName];
             }
         }
         else if (ln === 2) {
             if (listenerStacks[targetType]) {
-                delete listenerStacks[targetType][target];
+                stacks = listenerStacks[targetType][target];
+
+                if (stacks) {
+                    for (eventName in stacks) {
+                        if (stacks.hasOwnProperty(eventName)) {
+                            publishers = this.getActivePublishers(targetType, eventName);
+
+                            for (i = 0,ln = publishers.length; i < ln; i++) {
+                                publishers[i].unsubscribe(target, eventName, true);
+                            }
+                        }
+                    }
+
+                    delete listenerStacks[targetType][target];
+                }
             }
         }
         else if (ln === 1) {
+            publishers = this.activePublishers[targetType];
+
+            for (i = 0,ln = publishers.length; i < ln; i++) {
+                publishers[i].unsubscribeAll();
+            }
+
             delete listenerStacks[targetType];
         }
         else {
+            publishers = this.activePublishers;
+
+            for (targetType in publishers) {
+                if (publishers.hasOwnProperty(targetType)) {
+                    publisherGroup = publishers[targetType];
+
+                    for (i = 0,ln = publisherGroup.length; i < ln; i++) {
+                        publisherGroup[i].unsubscribeAll();
+                    }
+                }
+            }
+
             delete this.listenerStacks;
             this.listenerStacks = {};
         }
@@ -282,33 +322,23 @@ Ext.define('Ext.event.Dispatcher', {
         return this.doDispatchEvent.apply(this, arguments);
     },
 
-    doDispatchEvent: function(targetType, target, eventName, args, actions, connectedController) {
+    doDispatchEvent: function(targetType, target, eventName, args, action, connectedController) {
         var listenerStack = this.getListenerStack(targetType, target, eventName),
             wildcardStacks = this.getWildcardListenerStacks(targetType, target, eventName),
             controller;
 
-        if (wildcardStacks.length > 0) {
-            if (!actions) {
-                actions = [];
+        if ((listenerStack === null || listenerStack.length == 0)) {
+            if (wildcardStacks.length == 0 && !action) {
+                return;
             }
-
-            actions.push({
-                fn: this.fireListenerStacks,
-                scope: this,
-                options: {
-                    args: [wildcardStacks, 0, targetType, target, eventName]
-                },
-                order: 'after'
-            });
         }
-
-        if ((!listenerStack || listenerStack.length == 0) && (!actions || actions.length == 0)) {
-            return;
+        else {
+            wildcardStacks.push(listenerStack);
         }
 
         controller = this.getController(targetType, target, eventName, connectedController);
-        controller.setListenerStack(listenerStack);
-        controller.fire(args, actions);
+        controller.setListenerStacks(wildcardStacks);
+        controller.fire(args, action);
 
         return !controller.isInterrupted();
     },
@@ -329,27 +359,5 @@ Ext.define('Ext.event.Dispatcher', {
         }
 
         return stacks;
-    },
-
-    fireListenerStacks: function(listenerStacks, index, targetType, target, eventName) {
-        var listenerStack = listenerStacks[index],
-            ln = listenerStacks.length,
-            controller = this.getController(targetType, target, eventName),
-            args = Array.prototype.slice.call(arguments, 5, -2),
-            actions;
-
-        if (++index <= ln - 1) {
-            actions = [{
-                fn: this.fireListenerStacks,
-                scope: this,
-                options: {
-                    args: [listenerStacks, index, targetType, target, eventName]
-                },
-                order: 'after'
-            }];
-        }
-
-        controller.setListenerStack(listenerStack);
-        controller.fire(args, actions);
     }
 });

@@ -1,5 +1,11 @@
 /**
- * A simple label component which allows you to insert content using {@link #html} configuration
+ * A simple label component which allows you to insert content using {@link #html} configuration.
+ *
+ *     @example miniphone
+ *     Ext.Viewport.add({
+ *         xtype: 'label',
+ *         html: 'My label!'
+ *     });
  */
 Ext.define('Ext.Label', {
     extend: 'Ext.Component',
@@ -8,6 +14,7 @@ Ext.define('Ext.Label', {
     config: {
         /**
          * @cfg {String} html
+         * The label of this component.
          */
     }
 });

@@ -1,5 +1,6 @@
 /**
  * @author Ed Spencer
+ * @aside guide stores
  *
  * Small helper class to make creating {@link Ext.data.Store}s from Array data easier. An ArrayStore will be
  * automatically configured with a {@link Ext.data.reader.Array}.
@@ -31,7 +32,7 @@
  *         ['Wal-Mart Stores, Inc.',45.45,0.73,1.63,'9/1 12:00am']
  *     ];
  *
- * An object literal of this form could also be used as the {@link #cfg-data} config option.
+ * An object literal of this form could also be used as the {@link #data} config option.
  *
  * **Note:** Although not listed here, this class accepts all of the configuration options of
  * **{@link Ext.data.reader.Array ArrayReader}**.
@@ -41,31 +42,25 @@ Ext.define('Ext.data.ArrayStore', {
     alias: 'store.array',
     uses: ['Ext.data.reader.Array'],
 
-    constructor: function(config) {
-        config = config || {};
-
-        Ext.applyIf(config, {
-            proxy: {
-                type: 'memory',
-                reader: 'array'
-            }
-        });
-
-        this.callParent([config]);
+    config: {
+        proxy: {
+            type: 'memory',
+            reader: 'array'
+        }
     },
 
     loadData: function(data, append) {
-        if (this.expandData === true) {
-            var r = [],
-                i = 0,
-                ln = data.length;
-
-            for (; i < ln; i++) {
-                r[r.length] = [data[i]];
-            }
-
-            data = r;
-        }
+//        if (this.expandData === true) {
+//            var r = [],
+//                i = 0,
+//                ln = data.length;
+//
+//            for (; i < ln; i++) {
+//                r[r.length] = [data[i]];
+//            }
+//
+//            data = r;
+//        }
 
         this.callParent([data, append]);
     }

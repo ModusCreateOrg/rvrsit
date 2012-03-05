@@ -34,7 +34,6 @@ MyGame = ig.Game.extend({
     ],
     init          : function() {
         var me = this;
-        Rvrsit.game = me;
 
         me.initSound();
         me.initSettings();
@@ -43,6 +42,8 @@ MyGame = ig.Game.extend({
         ig.input.initMouse();
 
         ig.input.bind(ig.KEY.MOUSE1, 'click');
+
+        Rvrsit.app.fireEvent('gameInitialized', me);
     },
 
     initSound : function() {

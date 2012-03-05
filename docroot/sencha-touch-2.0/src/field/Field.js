@@ -1,21 +1,21 @@
 /**
+ * @aside guide forms
+ *
  * Field is the base class for all form fields used in Sencha Touch. It provides a lot of shared functionality to all
  * field subclasses (for example labels, simple validation, {@link #clearIcon clearing} and tab index management), but
  * is rarely used directly. Instead, it is much more common to use one of the field subclasses:
  *
-<pre>
-xtype            Class
----------------------------------------
-textfield        {@link Ext.field.Text}
-numberfield      {@link Ext.field.Number}
-textareafield    {@link Ext.field.TextArea}
-hiddenfield      {@link Ext.field.Hidden}
-radiofield       {@link Ext.field.Radio}
-checkboxfield    {@link Ext.field.Checkbox}
-selectfield      {@link Ext.field.Select}
-togglefield      {@link Ext.field.Toggle}
-fieldset         {@link Ext.form.FieldSet}
-</pre>
+ *     xtype            Class
+ *     ---------------------------------------
+ *     textfield        {@link Ext.field.Text}
+ *     numberfield      {@link Ext.field.Number}
+ *     textareafield    {@link Ext.field.TextArea}
+ *     hiddenfield      {@link Ext.field.Hidden}
+ *     radiofield       {@link Ext.field.Radio}
+ *     checkboxfield    {@link Ext.field.Checkbox}
+ *     selectfield      {@link Ext.field.Select}
+ *     togglefield      {@link Ext.field.Toggle}
+ *     fieldset         {@link Ext.form.FieldSet}
  *
  * Fields are normally used within the context of a form and/or fieldset. See the {@link Ext.form.Panel FormPanel}
  * and {@link Ext.form.FieldSet FieldSet} docs for examples on how to put those together, or the list of links above
@@ -43,7 +43,10 @@ Ext.define('Ext.field.Field', {
     isFormField: true,
 
     config: {
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         baseCls: Ext.baseCSSPrefix + 'field',
 
         /**
@@ -62,7 +65,7 @@ Ext.define('Ext.field.Field', {
         labelAlign: 'left',
 
         /**
-         * @cfg {Number} labelWidth The width to make this field's label (defaults to 30%).
+         * @cfg {Number/String} labelWidth The width to make this field's label.
          * @accessor
          */
         labelWidth: '30%',
@@ -140,8 +143,19 @@ Ext.define('Ext.field.Field', {
          * @cfg {String} requiredCls The className to be applied to this Field when the {@link #required} configuration is set to true
          * @accessor
          */
-        requiredCls: Ext.baseCSSPrefix + 'field-required'
+        requiredCls: Ext.baseCSSPrefix + 'field-required',
+
+        /**
+         * @cfg {String} inputCls CSS class to add to the input element of this fields {@link #component}
+         */
+        inputCls: null
     },
+
+    /**
+     * @cfg {Boolean} isFocused
+     * True if this field is currently focused,
+     * @private
+     */
 
     getElementConfig: function() {
         var prefix = Ext.baseCSSPrefix;
@@ -154,12 +168,13 @@ Ext.define('Ext.field.Field', {
                     reference: 'label',
                     cls: prefix + 'form-label',
                     children: [{
+                        reference: 'labelspan',
                         tag: 'span'
                     }]
                 },
                 {
                     reference: 'innerElement',
-                    cls      : prefix + 'component-outer'
+                    cls: prefix + 'component-outer'
                 }
             ]
         };
@@ -171,7 +186,7 @@ Ext.define('Ext.field.Field', {
             prefix = Ext.baseCSSPrefix;
 
         if (newLabel) {
-            this.label.down('span').update(newLabel);
+            this.labelspan.setHtml(newLabel);
             renderElement.addCls(prefix + 'field-labeled');
         } else {
             renderElement.removeCls(prefix + 'field-labeled');
@@ -185,6 +200,12 @@ Ext.define('Ext.field.Field', {
 
         if (newLabelAlign) {
             renderElement.addCls(prefix + 'label-align-' + newLabelAlign);
+
+            if (newLabelAlign == "top") {
+                this.label.setWidth('100%');
+            } else {
+                this.updateLabelWidth(this.getLabelWidth());
+            }
         }
 
         if (oldLabelAlign) {
@@ -206,7 +227,11 @@ Ext.define('Ext.field.Field', {
     // @private
     updateLabelWidth: function(newLabelWidth) {
         if (newLabelWidth) {
-            this.label.setStyle('width', newLabelWidth);
+            if (this.getLabelAlign() == "top") {
+                this.label.setWidth('100%');
+            } else {
+                this.label.setWidth(newLabelWidth);
+            }
         }
     },
 
@@ -245,14 +270,31 @@ Ext.define('Ext.field.Field', {
          * The original value of the field as configured in the {@link #value} configuration.
          * setting is <code>true</code>.
          */
-            this.originalValue = this.getValue();
+        this.originalValue = this.getInitialConfig().value;
     },
 
     /**
-     * Resets the current field value to the originally loaded value and clears any validation messages.
+     * Resets the current field value back to the original value on this field when it was created.
+     *
+     *     // This will create a field with an original value
+     *     var field = Ext.Viewport.add({
+     *         xtype: 'textfield',
+     *         value: 'first value'
+     *     });
+     *
+     *     // Update the value
+     *     field.setValue('new value');
+     *
+     *     // Now you can reset it back to the `first value`
+     *     field.reset();
+     *
      * @return {Ext.field.Field} this
      */
-    reset: Ext.emptyFn,
+    reset: function() {
+        this.setValue(this.originalValue);
+
+        return this;
+    },
 
     /**
      * <p>Returns true if the value of this Field has been changed from its {@link #originalValue}.
@@ -289,21 +331,14 @@ Ext.define('Ext.field.Field', {
                 }
             };
 
-            /**
-             * @member Ext.field.Field
-             * @cfg {String} inputCls CSS class to add to the input element
-             * @todo this probably should not be deprecated
-             * @deprecated 2.0.0 Deprecated, please use {@link #component}.inputCls
-             */
-            deprecateProperty('inputCls', 'input', 'cls');
+			// See https://sencha.jira.com/browse/TOUCH-1184
 
             /**
              * @member Ext.field.Field
              * @cfg {String} fieldCls CSS class to add to the field
-             * @todo this probably should not be deprecated, plus it is not input cls
-             * @deprecated 2.0.0 Deprecated, please use {@link #component}.inputCls
+             * @deprecated 2.0.0 Deprecated, please use {@link #inputCls}
              */
-            deprecateProperty('fieldCls', 'input', 'cls');
+            deprecateProperty('fieldCls', null, 'inputCls');
 
             /**
              * @member Ext.field.Field
@@ -329,20 +364,24 @@ Ext.define('Ext.field.Field', {
         }
     });
 
-    Ext.Object.redefineProperty(prototype, 'fieldEl', function() {
-        //<debug warn>
-        Ext.Logger.deprecate("'fieldEl' is deprecated, please use getInput() to get an instance of Ext.field.Field instead", this);
-        //</debug>
+    Ext.Object.defineProperty(prototype, 'fieldEl', {
+        get: function() {
+            //<debug warn>
+            Ext.Logger.deprecate("'fieldEl' is deprecated, please use getInput() to get an instance of Ext.field.Field instead", this);
+            //</debug>
 
-        return this.getInput().input;
+            return this.getInput().input;
+        }
     });
 
-    Ext.Object.redefineProperty(prototype, 'labelEl', function() {
-        //<debug warn>
-        Ext.Logger.deprecate("'labelEl' is deprecated", this);
-        //</debug>
+    Ext.Object.defineProperty(prototype, 'labelEl', {
+        get: function() {
+            //<debug warn>
+            Ext.Logger.deprecate("'labelEl' is deprecated", this);
+            //</debug>
 
-        return this.getLabel().element;
+            return this.getLabel().element;
+        }
     });
     //</deprecated>
 });

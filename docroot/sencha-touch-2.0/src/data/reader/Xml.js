@@ -9,7 +9,9 @@
 <pre><code>
 Ext.define('User', {
     extend: 'Ext.data.Model',
-    fields: ['id', 'name', 'email']
+    config: {
+        fields: ['id', 'name', 'email']
+    }
 });
 
 var store = Ext.create('Ext.data.Store', {
@@ -63,7 +65,7 @@ reader: {
  *
  * <p>If you already have your XML format defined and it doesn't look quite like what we have above, you can usually
  * pass XmlReader a couple of configuration options to make it parse your format. For example, we can use the
- * {@link #root} configuration to parse data that comes back like this:</p>
+ * {@link #rootProperty} configuration to parse data that comes back like this:</p>
  *
 <pre><code>
 &lt;?xml version="1.0" encoding="UTF-8"?&gt;
@@ -81,18 +83,18 @@ reader: {
 &lt;/users&gt;
 </code></pre>
  *
- * <p>To parse this we just pass in a {@link #root} configuration that matches the 'users' above:</p>
+ * <p>To parse this we just pass in a {@link #rootProperty} configuration that matches the 'users' above:</p>
  *
 <pre><code>
 reader: {
-    type  : 'xml',
-    root  : 'users',
-    record: 'user'
+    type: 'xml',
+    record: 'user',
+    rootProperty: 'users'
 }
 </code></pre>
  *
- * <p>Note that XmlReader doesn't care whether your {@link #root} and {@link #record} elements are nested deep inside
- * a larger structure, so a response like this will still work:
+ * <p>Note that XmlReader doesn't care whether your {@link #rootProperty} and {@link #record} elements are nested deep
+ * inside a larger structure, so a response like this will still work:
  *
 <pre><code>
 &lt;?xml version="1.0" encoding="UTF-8"?&gt;
@@ -147,7 +149,7 @@ reader: {
 <pre><code>
 reader: {
     type: 'xml',
-    root: 'users',
+    rootProperty: 'users',
     totalProperty  : 'total',
     successProperty: 'success'
 }
@@ -168,15 +170,18 @@ Ext.define('Ext.data.reader.Xml', {
     alternateClassName: 'Ext.data.XmlReader',
     alias : 'reader.xml',
 
-    /**
-     * @cfg {String} record The DomQuery path to the repeated element which contains record information.
-     */
+    config: {
+        /**
+         * @cfg {String} record The DomQuery path to the repeated element which contains record information.
+         */
+        record: null
+    },
 
     /**
      * @private
      * Creates a function to return some particular key of data from a response. The totalProperty and
      * successProperty are treated as special cases for type casting, everything else is just a simple selector.
-     * @param {String} key
+     * @param {String} expr
      * @return {Function}
      */
     createAccessor: function(expr) {
@@ -204,14 +209,24 @@ Ext.define('Ext.data.reader.Xml', {
 
     //inherit docs
     getResponseData: function(response) {
+        // Check to see if the response is already an xml node.
+        if (response.nodeType === 1 || response.nodeType === 9) {
+            return response;
+        }
+
         var xml = response.responseXML;
 
         //<debug>
         if (!xml) {
-            Ext.Error.raise({
-                response: response,
-                msg: 'XML data not found in the response'
-            });
+            /**
+             * @event exception Fires whenever the reader is unable to parse a response.
+             * @param {Ext.data.reader.Xml} reader A reference to this reader
+             * @param {XMLHttpRequest} response The XMLHttpRequest response object.
+             * @param {String} error The error message.
+             */
+            this.fireEvent('exception', this, response, 'XML data not found in the response');
+
+            Ext.Logger.warn('XML data not found in the response');
         }
         //</debug>
 
@@ -235,7 +250,7 @@ Ext.define('Ext.data.reader.Xml', {
      */
     getRoot: function(data) {
         var nodeName = data.nodeName,
-            root     = this.root;
+            root     = this.getRootProperty();
 
         if (!root || (nodeName && nodeName == root)) {
             return data;
@@ -254,11 +269,11 @@ Ext.define('Ext.data.reader.Xml', {
      * @return {Ext.data.Model[]} The records
      */
     extractData: function(root) {
-        var recordName = this.record;
+        var recordName = this.getRecord();
 
         //<debug>
         if (!recordName) {
-            Ext.Error.raise('Record is a required parameter');
+            Ext.Logger.error('Record is a required parameter');
         }
         //</debug>
 
@@ -291,13 +306,24 @@ Ext.define('Ext.data.reader.Xml', {
         if (Ext.isArray(doc)) {
             doc = doc[0];
         }
-
-        /**
-         * DEPRECATED - will be removed in Ext JS 5.0. This is just a copy of this.rawData - use that instead
-         * @property xmlData
-         * @type Object
-         */
-        this.xmlData = doc;
         return this.callParent([doc]);
+    },
+
+    /**
+     * @private
+     * Returns an accessor expression for the passed Field from an XML element using either the Field's mapping, or
+     * its ordinal position in the fields collsction as the index.
+     * This is used by buildExtractors to create optimized on extractor function which converts raw data into model instances.
+     */
+    createFieldAccessExpression: function(field, fieldVarName, dataName) {
+        var selector = field.getMapping() || field.getName(),
+            result;
+
+        if (typeof selector === 'function') {
+            result = fieldVarName + '.getMapping()(' + dataName + ', this)';
+        } else {
+            result = 'me.getNodeValue(Ext.DomQuery.selectNode("' + selector + '", ' + dataName + '))';
+        }
+        return result;
     }
 });

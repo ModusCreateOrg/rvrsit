@@ -58,6 +58,12 @@ Ext.define('Ext.field.Input', {
      * @param {Ext.EventObject} e The event object
      */
 
+    /**
+     * @property {String} tag The el tag
+     * @private
+     */
+    tag: 'input',
+
     cachedConfig: {
         /**
          * @cfg {String} cls The className to be applied to this input
@@ -98,14 +104,11 @@ Ext.define('Ext.field.Input', {
     },
 
     config: {
-        // @inherit
-        baseCls: Ext.baseCSSPrefix + 'field-input',
-
         /**
-         * @cfg {String} tag The el tag
-         * @accessor
+         * @cfg
+         * @inheritdoc
          */
-        tag: 'input',
+        baseCls: Ext.baseCSSPrefix + 'field-input',
 
         /**
          * @cfg {String} name The field's HTML name attribute
@@ -210,7 +213,7 @@ Ext.define('Ext.field.Input', {
         /**
          * <p>The value that the Field had at the time it was last focused. This is the value that is passed
          * to the {@link Ext.field.Text#change} event which is fired if the value has been changed when the Field is blurred.</p>
-         * <p><b>This will be undefined until the Field has been visited.</b> Compare {@link #property-originalValue}.</p>
+         * <p><b>This will be undefined until the Field has been visited.</b> Compare {@link #originalValue}.</p>
          * @cfg {Mixed} startValue
          * @accessor
          */
@@ -221,31 +224,28 @@ Ext.define('Ext.field.Input', {
      * @cfg {String/Number} originalValue The original value when the input is rendered
      * @private
      */
-    originalValue: undefined,
 
     // @private
     getTemplate: function() {
         var items = [
             {
                 reference: 'input',
-                tag: this.getTag()
+                tag: this.tag
             },
             {
                 reference: 'clearIcon',
-                cls: 'x-clear-icon',
-                html: 'x'
+                cls: 'x-clear-icon'
             }
         ];
 
         items.push({
             reference: 'mask',
-            classList: [this.getMaskCls()]
+            classList: [this.config.maskCls]
         });
 
         return items;
     },
 
-    // @inherit
     initElement: function() {
         var me = this;
 
@@ -258,8 +258,6 @@ Ext.define('Ext.field.Input', {
             focus    : 'onFocus',
             blur     : 'onBlur',
             paste    : 'onPaste'
-            // mousedown: 'onMouseDown',
-            // click    : 'onClick'
         });
 
         me.mask.on({
@@ -273,17 +271,6 @@ Ext.define('Ext.field.Input', {
                 scope: me
             });
         }
-
-        me.doInitValue();
-    },
-
-    // @private
-    doInitValue: function() {
-        /**
-         * @property {Mixed} originalValue
-         * The original value of the field as configured in the {@link #value} configuration
-         */
-        this.originalValue = this.getValue();
     },
 
     applyUseMask: function(useMask) {
@@ -516,6 +503,11 @@ Ext.define('Ext.field.Input', {
         return !!this.checkedRe.test(String(checked));
     },
 
+    setChecked: function(newChecked) {
+        this.updateChecked(this.applyChecked(newChecked));
+        this._checked = newChecked;
+    },
+
     /**
      * Updates the autocorrect attribute with the {@link #autoCorrect} configuration
      * @private
@@ -538,6 +530,8 @@ Ext.define('Ext.field.Input', {
         if (maxRows !== null && typeof maxRows !== 'number') {
             throw new Error("Ext.field.Input: [applyMaxRows] trying to pass a value which is not a number");
         }
+
+        return maxRows;
     },
     //</debug>
 
@@ -545,7 +539,6 @@ Ext.define('Ext.field.Input', {
         this.updateFieldAttribute('rows', newRows);
     },
 
-    // @inherit
     doSetDisabled: function(disabled) {
         this.callParent(arguments);
 
@@ -569,7 +562,7 @@ Ext.define('Ext.field.Input', {
     },
 
     /**
-     * Resets the current field value to the originally loaded value and clears any validation messages.
+     * Resets the current field value to the original value.
      */
     reset: function() {
         this.setValue(this.originalValue);
@@ -632,6 +625,20 @@ Ext.define('Ext.field.Input', {
         return me;
     },
 
+    /**
+     * Attempts to forcefully select all the contents of the input field.
+     * @return {Ext.field.Input} this
+     */
+    select: function() {
+        var me = this,
+            el = me.input;
+
+        if (el && el.dom.setSelectionRange) {
+            el.dom.setSelectionRange(0, 9999);
+        }
+        return me;
+    },
+
     onFocus: function(e) {
         this.fireAction('focus', [e], 'doFocus');
     },
@@ -670,8 +677,6 @@ Ext.define('Ext.field.Input', {
         }
 
         me.showMask();
-
-        // Ext.currentlyFocusedField = null;
     },
 
     // @private
@@ -685,6 +690,12 @@ Ext.define('Ext.field.Input', {
 
         if (String(newValue) != String(oldValue)) {
             this.onChange(this, newValue, oldValue);
+        }
+
+        //focus the field after cleartap happens, but only on android.
+        //this is to stop the keyboard from hiding. TOUCH-2064
+        if (Ext.os.is.Android) {
+            this.focus();
         }
     },
 

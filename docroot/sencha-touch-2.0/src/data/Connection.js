@@ -31,50 +31,84 @@
  */
 Ext.define('Ext.data.Connection', {
     mixins: {
-        observable: 'Ext.util.Observable'
+        observable: 'Ext.mixin.Observable'
     },
 
     statics: {
         requestId: 0
     },
 
-    url: null,
-    async: true,
-    method: null,
-    username: '',
-    password: '',
+    config: {
+        /**
+         * @cfg {String} url
+         * The default URL to be used for requests to the server.
+         * @accessor
+         */
+        url: null,
 
-    /**
-     * @cfg {Boolean} disableCaching
-     * True to add a unique cache-buster param to GET requests. (defaults to true)
-     */
-    disableCaching: true,
+        async: true,
 
-    /**
-     * @cfg {String} disableCachingParam
-     * Change the parameter which is sent went disabling caching through a cache buster. Defaults to '_dc'
-     */
-    disableCachingParam: '_dc',
+        /**
+         * @cfg {String} [method=undefined]
+         * The default HTTP method to be used for requests. Note that this is case-sensitive and
+         * should be all caps.
+         *
+         * Defaults to undefined; if not set but params are present will use "POST", otherwise "GET".
+         */
+        method: null,
 
-    /**
-     * @cfg {Number} timeout
-     * The timeout in milliseconds to be used for requests. (defaults to 30000)
-     */
-    timeout : 30000,
+        username: '',
+        password: '',
 
-    /**
-     * @cfg {Object} extraParams
-     * Any parameters to be appended to the request.
-     */
+        /**
+         * @cfg {Boolean} disableCaching
+         * True to add a unique cache-buster param to GET requests.
+         * @accessor
+         */
+        disableCaching: true,
 
-    useDefaultHeader : true,
-    defaultPostHeader : 'application/x-www-form-urlencoded; charset=UTF-8',
-    useDefaultXhrHeader : true,
-    defaultXhrHeader : 'XMLHttpRequest',
+        /**
+         * @cfg {String} disableCachingParam
+         * Change the parameter which is sent went disabling caching through a cache buster.
+         * @accessor
+         */
+        disableCachingParam: '_dc',
+
+        /**
+         * @cfg {Number} timeout
+         * The timeout in milliseconds to be used for requests.
+         * @accessor
+         */
+        timeout : 30000,
+
+        /**
+         * @cfg {Object} extraParams
+         * Any parameters to be appended to the request.
+         * @accessor
+         */
+        extraParams: null,
+
+        /**
+         * @cfg {Object} defaultHeaders
+         * An object containing request headers which are added to each request made by this object.
+         * @accessor
+         */
+        defaultHeaders: null,
+
+        useDefaultHeader : true,
+        defaultPostHeader : 'application/x-www-form-urlencoded; charset=UTF-8',
+        useDefaultXhrHeader : true,
+        defaultXhrHeader : 'XMLHttpRequest',
+
+        autoAbort: false
+    },
+
+    textAreaRe: /textarea/i,
+    multiPartRe: /multipart\/form-data/i,
+    lineBreakRe: /\r\n/g,
 
     constructor : function(config) {
-        config = config || {};
-        Ext.apply(this, config);
+        this.initConfig(config);
 
         /**
          * @event beforerequest
@@ -101,7 +135,6 @@ Ext.define('Ext.data.Connection', {
          * @param {Object} options The options config object passed to the {@link #request} method.
          */
         this.requests = {};
-        this.mixins.observable.constructor.call(this);
     },
 
     /**
@@ -214,16 +247,11 @@ Ext.define('Ext.data.Connection', {
         options = options || {};
         var me = this,
             scope = options.scope || window,
-            username = options.username || me.username,
-            password = options.password || me.password || '',
-            async,
-            requestOptions,
-            request,
-            headers,
-            xhr;
+            username = options.username || me.getUsername(),
+            password = options.password || me.getPassword() || '',
+            async, requestOptions, request, headers, xhr;
 
         if (me.fireEvent('beforerequest', me, options) !== false) {
-
             requestOptions = me.setOptions(options, scope);
 
             if (this.isFormUpload(options) === true) {
@@ -232,14 +260,14 @@ Ext.define('Ext.data.Connection', {
             }
 
             // if autoabort is set, cancel the current transactions
-            if (options.autoAbort === true || me.autoAbort) {
+            if (options.autoAbort === true || me.getAutoAbort()) {
                 me.abort();
             }
 
             // create a connection object
             xhr = this.getXhrInstance();
 
-            async = options.async !== false ? (options.async || me.async) : false;
+            async = options.async !== false ? (options.async || me.getAsync()) : false;
 
             // open the request
             if (username) {
@@ -252,7 +280,7 @@ Ext.define('Ext.data.Connection', {
 
             // create the transaction object
             request = {
-                id: ++Ext.data.Connection.requestId,
+                id: ++this.self.requestId,
                 xhr: xhr,
                 headers: headers,
                 options: options,
@@ -260,7 +288,7 @@ Ext.define('Ext.data.Connection', {
                 timeout: setTimeout(function() {
                     request.timedout = true;
                     me.abort(request);
-                }, options.timeout || me.timeout)
+                }, options.timeout || me.getTimeout())
             };
             me.requests[request.id] = request;
 
@@ -374,7 +402,7 @@ Ext.define('Ext.data.Connection', {
             doc = frame.contentWindow.document || frame.contentDocument || window.frames[id].document;
             if (doc) {
                 if (doc.body) {
-                    if (/textarea/i.test((firstChild = doc.body.firstChild || {}).tagName)) { // json response wrapped in textarea
+                    if (this.textAreaRe.test((firstChild = doc.body.firstChild || {}).tagName)) { // json response wrapped in textarea
                         response.responseText = firstChild.value;
                     } else {
                         response.responseText = doc.body.innerHTML;
@@ -403,7 +431,7 @@ Ext.define('Ext.data.Connection', {
     isFormUpload: function(options) {
         var form = this.getForm(options);
         if (form) {
-            return (options.isUpload || (/multipart\/form-data/i).test(form.getAttribute('enctype')));
+            return (options.isUpload || (this.multiPartRe).test(form.getAttribute('enctype')));
         }
         return false;
     },
@@ -427,14 +455,13 @@ Ext.define('Ext.data.Connection', {
     setOptions: function(options, scope) {
         var me = this,
             params = options.params || {},
-            extraParams = me.extraParams,
+            extraParams = me.getExtraParams(),
             urlParams = options.urlParams,
-            url = options.url || me.url,
+            url = options.url || me.getUrl(),
             jsonData = options.jsonData,
             method,
             disableCache,
             data;
-
 
         // allow params to be a method that returns the params object
         if (Ext.isFunction(params)) {
@@ -450,10 +477,7 @@ Ext.define('Ext.data.Connection', {
 
         //<debug>
         if (!url) {
-            Ext.Error.raise({
-                options: options,
-                msg: 'No URL specified'
-            });
+            Ext.Logger.error('No URL specified');
         }
         //</debug>
 
@@ -479,14 +503,14 @@ Ext.define('Ext.data.Connection', {
         params = this.setupParams(options, params);
 
         // decide the proper method for this request
-        method = (options.method || me.method || ((params || data) ? 'POST' : 'GET')).toUpperCase();
+        method = (options.method || me.getMethod() || ((params || data) ? 'POST' : 'GET')).toUpperCase();
         this.setupMethod(options, method);
 
 
-        disableCache = options.disableCaching !== false ? (options.disableCaching || me.disableCaching) : false;
+        disableCache = options.disableCaching !== false ? (options.disableCaching || me.getDisableCaching()) : false;
         // if the method is get append date to prevent caching
         if (method === 'GET' && disableCache) {
-            url = Ext.urlAppend(url, (options.disableCachingParam || me.disableCachingParam) + '=' + (new Date().getTime()));
+            url = Ext.urlAppend(url, (options.disableCachingParam || me.getDisableCachingParam()) + '=' + (new Date().getTime()));
         }
 
         // if the method is get or there is json/xml data append the params to the url
@@ -564,8 +588,8 @@ Ext.define('Ext.data.Connection', {
      */
     setupHeaders: function(xhr, options, data, params) {
         var me = this,
-            headers = Ext.apply({}, options.headers || {}, me.defaultHeaders || {}),
-            contentType = me.defaultPostHeader,
+            headers = Ext.apply({}, options.headers || {}, me.getDefaultHeaders() || {}),
+            contentType = me.getDefaultPostHeader(),
             jsonData = options.jsonData,
             xmlData = options.xmlData,
             key,
@@ -586,8 +610,8 @@ Ext.define('Ext.data.Connection', {
             headers['Content-Type'] = contentType;
         }
 
-        if (me.useDefaultXhrHeader && !headers['X-Requested-With']) {
-            headers['X-Requested-With'] = me.defaultXhrHeader;
+        if (me.getUseDefaultXhrHeader() && !headers['X-Requested-With']) {
+            headers['X-Requested-With'] = me.getDefaultXhrHeader();
         }
         // set up all the request headers on the xhr object
         try {
@@ -601,6 +625,11 @@ Ext.define('Ext.data.Connection', {
         } catch(e) {
             me.fireEvent('exception', key, header);
         }
+
+        if (options.withCredentials) {
+            xhr.withCredentials = options.withCredentials;
+        }
+
         return headers;
     },
 
@@ -634,7 +663,7 @@ Ext.define('Ext.data.Connection', {
 
     /**
      * Determines whether this object has a request outstanding.
-     * @param {Object} request (Optional) defaults to the last transaction
+     * @param {Object} request The request to check
      * @return {Boolean} True if there is an outstanding request.
      */
     isLoading : function(request) {
@@ -676,6 +705,13 @@ Ext.define('Ext.data.Connection', {
                 }
             }
         }
+    },
+
+    /**
+     * Aborts all outstanding requests
+     */
+    abortAll: function() {
+        this.abort();
     },
 
     /**
@@ -726,6 +762,10 @@ Ext.define('Ext.data.Connection', {
 
         try {
             result = me.parseStatus(request.xhr.status);
+
+            if (request.timedout) {
+                result.success = false;
+            }
         } catch (e) {
             // in some browsers we can't access the status if the readyState is not 4, so the request has failed
             result = {
@@ -762,7 +802,7 @@ Ext.define('Ext.data.Connection', {
         // see: https://prototype.lighthouseapp.com/projects/8886/tickets/129-ie-mangles-http-response-status-code-204-to-1223
         status = status == 1223 ? 204 : status;
 
-        var success = (status >= 200 && status < 300) || status == 304,
+        var success = (status >= 200 && status < 300) || status == 304 || status == 0,
             isException = false;
 
         if (!success) {
@@ -791,9 +831,18 @@ Ext.define('Ext.data.Connection', {
     createResponse : function(request) {
         var xhr = request.xhr,
             headers = {},
-            lines = xhr.getAllResponseHeaders().replace(/\r\n/g, '\n').split('\n'),
-            count = lines.length,
-            line, index, key, value, response;
+            lines, count, line, index, key, response;
+
+        //we need to make this check here because if a request times out an exception is thrown
+        //when calling getAllResponseHeaders() because the response never came back to populate it
+        if (request.timedout || request.aborted) {
+            request.success = false;
+            lines = [];
+        } else {
+            lines = xhr.getAllResponseHeaders().replace(this.lineBreakRe, '\n').split('\n');
+        }
+
+        count = lines.length;
 
         while (count--) {
             line = lines[count];

@@ -1,12 +1,13 @@
 /**
  * @class Ext.Date
+ * @mixins Ext.DateExtras
  * A set of useful static methods to deal with date.
- * 
- * **Please note:** Unless you require `Ext.DateExtras`, only the {@link #now} method will be available. You **MUST** 
- * require `Ext.DateExtras` to use the other methods available below.**
- * 
+ *
+ * **Please note:** Unless you require `Ext.DateExtras`, only the {@link #now} method will be available. You **MUST**
+ * require `Ext.DateExtras` to use the other methods available below.
+ *
  * Usage with {@link Ext#setup}:
- * 
+ *
  *     Ext.setup({
  *         requires: 'Ext.DateExtras',
  *         onReady: function() {
@@ -14,7 +15,7 @@
  *             alert(Ext.Date.format(date, 'j/d/Y'));
  *         }
  *     });
- * 
+ *
  * The date parsing and formatting syntax contains a subset of
  * <a href="http://www.php.net/date">PHP's date() function</a>, and the formats that are
  * supported will provide results equivalent to their PHP versions.
@@ -138,6 +139,33 @@ function xf(format) {
     });
 }
 
+/**
+ * Extra methods to be mixed into Ext.Date.
+ *
+ * Require this class to get Ext.Date with all the methods listed below.
+ *
+ * Using Ext.setup:
+ *
+ *     Ext.setup({
+ *         requires: 'Ext.DateExtras',
+ *         onReady: function() {
+ *             var date = new Date();
+ *             alert(Ext.Date.format(date, 'j/d/Y'));
+ *         }
+ *     });
+ *
+ * Using Ext.application:
+ *
+ *     Ext.application({
+ *         requires: 'Ext.DateExtras',
+ *         launch: function() {
+ *             var date = new Date();
+ *             alert(Ext.Date.format(date, 'j/d/Y'));
+ *         }
+ *     });
+ *
+ * @singleton
+ */
 Ext.DateExtras = {
     /**
      * Returns the current timestamp

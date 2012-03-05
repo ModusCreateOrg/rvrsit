@@ -1,24 +1,22 @@
 Ext.define('Rvrsit.controller.Waiting', {
     extend : 'Ext.app.Controller',
 
-    views : [ 'Waiting' ],
-
-    init           : function() {
-        this.control({
+    config : {
+        views   : [ 'Waiting' ],
+        control : {
             '[action="listSinglePlayer"]' : {
-                tap : this.onSinglePlayer
+                tap : 'onSinglePlayer'
             },
             '[action="listPlayUser"]'     : {
-                tap : this.onPlayUser
+                tap : 'onPlayUser'
             },
             '[action="listRefreshList"]'  : {
-                tap : this.onRefreshList
+                tap : 'onRefreshList'
             }
-        });
-
-        this.callParent();
+        }
     },
-    onSinglePlayer : function(btn) {
+
+    onSinglePlayer     : function(btn) {
         var me = this,
             list = btn.up('waiting');
 
@@ -29,9 +27,9 @@ Ext.define('Rvrsit.controller.Waiting', {
 
         me.application.fireEvent('singleplayer');
     },
-    onPlayUser     : function(btn) {
-        var me       = this,
-            list     = btn.up('waiting'),
+    onPlayUser         : function(btn) {
+        var me = this,
+            list = btn.up('waiting'),
             selected = list.getSelected();
 
         if (selected) {
@@ -41,8 +39,8 @@ Ext.define('Rvrsit.controller.Waiting', {
             Ext.Msg.alert('Error', 'You must select a player to enage!');
         }
     },
-    showView : function(data) {
-        var me   = this,
+    showView           : function(data) {
+        var me = this,
             view = me.getView('Waiting').create({
                 store : Ext.create('Rvrsit.store.Waiting')
             });
@@ -51,7 +49,7 @@ Ext.define('Rvrsit.controller.Waiting', {
         view.show();
         this.onRefreshList();
     },
-    onRefreshList  : function() {
+    onRefreshList      : function() {
         var me = this;
 
         me.application.rpc('getWaitingList', {

@@ -1,106 +1,108 @@
 /**
-This is a specialized field which shows a {@link Ext.picker.Date} when tapped. If it has a predefined value,
-or a value is selected in the {@link Ext.picker.Date}, it will be displayed like a normal {@link Ext.field.Text}
-(but not selectable/changable).
-
-    Ext.create('Ext.field.DatePicker', {
-        label: 'Birthday',
-        value: new Date()
-    });
-
-{@link Ext.field.DatePicker} fields are very simple to implement, and have no required configurations.
-
-## Examples
-
-It can be very useful to set a default {@link #value} configuration on {@link Ext.field.DatePicker} fields. In
-this example, we set the {@link #value} to be the current date. You can also use the {@link #setValue} method to
-update the value at any time.
-
-    @example preview
-    Ext.create('Ext.form.Panel', {
-        fullscreen: true,
-        items: [
-            {
-                xtype: 'fieldset',
-                items: [
-                    {
-                        xtype: 'datepickerfield',
-                        label: 'Birthday',
-                        name: 'birthday',
-                        value: new Date()
-                    }
-                ]
-            },
-            {
-                xtype: 'toolbar',
-                docked: 'bottom',
-                items: [
-                    { xtype: 'spacer' },
-                    {
-                        text: 'setValue',
-                        handler: function() {
-                            var datePickerField = Ext.ComponentQuery.query('datepickerfield')[0];
-
-                            var randomNumber = function(from, to) {
-                                return Math.floor(Math.random() * (to - from + 1) + from);
-                            };
-
-                            datePickerField.setValue({
-                                month: randomNumber(0, 11),
-                                day  : randomNumber(0, 28),
-                                year : randomNumber(1980, 2011)
-                            });
-                        }
-                    },
-                    { xtype: 'spacer' }
-                ]
-            }
-        ]
-    });
-
-When you need to retrieve the date from the {@link Ext.field.DatePicker}, you can either use the {@link #getValue} or
-{@link #getFormattedValue} methods:
-
-    @example preview
-    Ext.create('Ext.form.Panel', {
-        fullscreen: true,
-        items: [
-            {
-                xtype: 'fieldset',
-                items: [
-                    {
-                        xtype: 'datepickerfield',
-                        label: 'Birthday',
-                        name: 'birthday',
-                        value: new Date()
-                    }
-                ]
-            },
-            {
-                xtype: 'toolbar',
-                docked: 'bottom',
-                items: [
-                    {
-                        text: 'getValue',
-                        handler: function() {
-                            var datePickerField = Ext.ComponentQuery.query('datepickerfield')[0];
-                            Ext.Msg.alert(null, datePickerField.getValue());
-                        }
-                    },
-                    { xtype: 'spacer' },
-                    {
-                        text: 'getFormattedValue',
-                        handler: function() {
-                            var datePickerField = Ext.ComponentQuery.query('datepickerfield')[0];
-                            Ext.Msg.alert(null, datePickerField.getFormattedValue());
-                        }
-                    }
-                ]
-            }
-        ]
-    });
-
-
+ * @aside guide forms
+ *
+ * This is a specialized field which shows a {@link Ext.picker.Date} when tapped. If it has a predefined value,
+ * or a value is selected in the {@link Ext.picker.Date}, it will be displayed like a normal {@link Ext.field.Text}
+ * (but not selectable/changable).
+ *
+ *     Ext.create('Ext.field.DatePicker', {
+ *         label: 'Birthday',
+ *         value: new Date()
+ *     });
+ *
+ * {@link Ext.field.DatePicker} fields are very simple to implement, and have no required configurations.
+ *
+ * ## Examples
+ *
+ * It can be very useful to set a default {@link #value} configuration on {@link Ext.field.DatePicker} fields. In
+ * this example, we set the {@link #value} to be the current date. You can also use the {@link #setValue} method to
+ * update the value at any time.
+ *
+ *     @example miniphone preview
+ *     Ext.create('Ext.form.Panel', {
+ *         fullscreen: true,
+ *         items: [
+ *             {
+ *                 xtype: 'fieldset',
+ *                 items: [
+ *                     {
+ *                         xtype: 'datepickerfield',
+ *                         label: 'Birthday',
+ *                         name: 'birthday',
+ *                         value: new Date()
+ *                     }
+ *                 ]
+ *             },
+ *             {
+ *                 xtype: 'toolbar',
+ *                 docked: 'bottom',
+ *                 items: [
+ *                     { xtype: 'spacer' },
+ *                     {
+ *                         text: 'setValue',
+ *                         handler: function() {
+ *                             var datePickerField = Ext.ComponentQuery.query('datepickerfield')[0];
+ *
+ *                             var randomNumber = function(from, to) {
+ *                                 return Math.floor(Math.random() * (to - from + 1) + from);
+ *                             };
+ *
+ *                             datePickerField.setValue({
+ *                                 month: randomNumber(0, 11),
+ *                                 day  : randomNumber(0, 28),
+ *                                 year : randomNumber(1980, 2011)
+ *                             });
+ *                         }
+ *                     },
+ *                     { xtype: 'spacer' }
+ *                 ]
+ *             }
+ *         ]
+ *     });
+ *
+ * When you need to retrieve the date from the {@link Ext.field.DatePicker}, you can either use the {@link #getValue} or
+ * {@link #getFormattedValue} methods:
+ *
+ *     @example preview
+ *     Ext.create('Ext.form.Panel', {
+ *         fullscreen: true,
+ *         items: [
+ *             {
+ *                 xtype: 'fieldset',
+ *                 items: [
+ *                     {
+ *                         xtype: 'datepickerfield',
+ *                         label: 'Birthday',
+ *                         name: 'birthday',
+ *                         value: new Date()
+ *                     }
+ *                 ]
+ *             },
+ *             {
+ *                 xtype: 'toolbar',
+ *                 docked: 'bottom',
+ *                 items: [
+ *                     {
+ *                         text: 'getValue',
+ *                         handler: function() {
+ *                             var datePickerField = Ext.ComponentQuery.query('datepickerfield')[0];
+ *                             Ext.Msg.alert(null, datePickerField.getValue());
+ *                         }
+ *                     },
+ *                     { xtype: 'spacer' },
+ *                     {
+ *                         text: 'getFormattedValue',
+ *                         handler: function() {
+ *                             var datePickerField = Ext.ComponentQuery.query('datepickerfield')[0];
+ *                             Ext.Msg.alert(null, datePickerField.getFormattedValue());
+ *                         }
+ *                     }
+ *                 ]
+ *             }
+ *         ]
+ *     });
+ *
+ *
  */
 Ext.define('Ext.field.DatePicker', {
     extend: 'Ext.field.Text',
@@ -154,10 +156,11 @@ Ext.define('Ext.field.DatePicker', {
         destroyPickerOnHide: false,
 
         /**
-         * @cfg {Number} tabIndex
-         * @hide
+         * @cfg {String} dateFormat The format to be used when displaying the date in this field.
+         * Accepts any valid date format. You can view formats over in the {@link Ext.Date} documentation.
+         * Defaults to `Ext.util.Format.defaultDateFormat`.
          */
-        tabIndex: -1,
+        dateFormat: null,
 
         /**
          * @cfg {Object}
@@ -176,7 +179,11 @@ Ext.define('Ext.field.DatePicker', {
 
             masktap: 'onMaskTap'
         });
+
+        this.getComponent().input.dom.disabled = true;
     },
+
+    syncEmptyCls: Ext.emptyFn,
 
     applyValue: function(value) {
         if (!Ext.isDate(value) && !Ext.isObject(value)) {
@@ -190,78 +197,100 @@ Ext.define('Ext.field.DatePicker', {
         return value;
     },
 
-    // @inherit
     updateValue: function(newValue) {
-        var picker = this.getPicker();
-        if (this.initialized && picker) {
+        var picker = this._picker;
+        if (picker && picker.isPicker) {
             picker.setValue(newValue);
         }
 
         // Ext.Date.format expects a Date
         if (newValue !== null) {
-            this.getComponent().setValue(Ext.Date.format(newValue, Ext.util.Format.defaultDateFormat));
+            this.getComponent().setValue(Ext.Date.format(newValue, this.getDateFormat() || Ext.util.Format.defaultDateFormat));
+        } else {
+            this.getComponent().setValue('');
         }
 
-        this._value = newValue;
+        if (this._picker && this._picker instanceof Ext.picker.Date) {
+            this._picker.setValue(newValue);
+        }
     },
 
+    /**
+     * Updates the date format in the field.
+     * @private
+     */
+    updateDateFormat: function(newDateFormat, oldDateFormat) {
+        var value = this.getValue();
+        if (newDateFormat != oldDateFormat && Ext.isDate(value) && this._picker && this._picker instanceof Ext.picker.Date) {
+            this.getComponent().setValue(Ext.Date.format(value, newDateFormat || Ext.util.Format.defaultDateFormat));
+        }
+    },
+
+    /**
+     * Returns the {@link Date} value of this field.
+     * If you wanted a formated date
+     * @return {Date} The date selected
+     */
     getValue: function() {
+        if (this._picker && this._picker instanceof Ext.picker.Date) {
+            return this._picker.getValue();
+        }
+
         return this._value;
     },
 
     /**
-     * Returns the value of the field, which will be a {@link Date} unless the <tt>format</tt> parameter is true.
-     * @param {Boolean} format True to format the value with <tt>Ext.util.Format.defaultDateFormat</tt>
+     * Returns the value of the field formatted using the specified format. If it is not specified, it will default to
+     * {@link #dateFormat} and then {@link Ext.util.Format#defaultDateFormat}.
+     * @param {String} format The format to be returned
+     * @return {String} The formatted date
      */
     getFormattedValue: function(format) {
         var value = this.getValue();
-        return (Ext.isDate(value)) ? Ext.Date.format(value, format || Ext.util.Format.defaultDateFormat) : value;
+        return (Ext.isDate(value)) ? Ext.Date.format(value, format || this.getDateFormat() || Ext.util.Format.defaultDateFormat) : value;
     },
 
-    applyPicker: function(config) {
-        if (!this.initialized) {
-            //if this field has not been initialized yet, we don't want to create the picker
-            //as it will not be shown immeditely. We will hold this off until the first time
-            //it needs to be shown
-            return null;
+    applyPicker: function(picker, pickerInstance) {
+        if (pickerInstance && pickerInstance.isPicker) {
+            picker = pickerInstance.setConfig(picker);
         }
 
-        return Ext.factory(config, Ext.picker.Date, this.getPicker());
+        return picker;
     },
 
-    updatePicker: function(newPicker) {
-        if (newPicker) {
-            newPicker.on({
+    getPicker: function() {
+        var picker = this._picker;
+
+        if (picker && !picker.isPicker) {
+            picker = Ext.factory(picker, Ext.picker.Date);
+            picker.on({
                 scope: this,
 
                 change: 'onPickerChange',
                 hide  : 'onPickerHide'
             });
-
-            newPicker.hide();
+            picker.setValue(this.getValue());
+            Ext.Viewport.add(picker);
+            this._picker = picker;
         }
+
+        return picker;
     },
 
     /**
      * @private
-     * Listener to the tap event of the mask element. Shows the internal {@link #datePicker} component when the button has been tapped.
+     * Listener to the tap event of the mask element. Shows the internal DatePicker component when the button has been tapped.
      */
     onMaskTap: function() {
         if (this.getDisabled()) {
             return false;
         }
 
-        var picker = this.getPicker(),
-            initialConfig = this.getInitialConfig();
-
-        if (!picker) {
-            picker = this.applyPicker(initialConfig.picker);
-            this.updatePicker(picker);
-            picker.setValue(initialConfig.value);
-            this._picker = picker;
+        if (this.getReadOnly()) {
+            return false;
         }
 
-        picker.show();
+        this.getPicker().show();
 
         return false;
     },
@@ -286,10 +315,9 @@ Ext.define('Ext.field.DatePicker', {
      */
     onPickerHide: function() {
         var picker = this.getPicker();
-
         if (this.getDestroyPickerOnHide() && picker) {
             picker.destroy();
-            this.setPicker(null);
+            this._picker = true;
         }
     },
 
@@ -298,16 +326,17 @@ Ext.define('Ext.field.DatePicker', {
     },
 
     // @private
-    onDestroy: function() {
+    destroy: function() {
         var picker = this.getPicker();
-        if (picker) {
+
+        if (picker && picker.isPicker) {
             picker.destroy();
         }
 
         this.callParent(arguments);
     }
-}, function() {
     //<deprecated product=touch since=2.0>
+}, function() {
     this.override({
         getValue: function(format) {
             if (format) {
@@ -319,5 +348,12 @@ Ext.define('Ext.field.DatePicker', {
             return this.callOverridden();
         }
     });
+
+    /**
+     * @method getDatePicker
+     * @inheritdoc Ext.field.DatePicker#getPicker
+     * @deprecated 2.0.0 Please use #getPicker instead
+     */
+    Ext.deprecateMethod(this, 'getDatePicker', 'getPicker');
     //</deprecated>
 });

@@ -5,10 +5,7 @@ var DataApi = {
         return Date.now();
     },
     getUsers       : function() {
-        var userFile = 'data/users.json',
-            fileData = fs.readFile(userFile);
-
-        return Json.decode(fileData);
+        return this.readFile('data/users.json');
     },
     getWaitingList : function(askingUser) {
         var users = this.getUsers(),
@@ -53,7 +50,7 @@ var DataApi = {
             users.push(user);
         }
         else {
-            user.status = 'waiting';
+//            user.status = 'waiting';
             user.lastLogin = currentTime;
         }
 
@@ -63,7 +60,18 @@ var DataApi = {
     updateUsers    : function(users) {
         this.writeFile('data/users.json', users);
     },
-    writeFile      : function(file, data) {
+    updateGame : function(game, status) {
+        var gameFile = 'data/games/' + game + '.json',
+            data     = this.readFile(gameFile);
+
+        data.push(status);
+
+        this.writeFile(gameFile, Json.encode(data))
+    },
+    readFile : function(file) {
+        return Json.decode(fs.readFile(file));
+    },
+    writeFile : function(file, data) {
         if (typeof data == 'object') {
             data = Json.encode(data);
         }

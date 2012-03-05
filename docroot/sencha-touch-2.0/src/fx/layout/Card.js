@@ -4,16 +4,22 @@
 Ext.define('Ext.fx.layout.Card', {
     requires: [
         'Ext.fx.layout.card.Slide',
+        'Ext.fx.layout.card.Cover',
+        'Ext.fx.layout.card.Reveal',
         'Ext.fx.layout.card.Fade',
         'Ext.fx.layout.card.Flip',
         'Ext.fx.layout.card.Pop',
-        'Ext.fx.layout.card.Cube',
+//        'Ext.fx.layout.card.Cube',
         'Ext.fx.layout.card.Scroll'
     ],
 
     constructor: function(config) {
-        var defaultClass = Ext.fx.layout.card.Css,
+        var defaultClass = Ext.fx.layout.card.Abstract,
             type;
+
+        if (!config) {
+            return null;
+        }
 
         if (typeof config == 'string') {
             type = config;
@@ -27,7 +33,14 @@ Ext.define('Ext.fx.layout.Card', {
         config.elementBox = false;
 
         if (type) {
-            if (type === 'slide' && Ext.os.is.Android2) {
+
+            if (Ext.os.is.Android2) {
+                // In Android 2 we only support scroll and fade. Otherwise force it to slide.
+                if (type != 'fade') {
+                    type = 'scroll';
+                }
+            }
+            else if (type === 'slide' && Ext.browser.is.ChromeMobile) {
                 type = 'scroll';
             }
 

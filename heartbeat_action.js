@@ -9,7 +9,7 @@
 heartbeatMethods = {
     serverTime : function() {
         return Util.currentTime();
-    }
+    },
     // add your additional methods here
     // they are called with an object containing key/value pairs
     // the key/value pairs are sent via params() function on the
@@ -18,13 +18,33 @@ heartbeatMethods = {
     /*
      Example
      */
-    , echo  : function(args) {
-        // this object is passed to the subscriber on the client
-        return {
-            message : args.message,
-            text    : 'echo @ ' + Date()
-        };
+//    echo  : function(args) {
+//        // this object is passed to the subscriber on the client
+//        return {
+//            message : args.message,
+//            text    : 'echo @ ' + Date.now()
+//        };
+//    },
+    gameStatus : function(user) {
+        var gameFile = 'data/games/test.json',
+            gameData = DataApi.readFile(gameFile);
+
+        console.log('\n gameStatus');
+        console.log(Util.print_r(gameData));
+
+        if (user.name == 'Slave' && user.status == 'playing' ) {
+            console.log("Clearing game file...");
+            DataApi.writeFile(gameFile, '[]');
+            return gameData;
+
+        }
+        else {
+            return [];
+        }
     }
+
+
+
     /*
      client would do (ONE TIME AT STARTUP):
      window.heartbeat = new silk.Heartbeat();
@@ -61,7 +81,7 @@ heartbeatMethods = {
 };
 
 function Heartbeat_action() {
-//    console.log('\n' + Date.now() + ' Heartbeat_action');
+    console.log('\n' + Date.now() + ' Heartbeat_action');
     var result = {},
         methods = Json.decode(req.data.methods),
         params = Json.decode(req.data.params),

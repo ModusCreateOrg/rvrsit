@@ -7,10 +7,9 @@ Ext.define('Ext.util.Region', {
     statics: {
         /**
          * @static
-         * @param {Mixed} el A string, DomElement or Ext.Element representing an element
-         * on the page.
-         * @returns {Ext.util.Region} region
          * Retrieves an Ext.util.Region for a particular element.
+         * @param {String/HTMLElement/Ext.Element} el The element or its ID.
+         * @return {Ext.util.Region} region
          */
         getRegion: function(el) {
             return Ext.fly(el).getPageBox(true);
@@ -18,6 +17,12 @@ Ext.define('Ext.util.Region', {
 
         /**
          * @static
+         * Creates new Region from an object:
+         *
+         *     Ext.util.Region.from({top: 0, right: 5, bottom: 3, left: -1});
+         *     // the above is equivalent to:
+         *     new Ext.util.Region(0, 5, 3, -1);
+         *
          * @param {Object} o An object with top, right, bottom, left properties
          * @return {Ext.util.Region} region The region constructed based on the passed object
          */
@@ -124,7 +129,7 @@ Ext.define('Ext.util.Region', {
      * Get the offset amount of a point outside the region
      * @param {String} axis optional
      * @param {Ext.util.Point} p the point
-     * @return {Ext.util.Offset}
+     * @return {Ext.util.Region}
      */
     getOutOfBoundOffset: function(axis, p) {
         if (!Ext.isObject(axis)) {
@@ -306,7 +311,7 @@ Ext.define('Ext.util.Region', {
 
     /**
      * Dump this to an eye-friendly string, great for debugging
-     * @return {String}
+     * @return {String} For example `Region[0,1,3,2]`
      */
     toString: function() {
         return "Region[" + this.top + "," + this.right + "," + this.bottom + "," + this.left + "]";
@@ -315,7 +320,7 @@ Ext.define('Ext.util.Region', {
 
     /**
      * Translate this region by the given offset amount
-     * @param {Ext.util.Offset/Object} offset
+     * @param {Object} offset
      * @return {Ext.util.Region} this This Region
      */
     translateBy: function(offset) {

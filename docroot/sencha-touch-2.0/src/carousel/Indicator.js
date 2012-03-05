@@ -8,7 +8,10 @@ Ext.define('Ext.carousel.Indicator', {
     alternateClassName: 'Ext.Carousel.Indicator',
 
     config: {
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         baseCls: Ext.baseCSSPrefix + 'carousel-indicator',
 
         direction: 'horizontal'
@@ -16,14 +19,14 @@ Ext.define('Ext.carousel.Indicator', {
 
     /**
      * @event previous
-     * @param {Ext.carousel.Indicator} this
      * Fires when this indicator is tapped on the left half
+     * @param {Ext.carousel.Indicator} this
      */
 
     /**
      * @event next
-     * @param {Ext.carousel.Indicator} this
      * Fires when this indicator is tapped on the right half
+     * @param {Ext.carousel.Indicator} this
      */
 
     initialize: function() {
@@ -62,7 +65,7 @@ Ext.define('Ext.carousel.Indicator', {
         var indicators = this.indicators;
 
         if (indicators.length > 0) {
-            indicators.pop().remove();
+            indicators.pop().destroy();
         }
     },
 
@@ -100,5 +103,19 @@ Ext.define('Ext.carousel.Indicator', {
         else {
             this.fireEvent('previous', this);
         }
+    },
+
+    destroy: function() {
+        var indicators = this.indicators,
+            i, ln, indicator;
+
+        for (i = 0,ln = indicators.length; i < ln; i++) {
+            indicator = indicators[i];
+            indicator.destroy();
+        }
+
+        indicators.length = 0;
+
+        this.callParent();
     }
 });

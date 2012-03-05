@@ -1,11 +1,15 @@
 /**
- * A FieldSet is a great way to visually separate elements of a form. It's normally used when you have a form with 
+ * @aside guide forms
+ *
+ * A FieldSet is a great way to visually separate elements of a form. It's normally used when you have a form with
  * fields that can be divided into groups - for example a customer's billing details in one fieldset and their shipping
- * address in another. A fieldset can be used inside a form or on its own elsewhere in your app. Fieldsets can 
+ * address in another. A fieldset can be used inside a form or on its own elsewhere in your app. Fieldsets can
  * optionally have a title at the top and instructions at the bottom. Here's how we might create a FieldSet inside a
  * form:
- * 
+ *
+ *     @example
  *     Ext.create('Ext.form.Panel', {
+ *         fullscreen: true,
  *         items: [
  *             {
  *                 xtype: 'fieldset',
@@ -26,7 +30,7 @@
  *             }
  *         ]
  *     });
- * 
+ *
  * Above we created a {@link Ext.form.Panel form} with a fieldset that contains two text fields. In this case, all
  * of the form fields are in the same fieldset, but for longer forms we may choose to use multiple fieldsets. We also
  * configured a {@link #title} and {@link #instructions} to give the user more information on filling out the form if
@@ -38,7 +42,10 @@ Ext.define('Ext.form.FieldSet', {
     requires: ['Ext.Title'],
 
     config: {
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         baseCls: Ext.baseCSSPrefix + 'form-fieldset',
 
         /**
@@ -51,13 +58,7 @@ Ext.define('Ext.form.FieldSet', {
          * @cfg {String} instructions Optional fieldset instructions, rendered just below the grouped fields
          * @accessor
          */
-        instructions: null,
-
-        // @inherit
-        layout: {
-            type : 'vbox',
-            align: 'stretch'
-        }
+        instructions: null
     },
 
     // @private

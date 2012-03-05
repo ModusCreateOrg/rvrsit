@@ -1,3 +1,6 @@
+/**
+ * @private
+ */
 Ext.define('Ext.event.ListenerStack', {
 
     currentOrder: 'current',
@@ -20,22 +23,24 @@ Ext.define('Ext.event.ListenerStack', {
         var lateBindingMap = this.lateBindingMap,
             listeners = this.getAll(order),
             i = listeners.length,
-            listener, id;
+            bindingMap, listener, id;
 
         if (typeof fn == 'string' && scope.isIdentifiable) {
             id = scope.getId();
 
-            if (lateBindingMap[id]) {
-                if (lateBindingMap[id][fn]) {
+            bindingMap = lateBindingMap[id];
+
+            if (bindingMap) {
+                if (bindingMap[fn]) {
                     return false;
                 }
                 else {
-                    lateBindingMap[id][fn] = true;
+                    bindingMap[fn] = true;
                 }
             }
             else {
-                lateBindingMap[id] = {};
-                lateBindingMap[id][fn] = true;
+                lateBindingMap[id] = bindingMap = {};
+                bindingMap[fn] = true;
             }
         }
         else {
@@ -84,6 +89,7 @@ Ext.define('Ext.event.ListenerStack', {
 
     create: function(fn, scope, options, order) {
         return {
+            stack: this,
             fn: fn,
             firingFn: false,
             boundFn: false,

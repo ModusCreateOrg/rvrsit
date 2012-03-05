@@ -2,33 +2,80 @@
  * {@link Ext.TitleBar}'s are most commonly used as a docked item within an {@link Ext.Container}.
  *
  * The main difference between a {@link Ext.TitleBar} and an {@link Ext.Toolbar} is that
- * the {@link #title} configuration is **always** centered horiztonally in a {@link Ext.TitleBar},
- * no matter what other items you have in it.
+ * the {@link #title} configuration is **always** centered horiztonally in a {@link Ext.TitleBar} between
+ * any items aligned left or right.
  *
  * You can also give items of a {@link Ext.TitleBar} an `align` configuration of `left` or `right`
  * which will dock them to the `left` or `right` of the bar.
  *
- * # Example:
+ * ## Examples
  *
- *     var myNavBar = new Ext.TitleBar({
+ *     @example preview
+ *     Ext.Viewport.add({
+ *         xtype: 'titlebar',
  *         docked: 'top',
  *         title: 'Navigation',
  *         items: [
  *             {
- *                 text: 'My Button',
+ *                 iconCls: 'add',
+ *                 iconMask: true,
+ *                 align: 'left'
  *             },
  *             {
- *                 text: 'My Button',
+ *                 iconCls: 'home',
+ *                 iconMask: true,
  *                 align: 'right'
  *             }
  *         ]
  *     });
  *
- *     Ext.create('Ext.Container', {
- *         dockedItems: [myNavBar],
- *         fullscreen : true,
- *         html       : 'Test Panel'
+ *     Ext.Viewport.setStyleHtmlContent(true);
+ *     Ext.Viewport.setHtml('This shows the title being centered and buttons using align <i>left</i> and <i>right</i>.');
+ *
+ * <br />
+ *
+ *     @example preview
+ *     Ext.Viewport.add({
+ *         xtype: 'titlebar',
+ *         docked: 'top',
+ *         title: 'Navigation',
+ *         items: [
+ *             {
+ *                 align: 'left',
+ *                 text: 'This button has a super long title'
+ *             },
+ *             {
+ *                 iconCls: 'home',
+ *                 iconMask: true,
+ *                 align: 'right'
+ *             }
+ *         ]
  *     });
+ *
+ *     Ext.Viewport.setStyleHtmlContent(true);
+ *     Ext.Viewport.setHtml('This shows how the title is automatically moved to the right when one of the aligned buttons is very wide.');
+ *
+ * <br />
+ *
+ *     @example preview
+ *     Ext.Viewport.add({
+ *         xtype: 'titlebar',
+ *         docked: 'top',
+ *         title: 'A very long title',
+ *         items: [
+ *             {
+ *                 align: 'left',
+ *                 text: 'This button has a super long title'
+ *             },
+ *             {
+ *                 align: 'right',
+ *                 text: 'Another button'
+ *             },
+ *         ]
+ *     });
+ *
+ *     Ext.Viewport.setStyleHtmlContent(true);
+ *     Ext.Viewport.setHtml('This shows how the title and buttons will automatically adjust their size when the width of the items are too wide..');
  *
  * The {@link #defaultType} of Toolbar's is {@link Ext.Button button}.
  */
@@ -47,10 +94,16 @@ Ext.define('Ext.TitleBar', {
     isToolbar: true,
 
     config: {
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         baseCls: Ext.baseCSSPrefix + 'toolbar',
 
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         cls: Ext.baseCSSPrefix + 'navigation-bar',
 
         /**
@@ -75,6 +128,7 @@ Ext.define('Ext.TitleBar', {
         defaultType: 'button',
 
         /**
+         * @cfg
          * @hide
          */
         layout: {
@@ -105,10 +159,32 @@ Ext.define('Ext.TitleBar', {
         this.callParent(arguments);
     },
 
+    beforeInitialize: function() {
+        this.applyItems = this.applyInitialItems;
+    },
+
     initialize: function() {
+        delete this.applyItems;
+
+        this.doAdd = this.doBoxAdd;
+        this.remove = this.doBoxRemove;
+        this.doInsert = this.doBoxInsert;
+
+        this.add(this.initialItems);
+        delete this.initialItems;
+
+        this.on({
+            painted: 'onPainted',
+            erased: 'onErased'
+        });
+    },
+
+    applyInitialItems: function(items) {
         var SizeMonitor = Ext.util.SizeMonitor,
             defaults = this.getDefaults() || {},
             leftBox, rightBox, spacer;
+
+        this.initialItems = items;
 
         this.leftBox = leftBox = this.add({
             xtype: 'container',
@@ -157,16 +233,6 @@ Ext.define('Ext.TitleBar', {
                 scope: this
             })
         };
-
-        this.doAdd = this.doBoxAdd;
-        this.doInsert = this.doBoxInsert;
-
-        this.on({
-            painted: 'onPainted',
-            erased: 'onErased'
-        });
-
-        this.callParent();
     },
 
     doBoxAdd: function(item) {
@@ -182,7 +248,19 @@ Ext.define('Ext.TitleBar', {
         }
     },
 
-    //TODO doBoxRemove
+    doBoxRemove: function(item) {
+        if (item.config.align == 'right') {
+            this.rightBox.remove(item);
+        }
+        else {
+            this.leftBox.remove(item);
+        }
+
+        if (this.painted) {
+            this.refreshTitlePosition();
+        }
+    },
+
     doBoxInsert: function(index, item) {
         if (item.config.align == 'right') {
             this.rightBox.add(item);
@@ -229,9 +307,11 @@ Ext.define('Ext.TitleBar', {
         var leftBox = this.leftBox,
             leftButton = leftBox.down('button'),
             leftBoxWidth, maxButtonWidth;
-        
+
         if (leftButton) {
-            leftButton.renderElement.setWidth('auto');
+            if (leftButton.getWidth() == null) {
+                leftButton.renderElement.setWidth('auto');
+            }
 
             leftBoxWidth = leftBox.renderElement.getWidth();
             maxButtonWidth = this.getMaxButtonWidth();

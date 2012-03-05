@@ -1,5 +1,6 @@
 /**
  * @author Ed Spencer
+ * @aside guide proxies
  *
  * Proxies are used by {@link Ext.data.Store Stores} to handle the loading and saving of {@link Ext.data.Model Model}
  * data. Usually developers will not need to create or interact with proxies directly.
@@ -10,14 +11,12 @@
  * The Client proxies save their data locally and include the following subclasses:
  *
  * - {@link Ext.data.proxy.LocalStorage LocalStorageProxy} - saves its data to localStorage if the browser supports it
- * - {@link Ext.data.proxy.SessionStorage SessionStorageProxy} - saves its data to sessionStorage if the browsers supports it
  * - {@link Ext.data.proxy.Memory MemoryProxy} - holds data in memory only, any data is lost when the page is refreshed
  *
  * The Server proxies save their data by sending requests to some remote server. These proxies include:
  *
  * - {@link Ext.data.proxy.Ajax Ajax} - sends requests to a server on the same domain
  * - {@link Ext.data.proxy.JsonP JsonP} - uses JSON-P to send requests to a server on a different domain
- * - {@link Ext.data.proxy.Direct Direct} - uses {@link Ext.direct.Manager} to send requests
  *
  * Proxies operate on the principle that all operations performed are either Create, Read, Update or Delete. These four
  * operations are mapped to the methods {@link #create}, {@link #read}, {@link #update} and {@link #destroy}
@@ -32,214 +31,135 @@
  * method.
  */
 Ext.define('Ext.data.proxy.Proxy', {
+    extend: 'Ext.Evented',
+
     alias: 'proxy.proxy',
+
     alternateClassName: ['Ext.data.DataProxy', 'Ext.data.Proxy'],
+
     requires: [
         'Ext.data.reader.Json',
-        'Ext.data.writer.Json'
-    ],
-    uses: [
+        'Ext.data.writer.Json',
         'Ext.data.Batch',
-        'Ext.data.Operation',
-        'Ext.data.Model'
+        'Ext.data.Operation'
     ],
-    mixins: {
-        observable: 'Ext.util.Observable'
+
+    config: {
+        /**
+         * @cfg {String} batchOrder
+         * Comma-separated ordering 'create', 'update' and 'destroy' actions when batching. Override this to set a different
+         * order for the batched CRUD actions to be executed in. Defaults to 'create,update,destroy'.
+         * @accessor
+         */
+        batchOrder: 'create,update,destroy',
+
+        /**
+         * @cfg {Boolean} batchActions
+         * True to batch actions of a particular type when synchronizing the store. Defaults to true.
+         * @accessor
+         */
+        batchActions: true,
+
+        /**
+         * @cfg {String/Ext.data.Model} model
+         * The name of the Model to tie to this Proxy. Can be either the string name of the Model, or a reference to the
+         * Model constructor. Required.
+         * @accessor
+         */
+        model: null,
+
+        /**
+         * @cfg {Object/String/Ext.data.reader.Reader} reader
+         * The Ext.data.reader.Reader to use to decode the server's response or data read from client. This can either be a
+         * Reader instance, a config object or just a valid Reader type name (e.g. 'json', 'xml').
+         * @accessor
+         */
+        reader: {
+            type: 'json'
+        },
+
+        /**
+         * @cfg {Object/String/Ext.data.writer.Writer} writer
+         * The Ext.data.writer.Writer to use to encode any request sent to the server or saved to client. This can either be
+         * a Writer instance, a config object or just a valid Writer type name (e.g. 'json', 'xml').
+         * @accessor
+         */
+        writer: {
+            type: 'json'
+        }
     },
-
-    /**
-     * @cfg {String} batchOrder
-     * Comma-separated ordering 'create', 'update' and 'destroy' actions when batching. Override this to set a different
-     * order for the batched CRUD actions to be executed in. Defaults to 'create,update,destroy'.
-     */
-    batchOrder: 'create,update,destroy',
-
-    /**
-     * @cfg {Boolean} batchActions
-     * True to batch actions of a particular type when synchronizing the store. Defaults to true.
-     */
-    batchActions: true,
-
-    /**
-     * @cfg {String} defaultReaderType
-     * The default registered reader type. Defaults to 'json'.
-     * @private
-     */
-    defaultReaderType: 'json',
-
-    /**
-     * @cfg {String} defaultWriterType
-     * The default registered writer type. Defaults to 'json'.
-     * @private
-     */
-    defaultWriterType: 'json',
-
-    /**
-     * @cfg {String/Ext.data.Model} model
-     * The name of the Model to tie to this Proxy. Can be either the string name of the Model, or a reference to the
-     * Model constructor. Required.
-     */
-
-    /**
-     * @cfg {Object/String/Ext.data.reader.Reader} reader
-     * The Ext.data.reader.Reader to use to decode the server's response or data read from client. This can either be a
-     * Reader instance, a config object or just a valid Reader type name (e.g. 'json', 'xml').
-     */
-
-    /**
-     * @cfg {Object/String/Ext.data.writer.Writer} writer
-     * The Ext.data.writer.Writer to use to encode any request sent to the server or saved to client. This can either be
-     * a Writer instance, a config object or just a valid Writer type name (e.g. 'json', 'xml').
-     */
 
     isProxy: true,
 
-    /**
-     * Creates the Proxy
-     * @param {Object} config (optional) Config object.
-     */
-    constructor: function(config) {
-        config = config || {};
+    applyModel: function(model) {
+        if (typeof model == 'string') {
+            model = Ext.data.ModelManager.getModel(model);
 
-        if (config.model === undefined) {
-            delete config.model;
+            if (!model) {
+                Ext.Logger.error('Model with name ' + arguments[0] + ' doesnt exist.');
+            }
         }
 
-        Ext.apply(this, config);
+        if (model && !model.prototype.isModel && Ext.isObject(model)) {
+            model = Ext.data.ModelManager.registerType(model.storeId || model.id || Ext.id(), model);
+        }
 
-        this.mixins.observable.constructor.call(this);
+        return model;
+    },
 
-        if (this.model !== undefined && !(this.model instanceof Ext.data.Model)) {
-            this.setModel(this.model);
+    updateModel: function(model) {
+        if (model) {
+            var reader = this.getReader();
+            if (reader && !reader.getModel()) {
+                reader.setModel(model);
+            }
+        }
+    },
+
+    applyReader: function(reader, currentReader) {
+        return Ext.factory(reader, Ext.data.Reader, currentReader, 'reader');
+    },
+
+    updateReader: function(reader) {
+        if (reader) {
+            var model = this.getModel();
+            if (!model) {
+                model = reader.getModel();
+                if (model) {
+                    this.setModel(model);
+                }
+            } else {
+                reader.setModel(model);
+            }
+
+            if (reader.onMetaChange) {
+                 reader.onMetaChange = Ext.Function.createSequence(reader.onMetaChange, this.onMetaChange, this);
+            }
+        }
+    },
+
+    onMetaChange: function(data) {
+        var model = this.getReader().getModel();
+        if (!this.getModel() && model) {
+            this.setModel(model);
         }
 
         /**
          * @event metachange
-         * Fires when this proxy's reader provides new metadata. Metadata usually consists
-         * of new field definitions, but can include any configuration data required by an
-         * application, and can be processed as needed in the event handler.
-         * This event is currently only fired for JsonReaders. Note that this event is also
-         * propagated by {@link Ext.data.Store}, which is typically where it would be handled.
-         * @param {Ext.data.proxy.Proxy} this
-         * @param {Object} meta The JSON metadata
+         * Fires whenever the server has sent back new metadata to reconfigure the Reader.
+         * @param {Ext.data.Proxy} this
+         * @param {Object} data The metadata sent back from the server
          */
+        this.fireEvent('metachange', this, data);
+    },
+
+    applyWriter: function(writer, currentWriter) {
+        return Ext.factory(writer, Ext.data.Writer, currentWriter, 'writer');
     },
 
     /**
-     * Sets the model associated with this proxy. This will only usually be called by a Store
-     *
-     * @param {String/Ext.data.Model} model The new model. Can be either the model name string,
-     * or a reference to the model's constructor
-     * @param {Boolean} setOnStore Sets the new model on the associated Store, if one is present
-     */
-    setModel: function(model, setOnStore) {
-        this.model = Ext.ModelManager.getModel(model);
-
-        var reader = this.reader,
-            writer = this.writer;
-
-        this.setReader(reader);
-        this.setWriter(writer);
-
-        if (setOnStore && this.store) {
-            this.store.setModel(this.model);
-        }
-    },
-
-    /**
-     * Returns the model attached to this Proxy
-     * @return {Ext.data.Model} The model
-     */
-    getModel: function() {
-        return this.model;
-    },
-
-    /**
-     * Sets the Proxy's Reader by string, config object or Reader instance
-     *
-     * @param {String/Object/Ext.data.reader.Reader} reader The new Reader, which can be either a type string,
-     * a configuration object or an Ext.data.reader.Reader instance
-     * @return {Ext.data.reader.Reader} The attached Reader object
-     */
-    setReader: function(reader) {
-        var me = this;
-
-        if (reader === undefined || typeof reader == 'string') {
-            reader = {
-                type: reader
-            };
-        }
-
-        if (reader.isReader) {
-            reader.setModel(me.model);
-        } else {
-            Ext.applyIf(reader, {
-                proxy: me,
-                model: me.model,
-                type : me.defaultReaderType
-            });
-
-            reader = Ext.createByAlias('reader.' + reader.type, reader);
-        }
-
-        if (reader.onMetaChange) {
-            reader.onMetaChange = Ext.Function.createSequence(reader.onMetaChange, this.onMetaChange, this);
-        }
-
-        me.reader = reader;
-        return me.reader;
-    },
-
-    /**
-     * Returns the reader currently attached to this proxy instance
-     * @return {Ext.data.reader.Reader} The Reader instance
-     */
-    getReader: function() {
-        return this.reader;
-    },
-
-    onMetaChange: function(meta) {
-        this.fireEvent('metachange', this, meta);
-    },
-
-    /**
-     * Sets the Proxy's Writer by string, config object or Writer instance
-     *
-     * @param {String/Object/Ext.data.writer.Writer} writer The new Writer, which can be either a type string,
-     * a configuration object or an Ext.data.writer.Writer instance
-     * @return {Ext.data.writer.Writer} The attached Writer object
-     */
-    setWriter: function(writer) {
-        if (writer === undefined || typeof writer == 'string') {
-            writer = {
-                type: writer
-            };
-        }
-
-        if (!(writer instanceof Ext.data.writer.Writer)) {
-            Ext.applyIf(writer, {
-                model: this.model,
-                type : this.defaultWriterType
-            });
-
-            writer = Ext.createByAlias('writer.' + writer.type, writer);
-        }
-
-        this.writer = writer;
-
-        return this.writer;
-    },
-
-    /**
-     * Returns the writer currently attached to this proxy instance
-     * @return {Ext.data.writer.Writer} The Writer instance
-     */
-    getWriter: function() {
-        return this.writer;
-    },
-
-    /**
-     * Performs the given create operation.
+     * Performs the given create operation. If you override this method in a custom Proxy, remember to always call the provided
+     * callback method when you are done with your operation.
      * @param {Ext.data.Operation} operation The Operation to perform
      * @param {Function} callback Callback function to be called when the Operation has completed (whether successful or not)
      * @param {Object} scope Scope to execute the callback function in
@@ -248,7 +168,8 @@ Ext.define('Ext.data.proxy.Proxy', {
     create: Ext.emptyFn,
 
     /**
-     * Performs the given read operation.
+     * Performs the given read operation. If you override this method in a custom Proxy, remember to always call the provided
+     * callback method when you are done with your operation.
      * @param {Ext.data.Operation} operation The Operation to perform
      * @param {Function} callback Callback function to be called when the Operation has completed (whether successful or not)
      * @param {Object} scope Scope to execute the callback function in
@@ -257,7 +178,8 @@ Ext.define('Ext.data.proxy.Proxy', {
     read: Ext.emptyFn,
 
     /**
-     * Performs the given update operation.
+     * Performs the given update operation. If you override this method in a custom Proxy, remember to always call the provided
+     * callback method when you are done with your operation.
      * @param {Ext.data.Operation} operation The Operation to perform
      * @param {Function} callback Callback function to be called when the Operation has completed (whether successful or not)
      * @param {Object} scope Scope to execute the callback function in
@@ -266,13 +188,18 @@ Ext.define('Ext.data.proxy.Proxy', {
     update: Ext.emptyFn,
 
     /**
-     * Performs the given destroy operation.
+     * Performs the given destroy operation. If you override this method in a custom Proxy, remember to always call the provided
+     * callback method when you are done with your operation.
      * @param {Ext.data.Operation} operation The Operation to perform
      * @param {Function} callback Callback function to be called when the Operation has completed (whether successful or not)
      * @param {Object} scope Scope to execute the callback function in
      * @method
      */
     destroy: Ext.emptyFn,
+
+    onDestroy: function() {
+        Ext.destroy(this.getReader(), this.getWriter());
+    },
 
     /**
      * Performs a batch of {@link Ext.data.Operation Operations}, in the order specified by {@link #batchOrder}. Used
@@ -288,48 +215,154 @@ Ext.define('Ext.data.proxy.Proxy', {
      * have not been saved before, 3 has been saved previously but needs to be updated, and 4 and 5 have already been
      * saved but should now be destroyed.
      *
-     * @param {Object} operations Object containing the Model instances to act upon, keyed by action name
-     * @param {Object} listeners (optional) listeners object passed straight through to the Batch -
-     * see {@link Ext.data.Batch}
-     * @return {Ext.data.Batch} The newly created Ext.data.Batch object
+     * @param {Object} options Object containing one or more properties supported by the batch method:
+     *
+     * @param {Object} options.operations Object containing the Model instances to act upon, keyed by action name
+     *
+     * @param {Object} [options.listeners] Event listeners object passed straight through to the Batch -
+     * see {@link Ext.data.Batch} for details
+     *
+     * @param {Ext.data.Batch/Object} [options.batch] A {@link Ext.data.Batch} object (or batch config to apply
+     * to the created batch). If unspecified a default batch will be auto-created.
+     *
+     * @param {Function} [options.callback] The function to be called upon completion of processing the batch.
+     * The callback is called regardless of success or failure and is passed the following parameters:
+     * @param {Ext.data.Batch} options.callback.batch The {@link Ext.data.Batch batch} that was processed,
+     * containing all operations in their current state after processing
+     * @param {Object} options.callback.options The options argument that was originally passed into batch
+     *
+     * @param {Function} [options.success] The function to be called upon successful completion of the batch. The
+     * success function is called only if no exceptions were reported in any operations. If one or more exceptions
+     * occurred then the `failure` function will be called instead. The success function is called
+     * with the following parameters:
+     * @param {Ext.data.Batch} options.success.batch The {@link Ext.data.Batch batch} that was processed,
+     * containing all operations in their current state after processing
+     * @param {Object} options.success.options The options argument that was originally passed into batch
+     *
+     * @param {Function} [options.failure] The function to be called upon unsuccessful completion of the batch. The
+     * failure function is called when one or more operations returns an exception during processing (even if some
+     * operations were also successful). The failure function is called with the following parameters:
+     * @param {Ext.data.Batch} options.failure.batch The {@link Ext.data.Batch batch} that was processed,
+     * containing all operations in their current state after processing
+     * @param {Object} options.failure.options The options argument that was originally passed into batch
+     *
+     * @param {Object} [options.scope] The scope in which to execute any callbacks (i.e. the `this` object inside
+     * the callback, success and/or failure functions). Defaults to the proxy.
+     *
+     * @return {Ext.data.Batch} The newly created Batch
      */
-    batch: function(operations, listeners) {
+    batch: function(options, /* deprecated */listeners) {
         var me = this,
-            batch = Ext.create('Ext.data.Batch', {
-                proxy: me,
-                listeners: listeners || {}
-            }),
-            useBatch = me.batchActions,
+            useBatch = me.getBatchActions(),
+            model = this.getModel(),
+            batch,
             records;
 
-        Ext.each(me.batchOrder.split(','), function(action) {
-            records = operations[action];
-            if (records) {
-                if (useBatch) {
-                    batch.add(Ext.create('Ext.data.Operation', {
-                        action: action,
-                        records: records
-                    }));
-                } else {
-                    Ext.each(records, function(record) {
-                        batch.add(Ext.create('Ext.data.Operation', {
-                            action : action,
-                            records: [record]
-                        }));
-                    });
+        if (options.operations === undefined) {
+            // the old-style (operations, listeners) signature was called
+            // so convert to the single options argument syntax
+            options = {
+                operations: options,
+                batch: {
+                    listeners: listeners
                 }
-            }
+            };
+
+            // <debug warn>
+            Ext.Logger.deprecate('Passes old-style signature to Proxy.batch (operations, listeners). Please convert to single options argument syntax.');
+            // </debug>
+        }
+
+        if (options.batch) {
+             if (options.batch.isBatch) {
+                 options.batch.setProxy(me);
+             } else {
+                 options.batch.proxy = me;
+             }
+        } else {
+             options.batch = {
+                 proxy: me,
+                 listeners: options.listeners || {}
+             };
+        }
+
+        if (!batch) {
+            batch = new Ext.data.Batch(options.batch);
+        }
+
+        batch.on('complete', Ext.bind(me.onBatchComplete, me, [options], 0));
+
+        Ext.each(me.getBatchOrder().split(','), function(action) {
+             records = options.operations[action];
+             if (records) {
+                 if (useBatch) {
+                     batch.add(new Ext.data.Operation({
+                         action: action,
+                         records: records,
+                         model: model
+                     }));
+                 } else {
+                     Ext.each(records, function(record) {
+                         batch.add(new Ext.data.Operation({
+                             action : action,
+                             records: [record],
+                             model: model
+                         }));
+                     });
+                 }
+             }
         }, me);
 
         batch.start();
         return batch;
+    },
+
+    /**
+      * @private
+      * The internal callback that the proxy uses to call any specified user callbacks after completion of a batch
+      */
+    onBatchComplete: function(batchOptions, batch) {
+         var scope = batchOptions.scope || this;
+
+         if (batch.hasException) {
+             if (Ext.isFunction(batchOptions.failure)) {
+                 Ext.callback(batchOptions.failure, scope, [batch, batchOptions]);
+             }
+         } else if (Ext.isFunction(batchOptions.success)) {
+             Ext.callback(batchOptions.success, scope, [batch, batchOptions]);
+         }
+
+         if (Ext.isFunction(batchOptions.callback)) {
+             Ext.callback(batchOptions.callback, scope, [batch, batchOptions]);
+         }
     }
+
+    // <deprecated product=touch since=2.0>
+    ,onClassExtended: function(cls, data) {
+        var prototype = this.prototype,
+            defaultConfig = prototype.config,
+            config = data.config || {},
+            key;
+
+        // Convert deprecated properties in application into a config object
+        for (key in defaultConfig) {
+            if (key != "control" && key in data) {
+                config[key] = data[key];
+                delete data[key];
+                // <debug warn>
+                Ext.Logger.warn(key + ' is deprecated as a property directly on the ' + this.$className + ' prototype. Please put it inside the config object.');
+                // </debug>
+            }
+        }
+        data.config = config;
+    }
+    // </deprecated>
 }, function() {
-    // Ext.data.proxy.ProxyMgr.registerType('proxy', this);
+    // Ext.data2.proxy.ProxyMgr.registerType('proxy', this);
 
     //backwards compatibility
-    Ext.data.DataProxy = this;
+    // Ext.data.DataProxy = this;
     // Ext.deprecate('platform', '2.0', function() {
-    //     Ext.data.DataProxy = this;
+    //     Ext.data2.DataProxy = this;
     // }, this);
 });

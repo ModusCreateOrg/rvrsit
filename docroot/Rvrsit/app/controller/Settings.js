@@ -1,17 +1,17 @@
 Ext.define('Rvrsit.controller.Settings', {
     extend : 'Ext.app.Controller',
 
-    views : [
-        'Settings'
-    ],
-
-    init : function() {
-        this.control({
+    config : {
+        views : [
+            'Settings'
+        ],
+        control : {
              'settings > field' : {
-                 change : this.onFieldChange
+                 change : 'onFieldChange'
              }
-        });
+        }
     },
+
     showSettings : function() {
         var settings = Rvrsit.game.getSettings();
         this.getView('Settings').create({

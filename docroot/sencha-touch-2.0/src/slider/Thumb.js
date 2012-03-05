@@ -1,5 +1,5 @@
 /**
- * @ignore
+ * @private
  * Utility class used by Ext.slider.Slider - should never need to be used directly.
  */
 Ext.define('Ext.slider.Thumb', {
@@ -7,10 +7,16 @@ Ext.define('Ext.slider.Thumb', {
     xtype : 'thumb',
 
     config: {
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         baseCls: Ext.baseCSSPrefix + 'thumb',
 
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         draggable: {
             direction: 'horizontal'
         }
@@ -21,7 +27,7 @@ Ext.define('Ext.slider.Thumb', {
     initialize: function() {
         this.callParent();
 
-        this.getDraggable().on({
+        this.getDraggable().onBefore({
             dragstart: 'onDragStart',
             drag: 'onDrag',
             dragend: 'onDragEnd',
@@ -31,19 +37,28 @@ Ext.define('Ext.slider.Thumb', {
         this.on('painted', 'onPainted');
     },
 
-    onDragStart: function(draggable, e, offset, options, controller) {
-        // @TODO Temporary only, better API to replace this later
-        this.doFireEvent('dragstart', [this, e, offset], null, controller);
+    onDragStart: function() {
+        if (this.isDisabled()) {
+            return false;
+        }
+
+        this.relayEvent(arguments);
     },
 
-    onDrag: function(draggable, e, offset, options, controller) {
-        // @TODO Temporary only, better API to replace this later
-        this.doFireEvent('drag', [this, e, offset], null, controller);
+    onDrag: function() {
+        if (this.isDisabled()) {
+            return false;
+        }
+
+        this.relayEvent(arguments);
     },
 
-    onDragEnd: function(draggable, e, options, controller) {
-        // @TODO Temporary only, better API to replace this later
-        this.doFireEvent('dragend', [this, e], null, controller);
+    onDragEnd: function() {
+        if (this.isDisabled()) {
+            return false;
+        }
+
+        this.relayEvent(arguments);
     },
 
     onPainted: function() {

@@ -1,14 +1,18 @@
 /**
+ * @private
  * @author Jacky Nguyen <jacky@sencha.com>
  */
 Ext.define('Ext.fx.Animation', {
 
     requires: [
         'Ext.fx.animation.Slide',
+        'Ext.fx.animation.SlideOut',
         'Ext.fx.animation.Fade',
+        'Ext.fx.animation.FadeOut',
         'Ext.fx.animation.Flip',
         'Ext.fx.animation.Pop',
-        'Ext.fx.animation.Cube'
+        'Ext.fx.animation.PopOut'
+//        'Ext.fx.animation.Cube'
     ],
 
     constructor: function(config) {
@@ -19,11 +23,22 @@ Ext.define('Ext.fx.Animation', {
             type = config;
             config = {};
         }
-        else if (config.type) {
+        else if (config && config.type) {
             type = config.type;
         }
 
         if (type) {
+            if (Ext.os.is.Android2) {
+                if (type == 'pop') {
+                    type = 'fade';
+                }
+                if (type == 'popIn') {
+                    type = 'fadeIn';
+                }
+                if (type == 'popOut') {
+                    type = 'fadeOut';
+                }
+            }
             defaultClass = Ext.ClassManager.getByAlias('animation.' + type);
 
             //<debug error>

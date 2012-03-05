@@ -1,4 +1,7 @@
 /**
+ * @aside guide tabs
+ * @aside video tabs-toolbars
+ *
  * Tab Panels are a great way to allow the user to switch between several pages that are all full screen. Each
  * Component in the Tab Panel gets its own Tab, which shows the Component when tapped on. Tabs can be positioned at
  * the top or the bottom of the Tab Panel, and can optionally accept title and icon configurations.
@@ -7,7 +10,7 @@
  * to toggle between code mode and live preview mode (you can also edit the code and see your changes in the live
  * preview):
  *
- *     @example preview
+ *     @example miniphone preview
  *     Ext.create('Ext.TabPanel', {
  *         fullscreen: true,
  *         tabBarPosition: 'bottom',
@@ -33,7 +36,7 @@
  * the title and icon defined on the item configuration, and switches to that item when tapped on. We can also position
  * the tab bar at the top, which makes our Tab Panel look like this:
  *
- *     @example preview
+ *     @example miniphone preview
  *     Ext.create('Ext.TabPanel', {
  *         fullscreen: true,
  *
@@ -56,18 +59,16 @@
  */
 Ext.define('Ext.tab.Panel', {
     extend: 'Ext.Container',
-    xtype : ['tabpanel'],
+    xtype : 'tabpanel',
     alternateClassName: 'Ext.TabPanel',
 
     requires: ['Ext.tab.Bar'],
 
-    /**
-     * @cfg {Object} layout
-     * @hide
-     */
     config: {
         /**
          * @cfg {String} ui
+         * Sets the UI of this component.
+         * Available values are: `light` and `dark`.
          * @accessor
          */
         ui: 'dark',
@@ -81,12 +82,16 @@ Ext.define('Ext.tab.Panel', {
 
         /**
          * @cfg {String} tabBarPosition
-         * The docked position for the {@link #tabBar} instance
+         * The docked position for the {@link #tabBar} instance.
+         * Possible values are 'top' and 'bottom'.
          * @accessor
          */
         tabBarPosition: 'top',
 
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         layout: {
             type: 'card',
             animation: {
@@ -95,18 +100,57 @@ Ext.define('Ext.tab.Panel', {
             }
         },
 
-        // @inherit
+        /**
+         * @cfg
+         * @inheritdoc
+         */
         cls: Ext.baseCSSPrefix + 'tabpanel'
+
+        /**
+         * @cfg {Boolean/String/Object} scrollable
+         * @accessor
+         * @hide
+         */
+
+        /**
+         * @cfg {Boolean/String/Object} scroll
+         * @hide
+         */
+    },
+
+    delegateListeners: {
+        delegate: '> component',
+        centeredchange: 'onItemCenteredChange',
+        dockedchange: 'onItemDockedChange',
+        floatingchange: 'onItemFloatingChange',
+        disabledchange: 'onItemDisabledChange'
     },
 
     initialize: function() {
         this.callParent();
 
         this.on({
-            tabchange: 'doTabChange',
+            order: 'before',
+            activetabchange: 'doTabChange',
             delegate: '> tabbar',
             scope   : this
         });
+
+        //<debug>
+        var layout = this.getLayout();
+        if (layout && !layout.isCard) {
+            Ext.Logger.error('The base layout for a TabPanel must always be a Card Layout');
+        }
+        //</debug>
+    },
+
+    /**
+     * Tab panels should not be scrollable. Instead, you should add scrollable to any item that
+     * you want to scroll.
+     * @private
+     */
+    applyScrollable: function() {
+        return false;
     },
 
     /**
@@ -121,14 +165,6 @@ Ext.define('Ext.tab.Panel', {
     },
 
     /**
-     * Updates the {@link #tabBar} instance with the new {@link Ext.tab.Bar#activeTab}.
-     */
-    doActiveItemChange: function(newCard) {
-        this.callParent(arguments);
-        this.getTabBar().setActiveTab(this.getInnerItems().indexOf(newCard));
-    },
-
-    /**
      * @private
      */
     doSetActiveItem: function(newActiveItem, oldActiveItem) {
@@ -136,14 +172,28 @@ Ext.define('Ext.tab.Panel', {
             var items = this.getInnerItems(),
                 oldIndex = items.indexOf(oldActiveItem),
                 newIndex = items.indexOf(newActiveItem),
-                reverse = oldIndex > newIndex;
+                reverse = oldIndex > newIndex,
+                animation = this.getLayout().getAnimation(),
+                tabBar = this.getTabBar(),
+                oldTab = tabBar.parseActiveTab(oldIndex),
+                newTab = tabBar.parseActiveTab(newIndex);
 
-            this.getLayout().getAnimation().setReverse(reverse);
+            if (animation && animation.setReverse) {
+                animation.setReverse(reverse);
+            }
 
             this.callParent(arguments);
 
             if (newIndex != -1) {
                 this.getTabBar().setActiveTab(newIndex);
+
+                if (oldTab) {
+                    oldTab.setActive(false);
+                }
+
+                if (newTab) {
+                    newTab.setActive(true);
+                }
             }
         }
     },
@@ -151,13 +201,12 @@ Ext.define('Ext.tab.Panel', {
     /**
      * Updates this container with the new active item.
      */
-    doTabChange: function(tabBar, newTab, oldTab) {
-        var index = tabBar.indexOf(newTab);
-        this.setActiveItem(index);
+    doTabChange: function(tabBar, newTab) {
+        this.setActiveItem(tabBar.indexOf(newTab));
     },
 
     /**
-     * Creates a new {@link Ext.tab.Bar} instance using {@link Ext.Factory}.
+     * Creates a new {@link Ext.tab.Bar} instance using {@link Ext#factory}.
      * @private
      */
     applyTabBar: function(config) {
@@ -197,7 +246,6 @@ Ext.define('Ext.tab.Panel', {
         }
     },
 
-    // @inherit
     onItemAdd: function(card) {
         var me = this;
 
@@ -210,6 +258,8 @@ Ext.define('Ext.tab.Panel', {
             tabConfig          = initialConfig.tab || {},
             tabTitle           = initialConfig.title,
             tabIconCls         = initialConfig.iconCls,
+            tabHidden          = initialConfig.hidden,
+            tabDisabled        = initialConfig.disabled,
             tabBadgeText       = initialConfig.badgeText,
             innerItems         = me.getInnerItems(),
             index              = innerItems.indexOf(card),
@@ -224,6 +274,14 @@ Ext.define('Ext.tab.Panel', {
 
         if (tabIconCls && !tabConfig.iconCls) {
             tabConfig.iconCls = tabIconCls;
+        }
+
+        if (tabHidden && !tabConfig.hidden) {
+            tabConfig.hidden = tabHidden;
+        }
+
+        if (tabDisabled && !tabConfig.disabled) {
+            tabConfig.disabled = tabDisabled;
         }
 
         if (tabBadgeText && !tabConfig.badgeText) {
@@ -244,49 +302,34 @@ Ext.define('Ext.tab.Panel', {
             tabBar.insert(index, tabInstance);
         }
 
+        card.tab = tabInstance;
+
         me.callParent(arguments);
-    }
+    },
 
-//    onRemove: function(cmp, autoDestroy) {
-//        // remove the tab from the tabBar
-//        if (!this.destroying) {
-//            this.getTabBar().remove(cmp.tab, autoDestroy);
-//        }
-//    },
-
-
-//    applyDelay: function(config) {
-//        var sortable  = this.getSortable();
-//        if (sortable) {
-//            sortable.setDelay(config);
-//        }
-//    },
-
-//    getDelay: function() {
-//        var sortable  = this.getSortable();
-//        return sortable ? sortable.getDelay() : null;
-//    },
-
-//    applySortable: function(config) {
-//        var me = this,
-//            tabBar = me.getTabBar().setSortable(config),
-//            delay = this.getDelay();
-//        if (delay) {
-//            this.setDelay(delay);
-//        }
-//        return tabBar;
-//    },
-
-//    getSortable: function(){
-//        return this.getTabBar().getSortable();
-//    },
+    /**
+     * If an item gets enabled/disabled and it has an tab, we should also enable/disable that tab
+     * @private
+     */
+    onItemDisabledChange: function(item, newDisabled) {
+        if (item && item.tab) {
+            item.tab.setDisabled(newDisabled);
+        }
+    },
 
     // @private
-//    applyCardSwitchAnimation: function(config){
-//        //return this.tabBar.cardSwitchAnimation = config;
-//    },
-//
-//    getCardSwitchAnimation: function(){
-//        //return this.tabBar.cardSwitchAnimation;
-//    }
+    onItemRemove: function(item, index) {
+        this.getTabBar().remove(item.tab, this.getAutoDestroy());
+
+        this.callParent(arguments);
+    }
+}, function() {
+    //<deprecated product=touch since=2.0>
+    /**
+     * @cfg {Boolean} tabBarDock
+     * @inheritdoc Ext.tab.Panel#tabBarPosition
+     * @deprecated 2.0.0 Please use {@link #tabBarPosition} instead.
+     */
+    Ext.deprecateProperty(this, 'tabBarDock', 'tabBarPosition');
+    //</deprecated>
 });
