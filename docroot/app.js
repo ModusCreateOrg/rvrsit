@@ -19,10 +19,12 @@
         }
     }
 
-    Ext.Loader.setConfig({
-        enabled : true
-    });
 
+    //<debug>
+    Ext.Loader.setPath({
+        'Ext': 'sdk/src'
+    });
+  
     Ext.application({
         name        : 'Rvrsit',
         appFolder   : scriptPath + '/app',
@@ -35,7 +37,7 @@
         ],
         launch        : function() {
             Rvrsit.app = this;
-            Rvrsit.heartbeat = new silk.Heartbeat();
+//            Rvrsit.heartbeat = new silk.Heartbeat();
 
             this.on({
                 gameInitialized : this.onGameInitialized,
