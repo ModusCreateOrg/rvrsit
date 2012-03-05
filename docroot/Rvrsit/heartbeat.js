@@ -1,136 +1,130 @@
 // Heartbeat.js
-Ext.namespace('Ext', 'silk');
-
-silk.HEARTBEAT_TIME = .25; // heartbeat frequency in seconds
-silk.heartbeatUrl = '/Heartbeat';
-
-silk.heartbeats = 0;
-silk.servertime = 0;
-silk.heartbeat_enabled = false;
-silk.heartbeat_inprogress = false;
 
 /**
  * @class silk.Heartbeat
  */
-silk.Heartbeat = function() {
-    // callbacks are simply called once per heartbeat
-    var callbacks = {};
-    var scopes = {};
-
-    this.addCallback = function(key, func, scope) {
-        callbacks[key] = func;
-        scopes[key] = scope || window;
-
-    };
-    this.removeCallback = function(key) {
-        delete callbacks[key];
-        delete scopes[key];
-    };
-
-    // methods are RPC calls to the server
-    var queue = {};
-    this.addMethod = function(key, config) {
-        queue[key] = config;
-    };
-    this.removeMethod = function(key) {
-        delete queue[key];
-    };
-
-    function DoHeartbeat() {
-        if (silk.heartbeat_inprogress || !silk.heartbeat_enabled) {
-            return;
-        }
-        silk.heartbeat_inprogress = true;
-        var params = [],
-            keys = [],
-            methods = [],
-            key,
-            myParams,
-            parm;
 
 
-        for ( key in queue) {
-            myParams = queue[key].params;
-            parm     = Ext.isFunction(myParams) ? myParams() : myParams;
+Ext.define('silk.Heartbeat', {
+    singleton   : true,
+    constructor : function() {
+        // callbacks are simply called once per heartbeat
+        var callbacks = {};
+        var scopes = {};
 
-            params.push(parm);
-            keys.push(key);
-            methods.push(queue[key].method);
-        }
+        this.addCallback = function(key, func, scope) {
+            callbacks[key] = func;
+            scopes[key] = scope || window;
 
-        Ext.Ajax.request({
-            url     : silk.heartbeatUrl,
-            params  : {
-                keys    : Ext.encode(keys),
-                params  : Ext.encode(params),
-                methods : Ext.encode(methods)
-            },
-            success : function(result) {
-                var data = Ext.decode(result.responseText),
-                    key,
-                    queueItem;
+        };
+        this.removeCallback = function(key) {
+            delete callbacks[key];
+            delete scopes[key];
+        };
 
+        // methods are RPC calls to the server
+        var queue = {};
+        this.addMethod = function(key, config) {
+            queue[key] = config;
+        };
+        this.removeMethod = function(key) {
+            delete queue[key];
+        };
 
-                if (data.data) {
-                    data = data.data;
-                }
-                // why?
-                for (key in data) {
-                    queueItem = queue[key];
-                    if (queueItem && queueItem.callback) {
-                        queueItem.callback.call(queueItem.scope || window, data[key]);
+        function DoHeartbeat() {
+            if (silk.heartbeat_inprogress || !silk.heartbeat_enabled) {
+                return;
+            }
+            silk.heartbeat_inprogress = true;
+            var params = [],
+                keys = [],
+                methods = [],
+                key,
+                myParams,
+                parm;
+
+            for (key in queue) {
+                myParams = queue[key].params;
+                parm = Ext.isFunction(myParams) ? myParams() : myParams;
+
+                params.push(parm);
+                keys.push(key);
+                methods.push(queue[key].method);
+            }
+
+            Ext.Ajax.request({
+                url     : silk.heartbeatUrl,
+                params  : {
+                    keys    : Ext.encode(keys),
+                    params  : Ext.encode(params),
+                    methods : Ext.encode(methods)
+                },
+                success : function(result) {
+                    var data = Ext.decode(result.responseText),
+                        key,
+                        queueItem;
+
+                    if (data.data) {
+                        data = data.data;
                     }
+                    // why?
+                    for (key in data) {
+                        queueItem = queue[key];
+                        if (queueItem && queueItem.callback) {
+                            queueItem.callback.call(queueItem.scope || window, data[key]);
+                        }
+                    }
+
+                    for (key in callbacks) {
+                        callbacks[key].call(scopes[key] || window, data);
+                    }
+
+                    silk.heartbeat_inprogress = false;
+                    silk.heartbeats++;
+                },
+                failure : function() {
+                    silk.heartbeat_inprogress = false;
                 }
-
-                for (key in callbacks) {
-                    callbacks[key].call(scopes[key] || window, data);
-                }
-
-                silk.heartbeat_inprogress = false;
-                silk.heartbeats++;
-            },
-            failure : function() {
-                silk.heartbeat_inprogress = false;
-            }
-        });
-    }
-
-    this.force = function() {
-        DoHeartbeat();
-    };
-
-//    this.addMethod('servertime', {
-//        method   : 'serverTime',
-//        params   : function() {
-//            return {}; // no params
-//        },
-//        callback : function(data) {
-//            silk.servertime = parseInt(data);
-//        }
-//    });
-
-    var hbTask = null;
-    this.newHeartbeatTime = function(hbTime) {
-        silk.HEARTBEAT_TIME = hbTime;
-        if (hbTask) {
-            Ext.TaskMgr.stop(hbTask);
-            hbTask = null;
+            });
         }
-        DoHeartbeat();
-        hbTask = Ext.TaskMgr.start({
-            interval : silk.HEARTBEAT_TIME * 1000,
-            run      : function() {
-                if (!silk.heartbeat_enabled || silk.heartbeat_inprogress) {
-                    return;
-                }
-                DoHeartbeat();
-            }
-        });
-    };
 
-    this.newHeartbeatTime(silk.HEARTBEAT_TIME);
-    return this;
-};
+        this.force = function() {
+            DoHeartbeat();
+        };
+
+        //    this.addMethod('servertime', {
+        //        method   : 'serverTime',
+        //        params   : function() {
+        //            return {}; // no params
+        //        },
+        //        callback : function(data) {
+        //            silk.servertime = parseInt(data);
+        //        }
+        //    });
+
+        var hbTask = null;
+        this.newHeartbeatTime = function(hbTime) {
+            silk.HEARTBEAT_TIME = hbTime;
+            if (hbTask) {
+                Ext.TaskMgr.stop(hbTask);
+                hbTask = null;
+            }
+            DoHeartbeat();
+            hbTask = Ext.TaskMgr.start({
+                interval : silk.HEARTBEAT_TIME * 1000,
+                run      : function() {
+                    if (!silk.heartbeat_enabled || silk.heartbeat_inprogress) {
+                        return;
+                    }
+                    DoHeartbeat();
+                }
+            });
+        };
+
+        this.newHeartbeatTime(silk.HEARTBEAT_TIME);
+        return this;
+    }
+});
 
 /*!
  * Ext JS Library 3.4.0
