@@ -88,7 +88,7 @@ $include-toolbar-uis: $include-default-uis !default;
   @if $include-toolbar-uis {
     @include sencha-toolbar-ui('dark', darken($toolbar-base-color, 10%));
     @include sencha-toolbar-ui('light', $toolbar-base-color);
-    @include sencha-toolbar-ui('neutral', #eee);
+    @include sencha-toolbar-ui('neutral', $neutral-color);
   }
 
   .x-navigation-bar {

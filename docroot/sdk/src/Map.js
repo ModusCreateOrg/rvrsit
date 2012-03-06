@@ -75,7 +75,7 @@ Ext.define('Ext.Map', {
         map: null,
 
         /**
-         * @cfg {Ext.Geolocation} geo
+         * @cfg {Ext.util.Geolocation} geo
          * Geolocation provider for the map.
          * @accessor
          */

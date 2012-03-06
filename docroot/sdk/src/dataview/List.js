@@ -6,8 +6,10 @@
  *
  *     @example miniphone preview
  *     Ext.define('Contact', {
- *        extend: 'Ext.data.Model',
- *        fields: ['firstName', 'lastName']
+ *         extend: 'Ext.data.Model',
+ *         config: {
+ *             fields: ['firstName', 'lastName']
+ *         }
  *     });
  *
  *     var store = Ext.create('Ext.data.Store', {

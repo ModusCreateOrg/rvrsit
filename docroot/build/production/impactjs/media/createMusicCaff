@@ -1,6 +1,0 @@
-for i in `ls | grep wav`; do 
-	nf=`echo $i | sed -e "s/\.wav//g"`
-	echo "$i"
-	afconvert -f caff -d aac -c 1 $i  "$nf.caff"; 
-done
-

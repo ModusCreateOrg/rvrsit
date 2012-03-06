@@ -133,6 +133,7 @@ Ext.define('Ext.field.Number', {
 
     doClearIconTap: function(me, e) {
         me.getComponent().setValue('');
-        this.callParent(arguments);
+        me.getValue();
+        me.hideClearIcon();
     }
 });

@@ -11,7 +11,7 @@
  *         increment: 2,
  *         cycle: true
  *     });
- *     Ext.Viewport.add(spinner);
+ *     Ext.Viewport.add({ xtype: 'container', items: [spinner] });
  *
  */
 Ext.define('Ext.field.Spinner', {

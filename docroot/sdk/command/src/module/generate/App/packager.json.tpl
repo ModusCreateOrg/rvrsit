@@ -30,7 +30,7 @@
 	 * For Android, please refer to the Google Launcher icons guide:
 	 * http://developer.android.com/guide/practices/ui_guidelines/icon_design_launcher.html
 	 */
-	"iconName:":"icon.png",
+	"iconName":"resources/icons/Icon~ipad.png",
 
 	/**
 	 * @cfg {String{[ "\}"]} inputPath
@@ -98,11 +98,19 @@
 	 * When using a certificatePath on Windows, you do not need to specify this.
 	 */
 	"certificateAlias":"",
+	
 	/**
 	 * @cfg {String{[ "\}"]} sdkPath
 	 * This is the path to the Android SDK, if you are developing an Android application.
 	 */
 	"sdkPath":"/path/to/android-sdk",
+	
+	/**
+	 * @cfg {String} androidAPILevel
+	 * This is android API level, the version of Android SDK to use, you can read more about it here: http://developer.android.com/guide/appendix/api-levels.html.
+	 * Be sure to install corresponding platform API in android SDK manager (android_sdk/tools/android)
+	 */
+	"androidAPILevel":"15",
 
 	/**
 	 * @cfg {Array[String]} orientations

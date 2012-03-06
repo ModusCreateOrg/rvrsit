@@ -172,10 +172,10 @@
         config: {
             /**
              * Whether or not to enable the dynamic dependency loading feature
-             * Defaults to false
+             * Defaults to true
              * @cfg {Boolean} enabled
              */
-            enabled: false,
+            enabled: true,
 
             /**
              * @cfg {Boolean} disableCaching

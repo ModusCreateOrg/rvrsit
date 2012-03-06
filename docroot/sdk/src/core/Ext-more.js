@@ -371,7 +371,7 @@ function(el){
      *     });
      *
      * @param {String/Object} config.icon
-     * A icon configuration for this application. This will only apply to iOS applications which are saved to the homescreen.
+     * A icon configuration for this application. This will work on iOS and Android applications which are saved to the homescreen.
      *
      * You can either pass a string which will be applied to all different sizes:
      *
@@ -395,12 +395,14 @@ function(el){
      *         }
      *     });
      *
+     * Android devices will alway use the 57px version.
+     *
      * @param {String} config.icon.57 The icon to be used on non-retna display devices (iPhone 3GS and below).
      * @param {String} config.icon.77 The icon to be used on the iPad.
      * @param {String} config.icon.114 The icon to be used on retna display devices (iPhone 4 and above).
      *
      * @param {Boolean} glossOnIcon
-     * True to add a gloss effect to the icon.
+     * True to add a gloss effect to the icon. This is ignored on Android (it will *not* add gloss).
      *
      * @param {String} phoneStartupScreen
      * Sets the apple-touch-icon `<meta>` tag so your home screen application can have a startup screen on phones.
@@ -595,29 +597,23 @@ function(el){
             icon = {
                 '57': phoneIcon || tabletIcon || icon,
                 '72': tabletIcon || phoneIcon || icon,
-                '114': phoneIcon || tabletIcon || icon
+                '114': phoneIcon || tabletIcon || icon,
+                '144': tabletIcon || phoneIcon || icon
             };
         }
 
-        precomposed = (config.glossOnIcon === false) ? '-precomposed' : '';
+        precomposed = (Ext.os.is.iOS && config.glossOnIcon === false) ? '-precomposed' : '';
 
         if (icon) {
-            var icon57 = icon['57'],
-                icon72 = icon['72'],
-                icon114 = icon['114'],
-                iconString = 'apple-touch-icon' + precomposed;
+            var iconString = 'apple-touch-icon' + precomposed,
+                iconPath;
 
-            // If we are on an iPad and we have a 72px icon defined, use it
-            if (isIpad && (icon72 || icon57 || icon114)) {
-                addLink(iconString, icon72 || icon114 || icon57, '72x72');
-            } else {
-                if (retina && (icon72 || icon114)) {
-                    // Other wise, check if we are a retina device and we have a 114 icon
-                    addLink(iconString, icon114 || icon72, '114x114');
-                } else {
-                    // And resort to the default 57px icon
-                    addLink(iconString, icon57);
-                }
+            // Add the default icon
+            addLink(iconString, icon['57'] || icon['72'] || icon['114'] || icon['144']);
+
+            // Loop through each icon size and add it
+            for (iconPath in icon) {
+                addLink(iconString, icon[iconPath], iconPath + 'x' + iconPath);
             }
         }
     },

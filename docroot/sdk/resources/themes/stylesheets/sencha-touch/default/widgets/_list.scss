@@ -209,7 +209,7 @@ $list-disclosure-round-size: 1.5em;
     }
 
     .x-list-disclosure {
-      overflow: visible;
+      overflow: hidden;
       -webkit-mask: 0 0 theme_image($theme-name, "disclosure2.png") no-repeat;
       -webkit-mask-size: $list-disclosure-round-size;
       @include background-gradient(lighten(desaturate($base-color, 10), 10));

@@ -1861,25 +1861,7 @@ Ext.define('Ext.data.Store', {
         }
 
         if (successful) {
-            if (operation.getAddRecords() !== true) {
-                me.data.each(function(record) {
-                    record.unjoin(me);
-                });
-                me.data.clear();
-
-                // This means we have to fire a clear event though
-                me.fireEvent('clear', this);
-            }
-
-            if (records && records.length) {
-                // Now lets add the records without firing an addrecords event
-                me.suspendEvents();
-                me.add(records);
-                me.resumeEvents();
-            }
-
-            // And finally fire a refresh event so any bound view can fully refresh itself
-            me.fireEvent('refresh', this, this.data);
+            this.fireAction('datarefresh', [this, this.data, operation], 'doDataRefresh');
         }
 
         me.loaded = true;
@@ -1888,6 +1870,30 @@ Ext.define('Ext.data.Store', {
 
         //this is a callback that would have been passed to the 'read' function and is optional
         Ext.callback(operation.getCallback(), operation.getScope() || me, [records, operation, successful]);
+    },
+
+    doDataRefresh: function(store, data, operation) {
+        var records = operation.getRecords(),
+            me = this;
+
+        if (operation.getAddRecords() !== true) {
+            data.each(function(record) {
+                record.unjoin(me);
+            });
+            data.clear();
+
+            // This means we have to fire a clear event though
+            me.fireEvent('clear', this);
+        }
+
+        if (records && records.length) {
+            // Now lets add the records without firing an addrecords event
+            me.suspendEvents();
+            me.add(records);
+            me.resumeEvents();
+        }
+
+        this.fireEvent('refresh', this, this.data);
     },
 
     /**

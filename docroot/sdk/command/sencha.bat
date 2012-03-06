@@ -9,6 +9,6 @@ IF EXIST .\sdk\command\sencha (
 		.\command\vendor\nodejs\win\node command\sencha.js %*
 	) ELSE (
     	set dir=%~dp0
-    	jsdb -path "%dir%v1." "%dir%v1\sencha.js" %*
+    	jsdb -path "%dir%..\command" "%dir%..\command\sencha.js" %*
 	)
 )

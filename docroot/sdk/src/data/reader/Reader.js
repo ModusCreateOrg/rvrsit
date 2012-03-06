@@ -748,7 +748,7 @@ Ext.define('Ext.data.reader.Reader', {
             total  : 0,
             count  : 0,
             records: [],
-            success: true
+            success: false
         })
     });
 

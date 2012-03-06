@@ -7258,10 +7258,10 @@ var noArgs = [],
         config: {
             /**
              * Whether or not to enable the dynamic dependency loading feature
-             * Defaults to false
+             * Defaults to true
              * @cfg {Boolean} enabled
              */
-            enabled: false,
+            enabled: true,
 
             /**
              * @cfg {Boolean} disableCaching
@@ -8726,7 +8726,7 @@ function(el){
      *     });
      *
      * @param {String/Object} config.icon
-     * A icon configuration for this application. This will only apply to iOS applications which are saved to the homescreen.
+     * A icon configuration for this application. This will work on iOS and Android applications which are saved to the homescreen.
      *
      * You can either pass a string which will be applied to all different sizes:
      *
@@ -8750,12 +8750,14 @@ function(el){
      *         }
      *     });
      *
+     * Android devices will alway use the 57px version.
+     *
      * @param {String} config.icon.57 The icon to be used on non-retna display devices (iPhone 3GS and below).
      * @param {String} config.icon.77 The icon to be used on the iPad.
      * @param {String} config.icon.114 The icon to be used on retna display devices (iPhone 4 and above).
      *
      * @param {Boolean} glossOnIcon
-     * True to add a gloss effect to the icon.
+     * True to add a gloss effect to the icon. This is ignored on Android (it will *not* add gloss).
      *
      * @param {String} phoneStartupScreen
      * Sets the apple-touch-icon `<meta>` tag so your home screen application can have a startup screen on phones.
@@ -8950,29 +8952,23 @@ function(el){
             icon = {
                 '57': phoneIcon || tabletIcon || icon,
                 '72': tabletIcon || phoneIcon || icon,
-                '114': phoneIcon || tabletIcon || icon
+                '114': phoneIcon || tabletIcon || icon,
+                '144': tabletIcon || phoneIcon || icon
             };
         }
 
-        precomposed = (config.glossOnIcon === false) ? '-precomposed' : '';
+        precomposed = (Ext.os.is.iOS && config.glossOnIcon === false) ? '-precomposed' : '';
 
         if (icon) {
-            var icon57 = icon['57'],
-                icon72 = icon['72'],
-                icon114 = icon['114'],
-                iconString = 'apple-touch-icon' + precomposed;
+            var iconString = 'apple-touch-icon' + precomposed,
+                iconPath;
 
-            // If we are on an iPad and we have a 72px icon defined, use it
-            if (isIpad && (icon72 || icon57 || icon114)) {
-                addLink(iconString, icon72 || icon114 || icon57, '72x72');
-            } else {
-                if (retina && (icon72 || icon114)) {
-                    // Other wise, check if we are a retina device and we have a 114 icon
-                    addLink(iconString, icon114 || icon72, '114x114');
-                } else {
-                    // And resort to the default 57px icon
-                    addLink(iconString, icon57);
-                }
+            // Add the default icon
+            addLink(iconString, icon['57'] || icon['72'] || icon['114'] || icon['144']);
+
+            // Loop through each icon size and add it
+            for (iconPath in icon) {
+                addLink(iconString, icon[iconPath], iconPath + 'x' + iconPath);
             }
         }
     },
@@ -15914,7 +15910,13 @@ Ext.define('Ext.data.ResultSet', {
          * @cfg {Ext.data.Model[]} records (required)
          * The array of record instances.
          */
-        records: null
+        records: null,
+
+        /**
+         * @cfg {String} message
+         * The message that was read in from the data
+         */
+        message: null
     },
 
     /**
@@ -31194,7 +31196,7 @@ Ext.define('Ext.data.reader.Reader', {
             total  : 0,
             count  : 0,
             records: [],
-            success: true
+            success: false
         })
     });
 
@@ -49248,25 +49250,7 @@ Ext.define('Ext.data.Store', {
         }
 
         if (successful) {
-            if (operation.getAddRecords() !== true) {
-                me.data.each(function(record) {
-                    record.unjoin(me);
-                });
-                me.data.clear();
-
-                // This means we have to fire a clear event though
-                me.fireEvent('clear', this);
-            }
-
-            if (records && records.length) {
-                // Now lets add the records without firing an addrecords event
-                me.suspendEvents();
-                me.add(records);
-                me.resumeEvents();
-            }
-
-            // And finally fire a refresh event so any bound view can fully refresh itself
-            me.fireEvent('refresh', this, this.data);
+            this.fireAction('datarefresh', [this, this.data, operation], 'doDataRefresh');
         }
 
         me.loaded = true;
@@ -49275,6 +49259,30 @@ Ext.define('Ext.data.Store', {
 
         //this is a callback that would have been passed to the 'read' function and is optional
         Ext.callback(operation.getCallback(), operation.getScope() || me, [records, operation, successful]);
+    },
+
+    doDataRefresh: function(store, data, operation) {
+        var records = operation.getRecords(),
+            me = this;
+
+        if (operation.getAddRecords() !== true) {
+            data.each(function(record) {
+                record.unjoin(me);
+            });
+            data.clear();
+
+            // This means we have to fire a clear event though
+            me.fireEvent('clear', this);
+        }
+
+        if (records && records.length) {
+            // Now lets add the records without firing an addrecords event
+            me.suspendEvents();
+            me.add(records);
+            me.resumeEvents();
+        }
+
+        this.fireEvent('refresh', this, this.data);
     },
 
     /**
@@ -53990,7 +53998,7 @@ Ext.define('Ext.Component', {
      * Fires whenever this Component actually becomes visible (painted) on the screen. This is useful when you need to
      * perform 'read' operations on the DOM element, i.e: calculating natural sizes and positioning. If you just need
      * perform post-initialization tasks that don't rely on the fact that the element must be rendered and visible on
-     * the screen, listen to {@link #initialize}
+     * the screen, listen to {@link #event-initialize}
      *
      * Note: This event is not available to be used with event delegation. Instead 'painted' only fires if you explicily
      * add at least one listener to it, due to performance reason.
@@ -54057,6 +54065,12 @@ Ext.define('Ext.Component', {
      * @event orientationchange
      * Fires when orientation changes.
      * @removed 2.0.0 This event is now only available on the Viewport's {@link Ext.Viewport#orientationchange}
+     */
+
+    /**
+     * @event initialize
+     * Fires when the component has been initialized
+     * @param {Ext.Component} this The component instance
      */
 
     /**
@@ -55481,7 +55495,7 @@ var owningTabPanel = grid.up('tabpanel');
  *     var button = Ext.create('Ext.Button', {
  *         text: 'Button'
  *     });
- *     Ext.Viewport.add(button);
+ *     Ext.Viewport.add({ xtype: 'container', padding: 10, items: [button] });
  *
  * ## Icons
  *
@@ -55493,7 +55507,7 @@ var owningTabPanel = grid.up('tabpanel');
  *         iconCls: 'refresh',
  *         iconMask: true
  *     });
- *     Ext.Viewport.add(button);
+ *     Ext.Viewport.add({ xtype: 'container', padding: 10, items: [button] });
  *
  * Note that the {@link #iconMask} configuration is required when you want to use any of the
  * bundled Pictos icons.
@@ -55529,6 +55543,7 @@ var owningTabPanel = grid.up('tabpanel');
  *     @example
  *     Ext.create('Ext.Container', {
  *         fullscreen: true,
+ *         padding: 10,
  *         items: {
  *             xtype: 'button',
  *             text: 'My Button',
@@ -56665,7 +56680,7 @@ Ext.define('Ext.Map', {
         map: null,
 
         /**
-         * @cfg {Ext.Geolocation} geo
+         * @cfg {Ext.util.Geolocation} geo
          * Geolocation provider for the map.
          * @accessor
          */
@@ -57413,7 +57428,10 @@ Ext.define('Ext.Media', {
         //http://developer.apple.com/library/safari/#documentation/AudioVideo/Conceptual/Using_HTML5_Audio_Video/ControllingMediaWithJavaScript/ControllingMediaWithJavaScript.html
 
         dom.src = newUrl;
-        dom.load();
+
+        if ('load' in dom) {
+            dom.load();
+        }
 
         if (this.getPlaying()) {
             this.play();
@@ -61326,7 +61344,8 @@ Ext.define('Ext.field.Number', {
 
     doClearIconTap: function(me, e) {
         me.getComponent().setValue('');
-        this.callParent(arguments);
+        me.getValue();
+        me.hideClearIcon();
     }
 });
 
@@ -61469,7 +61488,7 @@ Ext.define('Ext.field.Search', {
  *         increment: 2,
  *         cycle: true
  *     });
- *     Ext.Viewport.add(spinner);
+ *     Ext.Viewport.add({ xtype: 'container', items: [spinner] });
  *
  */
 Ext.define('Ext.field.Spinner', {
@@ -62274,13 +62293,13 @@ Ext.define('Ext.plugin.ListPaging', {
  *         fields: ['name', 'img', 'text'],
  *         data: [
  *             {
- *                 name: 'ariyahidayat',
- *                 img: 'https://si0.twimg.com/profile_images/1662373732/headshot_normal.jpg',
- *                 text: 'Read about the first exciting year of #PhantomJS development'
+ *                 name: 'edpsencer',
+ *                 img: 'http://a2.twimg.com/profile_images/1175591906/Ed-presenting-cropped_reasonably_small.jpg',
+ *                 text: 'Read about Sencha Touch'
  *             },{
- *                 name: 'whereisthysting',
- *                 img: 'https://si0.twimg.com/profile_images/1628080808/Brendan_Coughran_normal.jpg',
- *                 text: 'The power of canvas http://glittle.org/blog/smiley-slider/'
+ *                 name: 'rdougan',
+ *                 img: 'http://a0.twimg.com/profile_images/1261180556/171265_10150129602722922_727937921_7778997_8387690_o_reasonably_small.jpg',
+ *                 text: 'Javascript development'
  *             },{
  *                 name: 'philogb',
  *                 img: 'https://si0.twimg.com/profile_images/1249073521/ng_normal.png',
@@ -62288,7 +62307,7 @@ Ext.define('Ext.plugin.ListPaging', {
  *             }
  *         ]
  *     });
- * 
+ *
  *     Ext.create('Ext.dataview.List', {
  *         fullscreen: true,
  *
@@ -62302,7 +62321,7 @@ Ext.define('Ext.plugin.ListPaging', {
  *         ],
  *
  *         itemTpl: [
- *             '<img src="{img}" alt='{name} photo' />',
+ *             '<img src="{img}" alt="{name} photo" />',
  *             '<div class="tweet"><b>{name}:</b> {text}</div>'
  *         ]
  *     });
@@ -65113,7 +65132,7 @@ Ext.define('Ext.Panel', {
  *             }
  *         }
  *     });
- *     Ext.Viewport.add(segmentedButton);
+ *     Ext.Viewport.add({ xtype: 'container', padding: 10, items: [segmentedButton] });
  *
  */
 Ext.define('Ext.SegmentedButton', {
@@ -68076,6 +68095,7 @@ Ext.define('Ext.dataview.component.DataItem', {
         if (!newRecord) {
             return;
         }
+        this._record = newRecord;
 
         var me = this,
             dataview = me.config.dataview,
@@ -69389,8 +69409,10 @@ Ext.define('Ext.dataview.DataView', {
  *
  *     @example miniphone preview
  *     Ext.define('Contact', {
- *        extend: 'Ext.data.Model',
- *        fields: ['firstName', 'lastName']
+ *         extend: 'Ext.data.Model',
+ *         config: {
+ *             fields: ['firstName', 'lastName']
+ *         }
  *     });
  *
  *     var store = Ext.create('Ext.data.Store', {
@@ -72148,6 +72170,7 @@ Ext.define('Ext.navigation.Bar', {
         this.refreshNavigationBarProxy();
 
         var properties = this.getNavigationBarProxyProperties();
+
         if (backButton && backButton.rendered) {
             backButton.setWidth(properties.backButton.width);
         }
@@ -72654,7 +72677,7 @@ Ext.define('Ext.navigation.Bar', {
         proxy.backButton = proxy.down('button[ui=back]');
 
         //add the proxy to the body
-        Ext.getBody().appendChild(proxy.element);
+        this.element.appendChild(proxy.element);
     },
 
     /**
@@ -72689,18 +72712,16 @@ Ext.define('Ext.navigation.Bar', {
             backButtonStack = me.backButtonStack,
             title = backButtonStack[backButtonStack.length - 1],
             oldTitle = me.getBackButtonText(),
-            proxyElement, proxyBackButton;
+            proxyBackButton;
 
         if (!proxy) {
             me.createNavigationBarProxy();
             proxy = me.proxy;
         }
-
-        proxyElement = proxy.element;
         proxyBackButton = proxy.backButton;
 
-        proxyElement.setWidth(element.getWidth());
-        proxyElement.setHeight(element.getHeight());
+        proxy.setWidth(element.getWidth());
+        proxy.setHeight(element.getHeight());
 
         proxy.setTitle(title);
 
@@ -72728,7 +72749,7 @@ Ext.define('Ext.navigation.Bar', {
 
     /**
      * We override the hidden method because we don't want to remove it from the view using display:none. Instead we just position it off
-     * the scren, much like the navigation bar proxy. This means that all animations, pushing, popping etc. all still work when if you hide/show
+     * the screen, much like the navigation bar proxy. This means that all animations, pushing, popping etc. all still work when if you hide/show
      * this bar at any time.
      * @private
      */
@@ -72774,6 +72795,11 @@ Ext.define('Ext.navigation.Bar', {
         }
 
         return ghost;
+    },
+
+    destroy: function() {
+        Ext.destroy(this.proxy);
+        delete this.proxy;
     }
 });
 

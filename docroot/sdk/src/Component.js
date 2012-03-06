@@ -781,7 +781,7 @@ Ext.define('Ext.Component', {
      * Fires whenever this Component actually becomes visible (painted) on the screen. This is useful when you need to
      * perform 'read' operations on the DOM element, i.e: calculating natural sizes and positioning. If you just need
      * perform post-initialization tasks that don't rely on the fact that the element must be rendered and visible on
-     * the screen, listen to {@link #initialize}
+     * the screen, listen to {@link #event-initialize}
      *
      * Note: This event is not available to be used with event delegation. Instead 'painted' only fires if you explicily
      * add at least one listener to it, due to performance reason.
@@ -848,6 +848,12 @@ Ext.define('Ext.Component', {
      * @event orientationchange
      * Fires when orientation changes.
      * @removed 2.0.0 This event is now only available on the Viewport's {@link Ext.Viewport#orientationchange}
+     */
+
+    /**
+     * @event initialize
+     * Fires when the component has been initialized
+     * @param {Ext.Component} this The component instance
      */
 
     /**

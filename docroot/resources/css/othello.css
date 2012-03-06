@@ -18,7 +18,7 @@ canvas {
 
 /* score card sidebar */
 .logo {
-    background-image: url(../../impactjs/media/images/rvrsit-logo.png);
+    background-image: url(../../media/images/rvrsit-logo.png);
     background-repeat: no-repeat;
     width: 231px;
     height: 60px;
@@ -29,7 +29,7 @@ canvas {
 .player {
     height: 70px;
     width: 306px;
-    background-image: url(../../impactjs/media/images/new/score_bg.png);
+    background-image: url(../../media/images/new/score_bg.png);
     background-repeat: no-repeat;
     margin: 20px 0 2px 27px;
     color: #FFF;
@@ -40,11 +40,11 @@ canvas {
     width: 32px;
 }
 
-.tile-white { background-image: url(../../impactjs/media/images/rvrs-wht-32px.png) }
+.tile-white { background-image: url(../../media/images/rvrs-wht-32px.png) }
 
-.tile-black { background-image: url(../../impactjs/media/images/rvrs-blck-32px.png) }
+.tile-black { background-image: url(../../media/images/rvrs-blck-32px.png) }
 
-.tile-black-score { background-image: url(../../impactjs/media/images/rvrs-blck-32px.png) }
+.tile-black-score { background-image: url(../../media/images/rvrs-blck-32px.png) }
 
 .player-turn-label {
     font-weight: bold;
@@ -152,13 +152,13 @@ canvas {
 }
 
 .button-untouched {
-    background-image: url(../../impactjs/media/images/new/button-untouched.png);
+    background-image: url(../../media/images/new/button-untouched.png);
     background-repeat: no-repeat;
 }
 
 .button-touched {
     top: 58px;
-    background-image: url(../../impactjs/media/images/new/button-touched.png);
+    background-image: url(../../media/images/new/button-touched.png);
     background-repeat: no-repeat;
 }
 

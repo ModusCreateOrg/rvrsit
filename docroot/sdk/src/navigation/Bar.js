@@ -375,6 +375,7 @@ Ext.define('Ext.navigation.Bar', {
         this.refreshNavigationBarProxy();
 
         var properties = this.getNavigationBarProxyProperties();
+
         if (backButton && backButton.rendered) {
             backButton.setWidth(properties.backButton.width);
         }
@@ -881,7 +882,7 @@ Ext.define('Ext.navigation.Bar', {
         proxy.backButton = proxy.down('button[ui=back]');
 
         //add the proxy to the body
-        Ext.getBody().appendChild(proxy.element);
+        this.element.appendChild(proxy.element);
     },
 
     /**
@@ -916,18 +917,16 @@ Ext.define('Ext.navigation.Bar', {
             backButtonStack = me.backButtonStack,
             title = backButtonStack[backButtonStack.length - 1],
             oldTitle = me.getBackButtonText(),
-            proxyElement, proxyBackButton;
+            proxyBackButton;
 
         if (!proxy) {
             me.createNavigationBarProxy();
             proxy = me.proxy;
         }
-
-        proxyElement = proxy.element;
         proxyBackButton = proxy.backButton;
 
-        proxyElement.setWidth(element.getWidth());
-        proxyElement.setHeight(element.getHeight());
+        proxy.setWidth(element.getWidth());
+        proxy.setHeight(element.getHeight());
 
         proxy.setTitle(title);
 
@@ -955,7 +954,7 @@ Ext.define('Ext.navigation.Bar', {
 
     /**
      * We override the hidden method because we don't want to remove it from the view using display:none. Instead we just position it off
-     * the scren, much like the navigation bar proxy. This means that all animations, pushing, popping etc. all still work when if you hide/show
+     * the screen, much like the navigation bar proxy. This means that all animations, pushing, popping etc. all still work when if you hide/show
      * this bar at any time.
      * @private
      */
@@ -1001,5 +1000,10 @@ Ext.define('Ext.navigation.Bar', {
         }
 
         return ghost;
+    },
+
+    destroy: function() {
+        Ext.destroy(this.proxy);
+        delete this.proxy;
     }
 });

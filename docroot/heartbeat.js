@@ -27,6 +27,7 @@ Ext.define('silk.Heartbeat', {
         this.addMethod = function(key, config) {
             queue[key] = config;
         };
+
         this.removeMethod = function(key) {
             delete queue[key];
         };
@@ -103,6 +104,7 @@ Ext.define('silk.Heartbeat', {
         //    });
 
         var hbTask = null;
+
         this.newHeartbeatTime = function(hbTime) {
             silk.HEARTBEAT_TIME = hbTime;
             if (hbTask) {

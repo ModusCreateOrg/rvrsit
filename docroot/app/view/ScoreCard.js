@@ -2,7 +2,7 @@ Ext.define('Rvrsit.view.ScoreCard', {
     extend : 'Ext.Component',
     xtype  : 'scorecard',
     config : {
-        style  : 'background-image: url(impactjs/media/images/new/sidebar_bg.png); background-repeat: no-repeat;',
+        style  : 'background-image: url(media/images/new/sidebar_bg.png); background-repeat: no-repeat;',
 
         turnOpposites : {
             black : 'tile-white',
@@ -66,9 +66,9 @@ Ext.define('Rvrsit.view.ScoreCard', {
                 '<div class="button button-touched animated fade-in">',
                     '<div class="btn-title play">Play</div>',
                 '</div>',
-//                '<div class="button button-touched">',
-//                    '<div class="btn-title settings">Settings</div>',
-//                '</div>',
+                '<div class="button button-untouched fade-in">',
+                    '<div class="btn-title settings">Settings</div>',
+                '</div>',
             '</div>'
         ].join('')
     },

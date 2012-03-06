@@ -25,6 +25,10 @@ Ext.define('Command.Cli', {
         }
         else {
             platformName = 'linux';
+
+            if (/64/.test(process.arch)) {
+                platformName += '64';
+            }
         }
 
         this.platformName = platformName;

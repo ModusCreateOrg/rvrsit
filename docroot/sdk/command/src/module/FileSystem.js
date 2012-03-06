@@ -57,7 +57,7 @@ Ext.define('Command.module.FileSystem', {
      * @param toFile
      */
     minify: function(fromFile, toFile, compressor, callback) {
-        var command, jarPath;
+        var command, jarPath, toArg, content;
 
         callback = callback || Ext.emptyFn;
 
@@ -69,28 +69,34 @@ Ext.define('Command.module.FileSystem', {
 
             ast = pro.ast_mangle(ast); // get a new AST with mangled names
             ast = pro.ast_squeeze(ast); // get an AST with compression optimizations
+            content = pro.gen_code(ast);
 
-            this.write(toFile, pro.gen_code(ast));
-            callback();
+            if (toFile) {
+                this.write(toFile, content);
+                callback();
+            }
+            else {
+                callback(content);
+            }
         }
         else {
             if (compressor === 'closurecompiler') {
-                command = 'java -jar %s --js_output_file %s --js %s';
+                command = 'java -jar %s ' + (toFile ? '--js_output_file %s' : '%s') + ' --js %s';
                 jarPath = this.getVendorPath('closurecompiler/compiler.jar');
             }
             else {
-                command = 'java -jar %s -o %s %s';
+                command = 'java -jar %s ' + (toFile ? '-o %s' : '%s') + ' %s';
                 jarPath = this.getVendorPath('yuicompressor/yuicompressor.jar');
             }
 
-            command = require('util').format(command,
-                this.escapeShell(jarPath), this.escapeShell(toFile), this.escapeShell(fromFile));
-
-            require('child_process').exec(command,
-                function(error, stdout, stderr) {
-                    if (error) {
-                        this.error(error);
-                        this.error(stderr);
+            this.exec(command, [jarPath, toFile, fromFile], function(error, stdout, stderr) {
+                if (error) {
+                    this.error(error);
+                    this.error(stderr);
+                }
+                else {
+                    if (!toFile) {
+                        callback(stdout);
                     }
                     else {
                         if (stdout) {
@@ -98,8 +104,8 @@ Ext.define('Command.module.FileSystem', {
                         }
                         callback();
                     }
-                }.bind(this)
-            );
+                }
+            });
         }
     },
 
@@ -110,16 +116,12 @@ Ext.define('Command.module.FileSystem', {
      * @param delta
      */
     delta: function(fromFile, toFile, delta, callback) {
-        var command = '%s encode -json -dictionary %s -target %s -delta %s --stats';
-
-        command = require('util').format(command,
+        this.exec('%s encode -json -dictionary %s -target %s -delta %s --stats', [
             this.getVendorPath('vcdiff/' + this.cli.platformName + '/vcdiff'),
-            this.escapeShell(fromFile),
-            this.escapeShell(toFile),
-            this.escapeShell(delta)
-        );
-
-        require('child_process').exec(command, function(error, stdout, stderr) {
+            fromFile,
+            toFile,
+            delta
+        ], function(error, stdout, stderr) {
             if (error) {
                 this.error(stderr);
             }
@@ -133,7 +135,7 @@ Ext.define('Command.module.FileSystem', {
                 this.write(delta, content.substring(0, content.length - 2) + ']');
                 callback();
             }
-        }.bind(this));
+        });
     },
 
     mkdir: function() {
@@ -187,7 +189,11 @@ Ext.define('Command.module.FileSystem', {
         return this.write(file, beautify ? JSON.stringify(object, null, 4) : JSON.stringify(object));
     },
 
-    append: function(file, content) {
+    prependFile: function(file, content) {
+        this.write(file, content + this.read(file));
+    },
+
+    appendFile: function(file, content) {
         var fs = require('fs'),
             fd = fs.openSync(file, 'a');
 

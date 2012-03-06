@@ -24,12 +24,31 @@ Ext.define('Command.module.Application', {
         ],
         build: [
             "Build the application at the current working directory to the given path",
-            ['environment', 'e', "The build environment, either 'testing', 'production' or 'native'. Defaults to 'testing'",
-                'string', 'testing', 'production'],
+            ['environment', 'e', "The build environment, either 'testing', 'package', 'production', or 'native'" +
+                "\n                          " +
+                "+ 'testing' is meant for QA prior to production. All JavaScript and CSS Files are bundled, but not minified" +
+                "\n                          " +
+                "+ 'package' creates a self-contained, re-distributable production build that " +
+                    "\n                             " +
+                    "normally runs from local file system without the need for a web server" +
+                "\n                          " +
+                "+ 'production' creates a production build that is normally hosted on a web server and " +
+                    "\n                             " +
+                    "serve multiple clients (devices). The build is offline-capable and has built-in " +
+                    "\n                             " +
+                    "OTA delta updating feature" +
+                "\n                          " +
+                "+ 'native' first generates a 'package' build, then packages it as a native " +
+                    "\n                             " +
+                    "application, ready to be deployed to native platforms",
+                'string', null, 'production'],
             ['destination', 'd', "The directory path to build this application to. " +
+                "\n                          " +
                 "If none given, the default path specified inside 'app.json' is used", 'string', '', '/path/to/deploy/myapp'],
             ['archive', 'a', "The directory path where all previous builds were stored," +
+                "\n                          " +
                 "needed to generate deltas between updates (for production only). " +
+                "\n                          " +
                 "If none given, the default path specified inside 'app.json' is used",
                 'string', '', '/path/to/myapp/archive']
         ]
@@ -42,52 +61,49 @@ Ext.define('Command.module.Application', {
     },
 
     resolve: function(uri, output, callback) {
-        var command = '%s %s %s',
-            parsedUri = require('url').parse(uri);
+        var parsedUri = require('url').parse(uri);
 
         if (!/^file|http/.test(parsedUri.protocol)) {
             uri = 'file:///' + require('path').resolve(uri).replace(/\\/g, '/');
         }
 
-        command = require('util').format(command,
-            this.escapeShell(this.getVendorPath('phantomjs/' + this.cli.platformName + '/phantomjs')),
-            this.escapeShell(this.getVendorPath('phantomjs/dependencies.js')),
-            this.escapeShell(uri)
-        );
-
-        require('child_process').exec(command,
-            function(error, stdout) {
-                if (error) {
-                    this.error(stdout);
+        this.exec('%s %s %s', [
+            this.getVendorPath('phantomjs/' + this.cli.platformName + '/phantomjs'),
+            this.getVendorPath('phantomjs/dependencies.js'),
+            uri
+        ], function(error, stdout) {
+            if (error) {
+                this.error(stdout);
+            }
+            else {
+                if (output) {
+                    this.getModule('fs').write(output, stdout);
                 }
-                else {
-                    if (output) {
-                        this.getModule('fs').write(output, stdout);
-                    }
 
-                    if (callback) {
-                        callback(JSON.parse(stdout));
-                    }
+                if (callback) {
+                    callback(JSON.parse(stdout));
                 }
-            }.bind(this)
-        );
+            }
+        });
     },
 
     build: function(environment, destination, archive) {
-        var needsPackaging = false;
+        var nativePackaging = false;
 
         if (environment == 'native') {
-            environment = 'testing';
-            needsPackaging = true;
+            environment = 'package';
+            nativePackaging = true;
         }
 
-        if (environment !== 'testing' && environment !== 'production') {
-            throw new Error("Invalid environment argument of: '"+environment+"', must be either 'testing' or 'production'");
+        if (!/^testing|package|production$/.test(environment)) {
+            throw new Error("Invalid environment argument of: '"+environment+"'," +
+                " must be either 'testing', 'package', 'production' or 'native'");
         }
 
         var path = require('path'),
             src = process.cwd(),
             fs = this.getModule('fs'),
+            sdk = path.resolve(src, fs.read('.senchasdk').trim()),
             config = fs.readJson(path.join(src, 'app.json')),
             jsAssets = config.js || [],
             cssAssets = config.css || [],
@@ -96,13 +112,13 @@ Ext.define('Command.module.Application', {
             preprocessor = Ext.require('Command.Preprocessor').getInstance(),
             nodeFs = require('fs'),
             indexHtml, assets, file, destinationFile, files,
-            appJs, appJson, assetsCount, processedAssetsCount,
-            packagerConfig, packagerJson;
+            appJs, assetsCount, processedAssetsCount,
+            packagerConfig, packagerJson, processIndex;
 
-        preprocessor.setParams(config.preprocessor || {});
+        preprocessor.setParams(config.buildOptions || {});
 
         if (!destination) {
-            destination = config.buildPath[environment];
+            destination = config.buildPaths[environment];
         }
 
         if (!archive) {
@@ -149,8 +165,40 @@ Ext.define('Command.module.Application', {
             this.info("Copied " + extra);
         }, this);
 
-        this.info("Resolving your application dependencies...");
+        processIndex = function(callback) {
+            var appJson = JSON.stringify({
+                id: config.id,
+                js: jsAssets,
+                css: cssAssets
+            });
 
+            fs.write(path.join(destination, 'app.json'), appJson);
+            this.info("Generated app.json");
+
+            indexHtml = fs.read(path.join(src, 'index.html'));
+
+            if (environment == 'production' && appCache) {
+                indexHtml = indexHtml.replace('<html manifest=""', '<html manifest="cache.manifest"');
+            }
+
+            fs.minify(path.join(sdk, 'microloader', (environment == 'production' ? 'production' : 'testing')+'.js'), null, 'closurecompiler', function(content) {
+                indexHtml = indexHtml.replace(/<script id="microloader"([^<]+)<\/script>/,
+                    '<script type="text/javascript">' +
+                        content + ';Ext.blink(' + (environment == 'production' ? JSON.stringify({
+                            id: config.id
+                        }) : appJson) + ')' +
+                    '</script>');
+
+                fs.write(path.join(destination, 'index.html'), indexHtml);
+                this.info("Embedded microloader into index.html");
+
+                if (callback) {
+                    callback();
+                }
+            }.bind(this));
+        }.bind(this);
+
+        this.info("Resolving your application dependencies...");
         this.resolve(path.join(src, 'index.html'), null, function(dependencies) {
             this.info("Found " + dependencies.length + " dependencies. Concatenating all into app.js...");
 
@@ -176,6 +224,10 @@ Ext.define('Command.module.Application', {
                     this.info("Processed " + file);
                 }
 
+                if (environment == 'testing') {
+                    return;
+                }
+
                 this.info("Minifying " + file);
 
                 fs.minify(destinationFile, destinationFile, null, function(destinationFile, file, asset) {
@@ -185,6 +237,7 @@ Ext.define('Command.module.Application', {
                         var version = fs.checksum(destinationFile);
                         asset.version = version;
 
+                        fs.prependFile(destinationFile, '/*' + version + '*/');
                         fs.copyFile(destinationFile, path.join(archive, file, version));
 
                         if (asset.update === 'delta') {
@@ -209,80 +262,54 @@ Ext.define('Command.module.Application', {
                     }
 
                     if (++processedAssetsCount == assetsCount) {
-                        appJson = JSON.stringify({
-                            js: jsAssets,
-                            css: cssAssets
-                        }, null, 4);
+                        processIndex(function() {
+                            if (environment == 'production' && appCache) {
+                                appCache.cache = appCache.cache.map(function(cache) {
+                                    var checksum = '';
 
-                        fs.write(path.join(destination, 'app.json'), appJson);
-                        this.info("Generated app.json");
-
-                        indexHtml = fs.read(path.join(src, 'index.html'));
-
-                        if (environment == 'production' && appCache) {
-                            indexHtml = indexHtml.replace('<html manifest=""', '<html manifest="app.manifest"');
-                        }
-
-                        indexHtml = indexHtml.replace(/<script id="microloader"([^<]+)<\/script>/,
-                            '<script type="text/javascript">' +
-                                fs.read(path.join(src, 'sdk', 'sencha-'+environment+'.js')) +
-                                'Ext.blink(' + appJson + ')' +
-                            '</script>');
-
-                        fs.write(path.join(destination, 'index.html'), indexHtml);
-                        this.info("Embedded microloader into index.html");
-
-                        if (environment == 'production' && appCache) {
-                            appCache.cache = appCache.cache.map(function(cache) {
-                                var checksum = '';
-
-                                if (!/^(\/|(.*):\/\/)/.test(cache)) {
-                                    this.info("Generating checksum for appCache item: " + cache);
-                                    checksum = fs.checksum(path.join(destination, cache));
-                                }
-
-                                return {
-                                    uri: cache,
-                                    checksum: checksum
-                                }
-                            }, this);
-
-                            fs.write(path.join(destination, 'app.manifest'), this.getTemplate('app.manifest').apply(appCache));
-                            this.info("Generated app.manifest");
-                        }
-
-                        if (needsPackaging) {
-                            packagerJson = fs.read(path.join(src, 'packager.json'));
-                            packagerConfig = Ext.JSON.decode(packagerJson);
-                            packagerConfig.inputPath = destination;
-                            packagerConfig.outputPath = path.resolve(config.buildPath.native);
-                            fs.mkdir(packagerConfig.outputPath);
-                            fs.writeJson(path.join(src, 'packager.json'), packagerConfig);
-
-                            this.info("Packaging your application as a native app...");
-                            require('child_process').exec('sencha package run', function(error, stdout, stderr) {
-                                fs.write(path.join(src, 'packager.json'), packagerJson);
-
-                                if (error) {
-                                    this.error(error);
-                                    if (stderr) {
-                                        this.error(stderr);
-                                    }
-                                }
-                                else {
-                                    if (stdout) {
-                                        this.info(stdout);
+                                    if (!/^(\/|(.*):\/\/)/.test(cache)) {
+                                        this.info("Generating checksum for appCache item: " + cache);
+                                        checksum = fs.checksum(path.join(destination, cache));
                                     }
 
-                                    if (stderr) {
-                                        this.info(stderr);
+                                    return {
+                                        uri: cache,
+                                        checksum: checksum
                                     }
+                                }, this);
+
+                                fs.write(path.join(destination, 'cache.manifest'), this.getTemplate('cache.manifest').apply(appCache));
+                                this.info("Generated cache.manifest");
+                            }
+
+                            if (nativePackaging) {
+                                packagerJson = fs.read(path.join(src, 'packager.json'));
+                                packagerConfig = Ext.JSON.decode(packagerJson);
+
+                                if (packagerConfig.platform.match(/iOS/)) {
+                                    fs.copyDirectory(path.join(src, 'resources', 'icons'), destination);
+                                    fs.copyDirectory(path.join(src, 'resources', 'loading'), destination);
                                 }
-                            }.bind(this));
-                        }
+
+                                packagerConfig.inputPath = destination;
+                                packagerConfig.outputPath = path.resolve(config.buildPaths.native);
+                                fs.mkdir(packagerConfig.outputPath);
+                                fs.writeJson(path.join(src, 'packager.temp.json'), packagerConfig);
+
+                                this.info("Packaging your application as a native app...");
+
+                                this.getModule('package').run('packager.temp.json', function() {
+                                    nodeFs.unlinkSync(path.join(src, 'packager.temp.json'));
+                                });
+                            }
+                        }.bind(this));
                     }
                 }.bind(this, destinationFile, file, asset));
             }, this);
+
+            if (environment == 'testing') {
+                processIndex();
+            }
 
         }.bind(this));
     }

@@ -8,7 +8,7 @@ Ext.define('Rvrsit.view.Viewport', {
 
     config     : {
         fullscreen : true,
-        style      : 'background-image: url(impactjs/media/images/new/bg.jpg); background-repeat: no-repeat;',
+        style      : 'background-image: url(media/images/new/bg.jpg); background-repeat: no-repeat;',
         //        bodyStyle  : 'padding: 10px; background-color: #FEFEFE',
         layout     : {
             type  : 'hbox',

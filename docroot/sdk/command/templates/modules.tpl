@@ -1,4 +1,4 @@
-Sencha Command v{version}
+Sencha Command v{version} for Sencha Touch 2
 Copyright (c) 2012 Sencha Inc.
 
 \033[4mUsage:\033[24m
