@@ -10,6 +10,72 @@ ig.module(
 )
 .defines(function() {
 
+var SoundSprite = function(src, schedule) {
+    var me = this;
+    me.src = src;
+    me.schedule = schedule;
+    me.init();
+};
+
+SoundSprite.prototype = {
+    currentIndex : 0,
+    numSounds : 2,
+    setVolume : function(volume) {
+        this.audio.volume = volume;
+    },
+    init : function() {
+        var me    = this,
+            i     = 0,
+            audio = new Audio(),
+            src;
+
+		// Probe sound formats and determine the file extension to load
+		for(; i < ig.Sound.use.length; i++ ) {
+			var format = ig.Sound.use[i];
+			if( audio.canPlayType(format.mime) ) {
+				this.format = format;
+				break;
+			}
+		}
+
+        if( !this.format ) {
+			ig.Sound.enabled = false;
+		    return;
+        }
+
+        src = me.src.match(/^(.*)\.[^\.]+$/)[1] + '.' + this.format.ext + ig.nocache;
+
+        me.audio = audio;
+        audio.src = src;
+
+        audio.play();
+        audio.addEventListener('timeupdate', Ext.Function.bind(me.onAudioTimeUpdate, me));
+    },
+
+    play : function(sound) {
+        var me     = this,
+            region = me.schedule[sound],
+            audio  = me.audio;
+
+        if (audio.currentTime > 0) {
+            audio.pause();
+        }
+        audio.currentTime = region[0];
+        me.endTime = region[1];
+
+        audio.play();
+    },
+    onAudioTimeUpdate : function(evt) {
+        var me = this,
+            audio = me.audio;
+
+        if (me.endTime && audio.currentTime > me.endTime) {
+            audio.pause();
+            delete me.endTime;
+        }
+    }
+};
+
 MyGame = ig.Game.extend({
     boardSize     : 100,
     soundRoot     : 'media/',
@@ -18,9 +84,16 @@ MyGame = ig.Game.extend({
     mode          : 'double', // two player
     sounds        : {
         badMove : 'bad_move.mp3',
+        newGame : 'new_game.mp3',
         white   : 'chip_flip_white.mp3',
-        black   : 'chip_flip_black.mp3',
-        newGame : 'new_game.mp3'
+        black   : 'chip_flip_black.mp3'
+
+    },
+    iosFx : {
+        newGame : [0, .324],
+        badMove : [.751, .980],
+        white   : [1.48, 1.6],
+        black   : [2.061, 3]
     },
     music         : [
         {
@@ -43,16 +116,22 @@ MyGame = ig.Game.extend({
 
         ig.input.bind(ig.KEY.MOUSE1, 'click');
 
-        Rvrsit.app.fireEvent('gameInitialized', me);
+        if (window.Rvrsit) {
+            Rvrsit.app.fireEvent('gameinitialized', me);
+        }
+        else {
+            window.game = this;
+        }
     },
 
     initSound : function() {
-//        return;
         var me = this,
             soundRoot = me.soundRoot,
             settings = me.getSettings(),
+            isDesktop = Ext.os.is.Desktop,
             fxRoot,
             musicRoot;
+
 
         if (settings.fx > 0 && !me.fxInitialized) {
             fxRoot = soundRoot + 'sounds/';
@@ -61,24 +140,29 @@ MyGame = ig.Game.extend({
                 sound,
                 name;
 
-            for (name in this.sounds) {
-                sound = new ig.Sound(fxRoot + sounds[name], false);
-                sound.volume = settings.fx;
-                sounds[name] = sound;
-            }
+//            if ( isDesktop ) {
+//                for (name in this.sounds) {
+//                    sound = new ig.Sound(fxRoot + sounds[name], true);
+//                    sound.volume = settings.fx;
+//                    sounds[name] = sound;
+//                }
+//            }
+//            else {
+                me.iosFx = new SoundSprite(fxRoot + 'iosFx.mp3', me.iosFx);
+//            }
 
             me.sounds = sounds;
             me.fxInitialized = true;
         }
-
-        if (settings.music > 0 && !me.musicInitialized) {
+//
+        if (isDesktop && settings.music > 0 && !me.musicInitialized) {
             musicRoot = soundRoot + 'music/';
 
             Ext.each(this.music, function(song) {
                 ig.music.add(new ig.Sound(musicRoot + song.song));
             });
 
-            ig.music.volume = settings.music;
+            ig.music.volume = settings.music || .5;
             ig.music.random = true;
 
             ig.music.play();
@@ -86,6 +170,12 @@ MyGame = ig.Game.extend({
             me.musicInitialized = true;
         }
     },
+
+    iosInitSounds : function() {
+        this.iosFx.init();
+
+    },
+
     newGame   : function() {
         var me = this,
             myChips = this.allChips;
@@ -104,6 +194,7 @@ MyGame = ig.Game.extend({
 
         me.halt = false;
     },
+
     update    : function() {
         // Update all entities and backgroundMaps
         this.parent();
@@ -116,7 +207,8 @@ MyGame = ig.Game.extend({
         this.parent();
     },
     buildChips              : function() {
-        var blankChips = {},
+        var me = this,
+            blankChips = {},
             visChips = {},
             chips = [],
             allChips = {},
@@ -157,7 +249,8 @@ MyGame = ig.Game.extend({
                     //                        color  : color,
                     itemId : itemId,
                     row    : xIndex,
-                    col    : yIndex
+                    col    : yIndex,
+                    game   : me
                 });
 
                 if (visible) {
@@ -325,7 +418,6 @@ MyGame = ig.Game.extend({
             else if (color == 'black') {
                 blackScore++;
             }
-
         }
 
         return {
@@ -335,16 +427,22 @@ MyGame = ig.Game.extend({
         }
     },
     calcScore               : function() {
-        Rvrsit.app.fireEvent('scoreupdate', this, this.getScore());
+        if (window.Rvrsit && window.Rvrsit.app) {
+            Rvrsit.app.fireEvent('scoreupdate', this, this.getScore());
+        }
     },
-    playSound               : function(sound) {
-//        return;
-        var me = this;
+
+    playSound : function(sound) {
+        var me         = this,
+            soundToPlay = /*me.sounds[sound] ||*/ me.iosFx;
+
         if (me.getSetting('fx')) {
+
             if (!me.fxInitialized) {
                 this.initSound();
             }
-            me.sounds[sound].play();
+//            console.log('playing sound: ' + sound);
+            soundToPlay.play(sound);
         }
     },
 
@@ -423,21 +521,25 @@ MyGame = ig.Game.extend({
     },
 
     nextMove      : function() {
-        var me = this,
-            app = Rvrsit.app,
-            currentTurn = me.turn,
-            computerColor = me.computerColor,
-            nextMoves = me.findNextMoves(currentTurn),
-            nextMoveIndex = -1,
+        var me              = this,
+            currentTurn     = me.turn,
+            computerColor   = me.computerColor,
+            nextMoves       = me.findNextMoves(currentTurn),
+//            nextMoveIndex   = -1,
             numVisibleChips = Object.keys(me.visChips).length,
+            app,
             nextMove;
+
+        if (window.Rvrsit) {
+            app = Rvrsit.app;
+        }
 
         if (nextMoves.length < 1) {
             // are all chips visible?
             if (numVisibleChips == me.boardSize) {
                 // if so, calc score  & end game!
                 me.halt = true;
-                Rvrsit.app.fireEvent('endgame', this, this.getScore());
+                window.Rvrsit && Rvrsit.app.fireEvent('endgame', this, this.getScore());
                 return;
             }
             else /*if(currentTurn != computerColor)*/ {
@@ -450,7 +552,6 @@ MyGame = ig.Game.extend({
                     return;
                 }
                 app.fireEvent('nomoves', this, currentTurn);
-
             }
 
         }
@@ -463,16 +564,6 @@ MyGame = ig.Game.extend({
             return;
         }
 
-        // TODO: Game difficulty mode
-        // Random choosing
-        var chooseRandomMove = function() {
-            while (!nextMove) {
-                nextMoveIndex = me.getRandomIndex();
-                nextMove = nextMoves[nextMoveIndex];
-            }
-        };
-
-        //            debugger;
         // hard
         var moveIdx = 0,
             flattenedStack,
@@ -506,10 +597,12 @@ MyGame = ig.Game.extend({
             chipItemIds[index] = chip.itemId;
         });
 
-        Rvrsit.app.fireEvent('chipFlips', {
-            turnColor   : currentTurn,
-            chipItemIds : chipItemIds
-        });
+        if (Rvrsit) {
+            Rvrsit.app.fireEvent('chipFlips', {
+                turnColor   : currentTurn,
+                chipItemIds : chipItemIds
+            });
+        }
     },
     findNextMoves : function(color) {
 
@@ -560,10 +653,10 @@ MyGame = ig.Game.extend({
         setTimeout(fn, 1500);
     },
     forceFlipChips : function(data) {
-        console.log('forceFlipChips', data);
+//        console.log('forceFlipChips', data);
         var me         = this,
             totalChips = data.chipItemIds.length,
-            duration   = 150,
+            duration   = 400,
             color      = data.turnColor,
             allChips   = me.allChips,
             itemIds    = data.chipItemIds,
@@ -574,14 +667,14 @@ MyGame = ig.Game.extend({
 
         Ext.each(itemIds, function(itemId, index) {
             chip = allChips[itemId];
-            console.log('chip', chip);
+//            console.log('chip', chip);
             if (index == totalChips) {
                 chip.isLast = true;
             }
 
             var fn = Ext.Function.bind(chip.startFlip, chip, [color]);
             setTimeout(fn, duration);
-            duration += 150;
+            duration += 400;
         });
 
     }

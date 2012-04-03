@@ -28,8 +28,10 @@ Ext.define('Rvrsit.view.Viewport', {
             painted : function() {
                 //TODO: push to controller
                 ig.main('#canvas', MyGame, 30, 548, 548, 1);
+//                Ext.Msg.alert('', 'Welcome to Rvrsit!', game.iosInitSounds, game)
+
             }
-        })
+        });
     },
 
     buildGameBoard : function() {

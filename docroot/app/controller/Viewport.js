@@ -141,6 +141,8 @@ Ext.define('Rvrsit.controller.Viewport', {
     onAppPlay : function() {
         // TODO: Get multi-player working!
         this.onAppSinglePlayer();
+        Rvrsit.game.iosInitSounds();
+
 //        var user = this.getApplication().getUser(),
 //            controller = ! user ? 'Register' : 'Waiting';
 //

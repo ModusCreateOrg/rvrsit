@@ -33,15 +33,15 @@ Ext.application({
 //            Rvrsit.heartbeat = new silk.Heartbeat();
 
         this.on({
-            gameInitialized : this.onGameInitialized,
+            gameinitialized : this.onGameInitialized,
             scope : this
         });
-
     },
 
     onGameInitialized : function(game) {
         Rvrsit.game = this.game = game;
         this.initHeartBeats();
+//        debugger;
 
     },
     initHeartBeats : function() {

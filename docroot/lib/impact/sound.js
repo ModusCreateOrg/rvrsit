@@ -88,14 +88,16 @@ ig.SoundManager = ig.Class.extend({
 			if( clip.paused || clip.ended ) {
 				if( clip.ended ) {
 					clip.currentTime = 0;
+//					clip.src = path;
 				}
 				return clip;
 			}
 		}
 		
 		// Still here? Pause and rewind the first channel
-		channels[0].pause();
+//		channels[0].pause();
 		channels[0].currentTime = 0;
+//		channels[0].src = path;
 		return channels[0];
 	}
 });

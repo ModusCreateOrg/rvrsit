@@ -33,7 +33,7 @@ ig.module(
         },
         update : function() {
             var me = this,
-                game = Rvrsit.game;
+                game = me.game;
 
             // is not animating && the event type is click
             if (!me.color && ! me.animating && ig.input.pressed('click')) {
@@ -46,7 +46,7 @@ ig.module(
 
                     if (adjacentChipStacks.length == 0) {
 
-//                        Rvrsit.game.playSound('badMove');
+                        game.playSound('badMove');
                         return;
                     }
 
@@ -62,10 +62,12 @@ ig.module(
                         chipItemIds[index] = chip.itemId;
                     });
 
-                    Rvrsit.app.fireEvent('chipFlips', {
-                        turnColor   : adjacentChipStacks[0].turnColor,
-                        chipItemIds : chipItemIds
-                    });
+                    if (window.Rvrsit)  {
+                        Rvrsit.app.fireEvent('chipFlips', {
+                            turnColor   : adjacentChipStacks[0].turnColor,
+                            chipItemIds : chipItemIds
+                        });
+                    }
 
                     me.startFlip();
                 }
@@ -79,7 +81,7 @@ ig.module(
 
         startFlip : function(color) {
             var me       = this,
-                game     = Rvrsit.game,
+                game     = me.game,
                 newColor = color || game.swapTurn();
 
             me.animating = true;
@@ -89,7 +91,7 @@ ig.module(
                 me.wasBlank = true;
             }
 
-//            game.playSound(newColor);
+            game.playSound(newColor);
 
             me.currentAnim = me.anims['flip_' + newColor];
             me.currentAnim.rewind();
@@ -107,7 +109,7 @@ ig.module(
         },
         endFlip : function() {
             var me = this,
-                game = Rvrsit.game;
+                game = me.game;
 
             me.color = me.newColor;
             if (me.wasBlank) {
@@ -171,7 +173,7 @@ ig.module(
         getChipStacks : function(color) {
 
             var me = this,
-                turnColor  = color || Rvrsit.game.turn,
+                turnColor  = color || me.game.turn,
                 chipStacks = [],
                 stackObj,
                 dir,
@@ -201,7 +203,7 @@ ig.module(
             var myItemId    = this.itemId,
 //                chipsToFlip = me.flattenedChipStacks,
                 totalChips  = chipsToFlip.length - 1,
-                duration    = 150;
+                duration    = 400;
 //                color       = me.turnColor;
 
 
@@ -213,7 +215,7 @@ ig.module(
                     }
                     var fn = Ext.Function.bind(chip.startFlip, chip, [color]);
                     setTimeout(fn, duration);
-                    duration += 150;
+                    duration += 400;
                 }
             });
 
