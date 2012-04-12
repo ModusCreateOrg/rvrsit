@@ -48,8 +48,14 @@ SoundSprite.prototype = {
         me.audio = audio;
         audio.src = src;
 
+        audio.volume = 0;
         audio.play();
         audio.addEventListener('timeupdate', Ext.Function.bind(me.onAudioTimeUpdate, me));
+
+        Ext.Function.defer(function() {
+            audio.pause();
+            audio.volume = .5;
+        },250);
     },
 
     play : function(sound) {
