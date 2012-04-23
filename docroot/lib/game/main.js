@@ -146,16 +146,16 @@ MyGame = ig.Game.extend({
                 sound,
                 name;
 
-//            if ( isDesktop ) {
-//                for (name in this.sounds) {
-//                    sound = new ig.Sound(fxRoot + sounds[name], true);
-//                    sound.volume = settings.fx;
-//                    sounds[name] = sound;
-//                }
-//            }
-//            else {
+            if ( isDesktop ) {
+                for (name in this.sounds) {
+                    sound = new ig.Sound(fxRoot + sounds[name], true);
+                    sound.volume = settings.fx;
+                    sounds[name] = sound;
+                }
+            }
+            else {
                 me.iosFx = new SoundSprite(fxRoot + 'iosFx.mp3', me.iosFx);
-//            }
+            }
 
             me.sounds = sounds;
             me.fxInitialized = true;
