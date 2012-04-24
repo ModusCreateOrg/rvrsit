@@ -1,5 +1,5 @@
-Config.documentRoot = 'docroot';
-Config.numChildren = 1;
+Config.documentRoot = '../docroot';
+Config.numChildren = 25;
 Config.port = 9090;
 Config.mysql = {
 	host: 'localhost',
@@ -15,8 +15,13 @@ Schema = require('Schema');
 SQL = new MySQL();
 SQL.connect();
 
+
+Auth = require('Auth.js');
 include('schemas.js');
+include('actions/heartbeat_action.js');
 include('actions/rpc_action.js');
+
+
 //include('actions/heartbeat.js');
 
 HttpChild.requestHandler = function() {

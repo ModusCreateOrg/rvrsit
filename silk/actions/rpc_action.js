@@ -9,76 +9,9 @@
 console = require('builtin/console');
 
 rpcMethods = {
-    updateSession : function(userSession) {
-        if (! userSession) {
-            return;
-        }
-
-        userSession.lastActivity = this.getTime();
-
-        Schema.putOne('PlayerSessions', userSession);
-    },
-
-    isAuthenticated : function() {
-        var cookie;
-
-        if ( ! res.data.player || ! (cookie = res.data.player.cookie) ) {
-            Json.failure({msg: 'Need cookie! Om nom nom!'});
-        }
-
-        var existing = Schema.findOne('PlayerSessions', {
-            cookie : cookie
-        });
-
-
-        if (! existing) {
-            Json.failure({msg: 'Need cookie! Om nom nom!'});
-        }
-
-        this.updateSession(existing);
-
-        return existing;
-    },
-
     auth : function() {
-
-        if (! req.data.name || ! req.data.email) {
-             Json.failure('user name and email are required!');
-        }
-
-        var user = Schema.findOne('Players', {
-            name     : req.data.name,
-            email    : req.data.email
-        });
-
-        if (user) {
-            var now = this.getTime(),
-                cookie;
-
-            if (! res.data.player || ! (cookie = res.data.player.cookie) ) {
-                cookie = Util.md5(user.email + now);
-                res.setCookie('othello_login', cookie);
-            }
-
-            SQL.update('delete from PlayerSessions where playerId = ' + user.playerId);
-
-            Schema.putOne('PlayerSessions', {
-                playerId       : user.playerId,
-                cookie       : cookie,
-                loginTime    : now,
-                gameId       : null,
-                lastActivity : now
-            });
-
-            this.respond({
-                user : Schema.clean('Players', user)   // removes the password field so it's not sent over the wire.
-            });
-        }
-        else {
-            Json.failure('Either the email address or password you entered are not found in the database');
-        }
+        this.respond(Auth.auth());
     },
-
     registerPlayer : function() {
         var errors = [];
         var data = req.data;
@@ -117,26 +50,8 @@ rpcMethods = {
         }
     },
 
-    listAvailablePlayers : function() {
-        var existing = this.isAuthenticated(),
-            twoMinutesAgo = this.getTime() - 560,
-            sql = [
-                'select distinct PlayerSessions.playerId, Players.name',
-                ' from PlayerSessions, Players',
-                ' where PlayerSessions.gameId is NULL and PlayerSessions.playerId = Players.playerId and PlayerSessions.playerId != ' + existing.playerId,
-                ' and PlayerSessions.lastActivity > ' + twoMinutesAgo
-            ].join('');
-
-
-        var players = SQL.getDataRows(sql);
-
-        this.respond({
-            availablePlayers : players
-        });
-    },
-
     listGames : function() {
-        if (! this.isAuthenticated()) {
+        if (! Auth.isAuthenticated()) {
             Json.failure({msg: 'Need cookie! Om nom nom!'});
         }
 
@@ -145,18 +60,12 @@ rpcMethods = {
             games : items
         });
     },
-    respond : function(data) {
-        data.dt = this.getTime();
 
-        Json.success(data);
-    },
-    getTime : function() {
-        return Math.floor(new Date().getTime() / 1000)
-    },
+
     challengePlayer : function() {
         var opponentPlayerId = req.data.playerId,
             player           = Schema.findOne('Players', {
-                playerId : this.isAuthenticated().playerId
+                playerId : Auth.isAuthenticated().playerId
             }),
             opponent         = Schema.findOne('Players', {
                 playerId : opponentPlayerId
@@ -192,7 +101,7 @@ rpcMethods = {
             playerId    : opponentPlayerId,
             messageType : 'challenge',
             message     : Json.encode(message),
-            messageDate : this.getTime()
+            messageDate : Auth.getTime()
         });
 
         Json.success({
@@ -200,20 +109,9 @@ rpcMethods = {
             secondPlayer : player
         });
     },
-    getMessages : function() {
-        var player   = this.isAuthenticated(),
-            messages = SQL.getDataRows('select messageId, message, messageType from Messages where playerId = ' + player.playerId + ' order by messageDate');
 
-        messages.each(function(message) {
-            message.message = Json.decode(message.message);
-        });
-
-        Json.success({
-            messages : messages
-        });
-    },
     ackMessages : function() {
-        var player     = this.isAuthenticated(),
+        var player     = Auth.isAuthenticated(),
             messages   = Json.decode(req.data.messages),
             messageSql = ' messageId = ',
             andSql     = ' and playerId = ' + player.playerId,
@@ -237,12 +135,12 @@ rpcMethods = {
         }
 
 
-        Json.success({
+        this.respond({
             deletedMessages : messages
         });
     },
     acceptChallenge : function() {
-        var acceptingPlayer  = this.isAuthenticated(),
+        var acceptingPlayer  = Auth.isAuthenticated(),
             challengeMessageEnvelope = Json.decode(req.data.challengeMessage),
             challengeMessage = challengeMessageEnvelope.message;
 
@@ -259,7 +157,7 @@ rpcMethods = {
         debugger;
         var firstPlayerId = challengeMessage.firstPlayer.playerId,
             secondPlayerId =  challengeMessage.secondPlayer.playerId,
-            now            = this.getTime();
+            now            = Auth.getTime();
 
         var game = Schema.putOne('Games', {
             firstPlayerId  : firstPlayerId,
@@ -276,13 +174,14 @@ rpcMethods = {
             playerId    : challengeMessage.secondPlayer.playerId,
             messageType : 'gameStart',
             message     : Json.encode(game),
-            messageDate : this.getTime()
+            messageDate : Auth.getTime()
         });
 
-        Json.success(game)
+        this.respond(game)
     },
+
     recordMove : function() {
-        var player     = this.isAuthenticated(),
+        var player     = Auth.isAuthenticated(),
             gameToken  = req.data.gameToken,
             playerId   = player.playerId,
             getGameSql = [
@@ -301,7 +200,13 @@ rpcMethods = {
             });
         }
 
-        Json.success(game);
+        this.respond(game);
+    },
+
+    respond : function(data) {
+        data.dt = Auth.getTime();
+
+        Json.success(data);
     }
 };
 
