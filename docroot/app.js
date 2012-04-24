@@ -40,12 +40,11 @@ Ext.application({
 
     onGameInitialized : function(game) {
         Rvrsit.game = this.game = game;
-        this.initHeartBeats();
+//        this.initHeartBeats();
 //        debugger;
 
     },
     initHeartBeats : function() {
-        return;
         silk.heartbeat_enabled = true;
         var me = this,
             game = Rvrsit.game;
@@ -57,9 +56,9 @@ Ext.application({
         if (me.user && ! me.hearbeatInitialized) {
 //            console.log('initializing heartbeat for ' + me.user.name)
             //            var n = 0;
-            Rvrsit.heartbeat.addMethod('gameStatus', {
+            silk.Heartbeat.addMethod('getMessages', {
                 scope    : this,
-                method   : 'gameStatus',
+                method   : 'getMessages',
                 params   : function() {
                     var data = Ext.apply({}, me.user);
                     data.status = game && game.halt ? 'halt' : 'playing';
@@ -68,7 +67,7 @@ Ext.application({
                 },
                 callback : function(turns) {
                     if (me.user.name == 'Slave') {
-                        console.log('>> gameStatus', turns);
+                        console.log('>> getMessages', turns);
                         var game = Rvrsit.game;
                         if (! game) {
                             return;
@@ -108,6 +107,7 @@ Ext.application({
         var thisUser = this.user;
         return thisUser ? thisUser : this.user = Ext.decode(localStorage.getItem('user'));
     },
+
     onUpdated: function() {
         Ext.Msg.confirm(
             "Application Update",

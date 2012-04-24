@@ -102,9 +102,23 @@ ig.module(
                     adjacentChipStacks  = me.adjacentChipStacks;
                 delete me.adjacentChipStacks;
                 delete me.flattenedChipStacks;
-//                console.log('me.adjacentChipStacks = ', stacks);
+
+                // prepare the chip ids to be sent to the server
+                var chipIds = [ me.itemId ];
+
+                Ext.each(flattenedChipStacks, function(chip) {
+                    console.log(chip.color)
+                    chipIds.push(chip.itemId);
+                });
+
+                console.log('Stacks to flip for opponent', {
+                    color : newColor,
+                    chipIds : chipIds
+                });
                 me.processChipStacks(adjacentChipStacks[0].turnColor, flattenedChipStacks);
             }
+
+
             game.calcScore();
         },
         endFlip : function() {
@@ -170,6 +184,7 @@ ig.module(
 
             return stackObj;
         },
+
         getChipStacks : function(color) {
 
             var me = this,
@@ -188,6 +203,7 @@ ig.module(
                         turnColor : turnColor,
                         chipStack : []
                     });
+
                     if (stackObj.doFlip) {
                         chipStacks.push(stackObj);
                     }
@@ -197,16 +213,12 @@ ig.module(
 
             return chipStacks;
         },
+
         processChipStacks : function(color, chipsToFlip) {
 
-//            debugger;
             var myItemId    = this.itemId,
-//                chipsToFlip = me.flattenedChipStacks,
                 totalChips  = chipsToFlip.length - 1,
                 duration    = 400;
-//                color       = me.turnColor;
-
-
 
             Ext.each(chipsToFlip, function(chip, index) {
                 if (chip.itemId != myItemId) {

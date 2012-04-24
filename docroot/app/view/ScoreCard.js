@@ -58,11 +58,11 @@ Ext.define('Rvrsit.view.ScoreCard', {
                         '</tr>',
                     '</table>',
                 '</div>',
-
-                '<div class="about-pane animated fade-in">',
-                    '<p><strong>This game was designed and built by the team at <a href="http://www.moduscreate.com">Modus Create</a>.</strong></p>',
-                    '<p>We are a highly motivated, interdisciplinary team that believes in lean development, design strategy, and user experience to develop stunning applications with emerging technology.</p>',
-                '</div>',
+//
+//                '<div class="about-pane animated fade-in">',
+//                    '<p><strong>This game was designed and built by the team at <a href="http://www.moduscreate.com">Modus Create</a>.</strong></p>',
+//                    '<p>We are a highly motivated, interdisciplinary team that believes in lean development, design strategy, and user experience to develop stunning applications with emerging technology.</p>',
+//                '</div>',
                 '<div class="button button-touched animated fade-in">',
                     '<div class="btn-title play">Play</div>',
                 '</div>',
@@ -76,7 +76,6 @@ Ext.define('Rvrsit.view.ScoreCard', {
     initialize : function() {
 
         this.callParent();
-
 
         this.element.on({
             tap      : this.onElementTap,

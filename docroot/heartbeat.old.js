@@ -2,7 +2,7 @@
 Ext.namespace('Ext', 'silk');
 
 silk.HEARTBEAT_TIME = 10; // heartbeat frequency in seconds
-silk.heartbeatUrl = '/Heartbeat';
+silk.heartbeatUrl = '/heartbeat';
 
 silk.heartbeats = 0;
 silk.servertime = 0;
@@ -75,7 +75,7 @@ silk.Heartbeat = function() {
 		});
 	}
 
-	this.Force = function() {
+	this.force = function() {
 		DoHeartbeat();
 	};
 

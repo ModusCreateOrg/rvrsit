@@ -178,7 +178,9 @@ MyGame = ig.Game.extend({
     },
 
     iosInitSounds : function() {
-        this.iosFx.init();
+        if (! Ext.os.is.Desktop) {
+            this.iosFx.init();
+        }
 
     },
 
@@ -440,7 +442,7 @@ MyGame = ig.Game.extend({
 
     playSound : function(sound) {
         var me         = this,
-            soundToPlay = /*me.sounds[sound] ||*/ me.iosFx;
+            soundToPlay = Ext.os.is.Desktop ? me.sounds[sound] : me.iosFx;
 
         if (me.getSetting('fx')) {
 
