@@ -122,9 +122,11 @@ Ext.define('Rvrsit.view.ScoreCard', {
         }
     },
     updateScore : function(scoreObj) {
+        console.log('score update', scoreObj)
         var me = this,
             turnOpposites = this.getTurnOpposites(),
-            turnTitleTexts = this.getTurnTitles()[Rvrsit.game.mode];
+            gameMode      = Rvrsit.game.mode.split(' ')[0],
+            turnTitleTexts = this.getTurnTitles()[gameMode];
 
         if (!me.playerTurnIndicator) {
             var myElement = me.element;

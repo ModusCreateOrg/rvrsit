@@ -24,7 +24,6 @@ Ext.define('Rvrsit.controller.Viewport', {
         }
     },
     init : function() {
-
         var me = this;
 
         Ext.Viewport.add({
@@ -78,11 +77,6 @@ Ext.define('Rvrsit.controller.Viewport', {
         var me = this,
             game = Rvrsit.game;
 
-//        if (game.mode == 'single') {
-//            game.newGame();
-//            return;
-//        }
-
         Ext.Msg.show({
             title   : 'Choose game mode:',
             buttons : [
@@ -92,20 +86,28 @@ Ext.define('Rvrsit.controller.Viewport', {
                 },
                 {
                     itemId : 'no',
-                    text   : '2 Player'
+                    text   : '2 Player (local)'
+                },
+                {
+                    itemId : 'cancel',
+                    text   : '2 Player (internet)'
                 }
             ],
             fn : function(btn) {
                 if (btn == 'yes') {
                     me.initSinglePlayerMode();
                 }
-                else {
-                    game.setMode('double');
+                else if (btn == 'no') {
+                    game.setMode('double local');
                     game.newGame();
                 }
+                else if (btn == 'cancel') {
+                    game.setMode('double remote');
+                    me.initDoubleRemoteMode();
+//                    game.newGame();
+                }
             }
-        })
-
+        });
     },
     initSinglePlayerMode : function() {
         var game = Rvrsit.game;
@@ -114,7 +116,7 @@ Ext.define('Rvrsit.controller.Viewport', {
             'Single player mode selected',
             'You will be playing against the computer as the black piece.' +
                 ' You are first.',
-            function(btn) {
+            function() {
                 game.setMode('single');
                 game.newGame();
             }
@@ -126,8 +128,10 @@ Ext.define('Rvrsit.controller.Viewport', {
     },
 
     onAfterNoMovesAlert : function() {
-        Rvrsit.game.swapTurn();
-        Rvrsit.game.nextMove();
+        var game = Rvrsit.game;
+
+        game.swapTurn();
+        game.nextMove();
     },
 
     onAppSettings : function() {
@@ -172,5 +176,21 @@ Ext.define('Rvrsit.controller.Viewport', {
 //                chipData : Ext.encode(data)
 //            }
 //        })
+    },
+    initDoubleRemoteMode : function() {
+        this.getApplication().rpc({
+            method   : 'listAvailablePlayers',
+            scope    : this,
+            callback : this.onAfterInitDoubleRemoteMode
+        });
+    },
+    onAfterInitDoubleRemoteMode : function(data) {
+        if (! data.success) {
+            this.getApplication().getController('Register').showView();
+            return;
+        }
+
+        console.log('available users', data);
+
     }
 });

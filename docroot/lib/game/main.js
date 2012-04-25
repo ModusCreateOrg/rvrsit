@@ -568,6 +568,7 @@ MyGame = ig.Game.extend({
             return;
         }
 
+        console.log(computerColor);
         if (currentTurn != computerColor || this.mode != 'single') {
             return;
         }

@@ -50,6 +50,24 @@ rpcMethods = {
         }
     },
 
+    listAvailablePlayers : function() {
+        var existing = Auth.isAuthenticated(),
+            twoMinutesAgo = Auth.getTime() - 560,
+            sql = [
+                'select distinct PlayerSessions.playerId, Players.name',
+                ' from PlayerSessions, Players',
+                ' where PlayerSessions.gameId is NULL and PlayerSessions.playerId = Players.playerId and PlayerSessions.playerId != ' + existing.playerId,
+                ' and PlayerSessions.lastActivity > ' + twoMinutesAgo
+            ].join('');
+
+
+        var players = SQL.getDataRows(sql);
+
+        this.respond({
+            availablePlayers : players
+        });
+    },
+
     listGames : function() {
         if (! Auth.isAuthenticated()) {
             Json.failure({msg: 'Need cookie! Om nom nom!'});
@@ -211,7 +229,10 @@ rpcMethods = {
 };
 
 function rpc_action() {
-    //	console.log('Invoking method ' + req.data.method);
-    rpcMethods[req.data.method] && rpcMethods[req.data.method]();
-    Json.failure('No such rpc method ' + req.data.method);
+    debugger;
+    console.log('RPC :: ' + req.data.method + '();');
+    var data = req.data,
+        methodName = data.method;
+    rpcMethods[methodName] && rpcMethods[methodName]();
+    Json.failure('No such rpc method ' + methodName);
 }

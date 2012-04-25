@@ -4,15 +4,13 @@
  * @class silk.Heartbeat
  */
 
-
-Ext.ns('silk');
-
 Ext.define('silk.Heartbeat', {
     singleton   : true,
     requires    : [
         'Ext.Ajax'
     ],
     enabled     : true,
+    heartbeatId  : 0,
     time        : 1,
     url         : '/heartbeat',
     inProgress  : false,
@@ -45,11 +43,11 @@ Ext.define('silk.Heartbeat', {
         };
 
         function doHeartbeat() {
-            console.log('doHeartbeat called')
+//            console.log('doHeartbeat called')
             if (me.inProgress || !me.enabled) {
                 return;
             }
-            console.log('heartbeat in progress')
+            console.log('heartbeat in progress :: ' + me.heartbeatId);
             me.inProgress = true;
             var params = [],
                 keys = [],
@@ -101,14 +99,12 @@ Ext.define('silk.Heartbeat', {
                 },
                 failure  : function(result) {
                     var data = Ext.decode(result.responseText);
-                    debugger;
-
                     Ext.Msg.alert('Request failed:', data.message);
                 },
                 callback : function() {
-//                    console.log('callback');
+                    console.log('heartbeat done :: ' + me.heartbeatId);
 //                    console.log(arguments);
-                    me.heartbeats++;
+                    me.heartbeatId++;
                     me.inProgress = false;
                 }
             });
@@ -159,43 +155,3 @@ Ext.define('silk.Heartbeat', {
         this.enabled = true;
     }
 });
-
-/*!
- * Ext JS Library 3.4.0
- * Copyright(c) 2006-2011 Sencha Inc.
- * licensing@sencha.com
- * http://www.sencha.com/license
- */
-/**
- * @class Ext.util.TaskRunner
- * Provides the ability to execute one or more arbitrary tasks in a multithreaded
- * manner.  Generally, you can use the singleton {@link Ext.TaskMgr} instead, but
- * if needed, you can create separate instances of TaskRunner.  Any number of
- * separate tasks can be started at any time and will run independently of each
- * other. Example usage:
- * <pre><code>
- // Start a simple clock task that updates a div once per second
- var updateClock = function(){
- Ext.fly('clock').update(new Date().format('g:i:s A'));
- }
- var task = {
- run: updateClock,
- interval: 1000 //1 second
- }
- var runner = new Ext.util.TaskRunner();
- runner.start(task);
-
- // equivalent using TaskMgr
- Ext.TaskMgr.start({
- run: updateClock,
- interval: 1000
- });
-
- * </code></pre>
- * <p>See the {@link #start} method for details about how to configure a task object.</p>
- * Also see {@link Ext.util.DelayedTask}.
- *
- * @constructor
- * @param {Number} interval (optional) The minimum precision in milliseconds supported by this TaskRunner instance
- * (defaults to 10)
- */

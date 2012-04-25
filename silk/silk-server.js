@@ -18,7 +18,7 @@ SQL.connect();
 
 Auth = require('Auth.js');
 include('schemas.js');
-include('actions/heartbeat_action.js');
+include('actions/hb_action.js');
 include('actions/rpc_action.js');
 
 

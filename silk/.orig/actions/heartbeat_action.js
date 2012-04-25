@@ -6,7 +6,7 @@
  * To change this template use File | Settings | File Templates.
  */
 
-heartbeatMethods = {
+heartbeat = {
     serverTime : function() {
         return Util.currentTime();
     },
@@ -92,11 +92,11 @@ function Heartbeat_action() {
     for (var i = 0; i < count; i++) {
         method = methods[i];
 
-        if (heartbeatMethods[method]) {
+        if (heartbeat[method]) {
             if (method != 'serverTime') {
                 console.log(' HB :: Execute - ' + methods[i]);
             }
-            result[keys[i]] = heartbeatMethods[methods[i]](params[i]);
+            result[keys[i]] = heartbeat[methods[i]](params[i]);
         }
     }
     Json.success(result);

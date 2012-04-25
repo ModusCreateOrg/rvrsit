@@ -4,8 +4,7 @@ Ext.define('Rvrsit.model.Waiting', {
     config: {
          fields : [
             'name',
-            'email',
-            'gameId'
+            'playerId'
         ]
     }
 });

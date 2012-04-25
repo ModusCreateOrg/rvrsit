@@ -4,52 +4,63 @@ Ext.define('Rvrsit.view.Waiting', {
     requires : [ 'Rvrsit.store.Waiting' ],
 
     config : {
-        title         : 'Choose a player!',
-        floating      : true,
-        modal         : true,
-        centered      : true,
-        scrollable    : false,
-        hideOnMaskTap : false,
-        height        : 500,
-        width         : 400,
-
-        itemTpl : '{name}'
+        ui                : 'dark',
+        loginTitle        : 'Please login.',
+        choosePlayerTitle : 'Choose a player!',
+        showAnimation     : 'pop',
+        hideAnimation     : 'slide',
+        floating          : true,
+        modal             : true,
+        centered          : true,
+        hideOnMaskTap     : false,
+        height            : 200,
+        width             : 400,
+        layout            : 'card',
+        itemTpl           : '{name}'
     },
 
     initialize : function() {
         var me = this;
 
         me.setItems([
-            me.getTitle(),
-            me.createBottomTbar()
+            me.buildTopToolbar(),
+            me.buildForm(),
+            me.buildBottomTbar()
         ]);
 
         me.callParent();
     },
 
-    buildFields : function() {
-        return [
-            {
-                xtype : 'textfield',
-                name  : 'name',
-                label : 'Name'
-            },
-            {
-                xtype : 'textfield',
-                name  : 'email',
-                label : 'Email'
+    buildForm : function() {
+        return {
+            xtype  : 'formpanel',
+            layout : 'fit',
+            items  : {
+                xtype : 'fieldset',
+                items : [
+                    {
+                        xtype : 'textfield',
+                        name  : 'name',
+                        label : 'Name'
+                    },
+                    {
+                        xtype : 'textfield',
+                        name  : 'email',
+                        label : 'Email'
+                    }
+                ]
             }
-        ]
+        }
     },
 
-    createBottomTbar : function() {
+    buildBottomTbar : function() {
         return{
             docked : 'bottom',
             xtype  : 'toolbar',
             items  : [
                 {
-                    text   : 'Single Player',
-                    action : 'listSinglePlayer',
+                    text   : 'Cancel',
+                    action : 'cancel',
                     ui     : 'decline'
                 },
                 {
@@ -68,12 +79,12 @@ Ext.define('Rvrsit.view.Waiting', {
         };
     },
 
-    applyTitle : function(title) {
-        var config = {
+    buildTopToolbar : function() {
+        return {
+            xtype  : 'toolbar',
             docked : 'top',
-            title  : title
+            title  : this.getLoginTitle()
         };
 
-        return Ext.factory(config, Ext.Toolbar, this.getTitle());
     }
 });
