@@ -24,7 +24,9 @@ heartbeatMethods = {
         });
 
         Json.success({
-            messages : messages
+            getMessages : {
+                messages : messages
+            }
         });
     },
 

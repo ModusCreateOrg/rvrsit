@@ -1,5 +1,5 @@
 Config.documentRoot = '../docroot';
-Config.numChildren = 25;
+Config.numChildren = 20;
 Config.port = 9090;
 Config.mysql = {
 	host: 'localhost',

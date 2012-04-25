@@ -14,7 +14,7 @@ Ext.define('Rvrsit.controller.Viewport', {
     },
     turn   : 'white',
     config : {
-        views  : [
+        views : [
             'Viewport'
         ],
 
@@ -28,7 +28,7 @@ Ext.define('Rvrsit.controller.Viewport', {
             }
         }
     },
-    init : function() {
+    init   : function() {
         var me = this;
 
         Ext.Viewport.add({
@@ -36,16 +36,17 @@ Ext.define('Rvrsit.controller.Viewport', {
         });
 
         me.getApplication().on({
-            scope        : me,
-            play         : me.onAppPlay,
-            settings     : me.onAppSettings,
-            singleplayer : me.onAppSinglePlayer,
-            setting      : me.onAppSettingsChange,
-            nomoves      : me.onAppNoMoves,
-            endgame      : me.onAppEndGame,
-            winner       : me.onAppWinner,
-            userUpdate   : me.onAppUserUpdate,
-            chipFlips    : me.onGameChipFlips
+            scope            : me,
+            play             : 'onAppPlay',
+            settings         : 'onAppSettings',
+            singleplayer     : 'onAppSinglePlayer',
+            setting          : 'onAppSettingsChange',
+            nomoves          : 'onAppNoMoves',
+            endgame          : 'onAppEndGame',
+            winner           : 'onAppWinner',
+            userUpdate       : 'onAppUserUpdate',
+            chipFlips        : 'onGameChipFlips',
+            messagesreceived : 'onMessagesReceived'
         });
 
         me.callParent();
@@ -78,7 +79,7 @@ Ext.define('Rvrsit.controller.Viewport', {
         );
     },
 
-    onAppSinglePlayer : function() {
+    onAppSinglePlayer    : function() {
         var me = this,
             game = Rvrsit.game;
 
@@ -98,7 +99,7 @@ Ext.define('Rvrsit.controller.Viewport', {
                     text   : '2 Player (internet)'
                 }
             ],
-            fn : function(btn) {
+            fn      : function(btn) {
                 if (btn == 'yes') {
                     me.initSinglePlayerMode();
                 }
@@ -109,7 +110,7 @@ Ext.define('Rvrsit.controller.Viewport', {
                 else if (btn == 'cancel') {
                     game.setMode('double remote');
                     me.initDoubleRemoteMode();
-//                    game.newGame();
+                    //                    game.newGame();
                 }
             }
         });
@@ -152,10 +153,10 @@ Ext.define('Rvrsit.controller.Viewport', {
         this.onAppSinglePlayer();
         Rvrsit.game.iosInitSounds();
 
-//        var user = this.getApplication().getUser(),
-//            controller = ! user ? 'Register' : 'Authentication';
-//
-//        this.getController(controller).showView();
+        //        var user = this.getApplication().getUser(),
+        //            controller = ! user ? 'Register' : 'Authentication';
+        //
+        //        this.getController(controller).showView();
     },
 
     onSoundCycle : function(btn) {
@@ -167,22 +168,22 @@ Ext.define('Rvrsit.controller.Viewport', {
         Rvrsit.game.forceFlipChips(data);
     },
 
-    onGameChipFlips : function(data) {
+    onGameChipFlips             : function(data) {
         // TODO: Get multi-player working!
 
-//        if (this.getApplication().user.name == 'Slave') {
-//            return;
-//        }
-//        console.log('onGameChipFlips', data);
-//        this.getApplication().rpc('updateGame', {
-//            params : {
-//                id       : 1,
-//                user     : Ext.encode(this.user),
-//                chipData : Ext.encode(data)
-//            }
-//        })
+        //        if (this.getApplication().user.name == 'Slave') {
+        //            return;
+        //        }
+        //        console.log('onGameChipFlips', data);
+        //        this.getApplication().rpc('updateGame', {
+        //            params : {
+        //                id       : 1,
+        //                user     : Ext.encode(this.user),
+        //                chipData : Ext.encode(data)
+        //            }
+        //        })
     },
-    initDoubleRemoteMode : function() {
+    initDoubleRemoteMode        : function() {
         this.getApplication().rpc({
             method   : 'listAvailablePlayers',
             scope    : this,
@@ -192,6 +193,50 @@ Ext.define('Rvrsit.controller.Viewport', {
     onAfterInitDoubleRemoteMode : function(data) {
         this.getApplication().getController('Authentication').showView(data);
         console.log('available users', data);
+    },
+
+    onMessagesReceived : function(messages) {
+        var me = this,
+            messageType = 'challenge',
+            challenge,
+            opponent;
+
+        Ext.each(messages, function(msg) {
+            if (msg.messageType == messageType)  {
+                challenge = msg.message;
+                return false;
+            }
+        });
+        // TODO : render a list showing all challengers
+        opponent = challenge.secondPlayer;
+
+
+        Ext.Msg.show({
+            title   : 'You are being challenged!',
+            message : '<b>' + opponent.name  + '</b>' + ' would like to challenge you to a game. Do you accept?',
+            buttons : [
+                {
+                    itemId : 'yes',
+                    text   : 'Let\'s do it!'
+                },
+                {
+                    itemId : 'no',
+                    text   : 'No way!'
+                }
+            ],
+            fn      : function(btn) {
+                console.log('btn pressed', btn);
+                if (btn == 'yes') {
+//                    me.initSinglePlayerMode();
+                }
+                else {
+//                    game.setMode('double local');
+//                    game.newGame();
+                }
+            }
+        });
+
+
 
     }
 });

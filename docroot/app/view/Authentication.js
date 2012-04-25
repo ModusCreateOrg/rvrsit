@@ -25,7 +25,7 @@ Ext.define('Rvrsit.view.Authentication', {
         },
 
         states : {
-            login                     : {
+            login : {
                 activeItem      : 0,
                 height          : 195,
                 animType        : 'fade',
@@ -34,7 +34,8 @@ Ext.define('Rvrsit.view.Authentication', {
                 challengePlayer : 'hide',
                 title           : 'Please login.'
             },
-            list                      : {
+
+            list : {
                 activeItem      : 1,
                 height          : 300,
                 animType        : 'fade',
@@ -43,6 +44,7 @@ Ext.define('Rvrsit.view.Authentication', {
                 challengePlayer : 'show',
                 title           : 'Choose a player!'
             },
+
             awaitingChallengeResponse : {
                 activeItem      : 2,
                 height          : 300,

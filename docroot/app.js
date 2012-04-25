@@ -38,52 +38,79 @@ Ext.application({
 
     onGameInitialized : function(game) {
         Rvrsit.game = this.game = game;
-        //        this.initHeartBeats();
-        //        debugger;
-
+        this.getMessages();
     },
-    initHeartBeats    : function() {
+    getMessages    : function() {
         silk.heartbeat_enabled = true;
         var me = this,
             game = Rvrsit.game;
 
         me.user = me.getUser();
-        if (me.user.name == 'Slave') {
-            game.newGame();
-        }
-        if (me.user && !me.hearbeatInitialized) {
+//        debugger;
+        if (me.user) {
 
             silk.Heartbeat.addMethod('getMessages', {
                 scope    : this,
                 method   : 'getMessages',
                 params   : function() {
-                    var data = Ext.apply({}, me.user);
-                    data.status = game && game.halt ? 'halt' : 'playing';
+                    var data = Ext.clone(me.user);
+//                    data.status = game && game.halt ? 'halt' : 'playing';
                     //                        console.log('params', data);
-                    return data;
+                    return Ext.clone(me.user);
                 },
-                callback : function(turns) {
-                    if (me.user.name == 'Slave') {
-                        console.log('>> getMessages', turns);
+                callback : function(data) {
+//                    if (me.user.name == 'Slave') {
+//                        console.log('>> getMessages', turns);
+//
+//                        var game = Rvrsit.game;
+//                        if (!game) {
+//                            return;
+//                        }
+//                        Ext.each(turns, function(turn) {
+//                            console.log(turn.turnColor, turn.chipItemIds);
+//                            game.forceFlipChips(turn);
+//                        });
+//                    }
+                    me.processMessages(data);
+                    me.getMessages();
 
-                        var game = Rvrsit.game;
-                        if (!game) {
-                            return;
-                        }
-                        Ext.each(turns, function(turn) {
-                            console.log(turn.turnColor, turn.chipItemIds);
-                            game.forceFlipChips(turn);
-                        });
-                    }
                 }
             });
 
-            me.hearbeatInitialized = false;
+            me.hearbeatInitialized = true;
         }
     },
 
+    processMessages : function(envelope) {
+       var me = this,
+           messages = envelope.messages,
+           messageIds = [];
+
+        if (messages.length < 1) {
+            return;
+        }
+
+        Ext.each(messages, function(msg, i) {
+            messageIds[i] = msg.messageId
+        });
+
+        me.fireEvent('messagesreceived', messages);
+
+        me.rpc({
+            method : 'ackMessages',
+            params : {
+                messages : Ext.encode(messageIds)
+            },
+            success : function() {
+                console.log(messageIds.join(), 'acknowledge');
+            }
+        });
+    },
+
+
     rpc : function(config) {
-        debugger;
+        console.log('>>> RPC ' + config.method);
+
         config = config || {};
         Ext.Ajax.request({
             method  : 'POST',

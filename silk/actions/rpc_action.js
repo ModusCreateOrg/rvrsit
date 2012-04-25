@@ -39,15 +39,12 @@ rpcMethods = {
             dateObj = new Date(),
             diff;
 
-
-
         players.each(function(player) {
             diff = Math.floor(now - (player.lastActivity * 1000));
             dateObj.setTime(diff);
 
             player.lastActivity = dateObj.getSeconds()
         });
-
 
         this.respond({
             availablePlayers : players
@@ -58,10 +55,10 @@ rpcMethods = {
             player           = Schema.findOne('Players', {
                 playerId : Auth.isAuthenticated().playerId
             }),
-            opponent         = Schema.findOne('Players', {
+            opponent = Schema.findOne('Players', {
                 playerId : opponentPlayerId
             }),
-            message  = {
+            message = {
                 firstPlayer  : {
                     name     : opponent.name,
                     playerId : opponent.playerId
@@ -73,20 +70,19 @@ rpcMethods = {
             };
 
         if (player.playerId == opponent.playerId) {
-            Json.failure({ message : 'Silly rabbit! You can\' challenge yourself!  That\'s what two-player local mode is for!'});
+            Json.failure({
+                message : 'Silly rabbit! You can\' challenge yourself!  That\'s what two-player local mode is for!'
+            });
         }
-
 
         /*
             TODO : add checks for
-                - is opponent playing a game already?
-                - is opponent alive
-                - prevent removal of all messages until the recipient ack's
-                - anything else?
+            - is opponent playing a game already?
+            - is opponent alive
+            - prevent removal of all messages until the recipient ack's
+            - anything else?
          */
 //        SQL.update('delete from Messages where playerId = ' + opponentPlayerId);
-
-
 
         Schema.putOne('Messages', {
             playerId    : opponentPlayerId,
@@ -102,13 +98,13 @@ rpcMethods = {
     },
 
     ackMessages : function() {
+        debugger;
         var player     = Auth.isAuthenticated(),
             messages   = Json.decode(req.data.messages),
             messageSql = ' messageId = ',
             andSql     = ' and playerId = ' + player.playerId,
             or         = ' OR ',
             fullSql    = '';
-
 
         if (messages && Util.isArray(messages) && messages.length > 0) {
             messages.each(function(message) {
@@ -124,7 +120,6 @@ rpcMethods = {
                 SQL.update(fullSql);
             }
         }
-
 
         this.respond({
             deletedMessages : messages
@@ -146,8 +141,8 @@ rpcMethods = {
 //            otherChallenges = SQL.getDataRows(sql);
 
         debugger;
-        var firstPlayerId = challengeMessage.firstPlayer.playerId,
-            secondPlayerId =  challengeMessage.secondPlayer.playerId,
+        var firstPlayerId  = challengeMessage.firstPlayer.playerId,
+            secondPlayerId = challengeMessage.secondPlayer.playerId,
             now            = Auth.getTime();
 
         var game = Schema.putOne('Games', {
@@ -202,7 +197,7 @@ rpcMethods = {
 };
 
 function rpc_action() {
-    debugger;
+//    debugger;
     console.log('RPC :: ' + req.data.method + '();');
     var data = req.data,
         methodName = data.method;

@@ -84,7 +84,7 @@ Ext.define('Rvrsit.controller.Authentication', {
         }
         else {
             view = this.view = Ext.Viewport.add({
-                xclass : 'Rvrsit.view.Authentication',
+                xtype  : 'authentication',
                 user   : app.getUser(),
                 store  : Ext.create('Rvrsit.store.Authentication', {
                     data : data
@@ -118,6 +118,15 @@ Ext.define('Rvrsit.controller.Authentication', {
         // TODO : purge any existing challenges
     },
     onChallengePlayer : function() {
+        var opponent = this.view.down('list').getSelection()[0];
+        if (! opponent) {
+            return;
+        }
+
+
+
+
+        debugger;
 
     }
 });
