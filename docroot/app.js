@@ -10,9 +10,8 @@ Ext.application({
     controllers : [
         'Settings',
         'ScoreCard',
-        'Waiting',
-        'Viewport',
-        'Register'
+        'Authentication',
+        'Viewport'
     ],
 
     icon : {

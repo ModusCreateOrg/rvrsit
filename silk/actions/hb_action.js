@@ -9,38 +9,12 @@
 heartbeatMethods = {
     serverTime : function() {
         return Util.currentTime();
-    }
+    },
     // add your additional methods here
     // they are called with an object containing key/value pairs
     // the key/value pairs are sent via params() function on the
     // client side (see heartbeat.js)
 
-    /*
-     Example
-     */, echo  : function(args) {
-        // this object is passed to the subscriber on the client
-        return {
-            message : args.message,
-            text    : 'echo echo echo echo'
-        };
-    },
-
-    listAvailablePlayers : function() {
-        var existing = Auth.isAuthenticated(),
-            twoMinutesAgo = Auth.getTime() - 560,
-            sql = [
-                'select distinct PlayerSessions.playerId, Players.name',
-                ' from PlayerSessions, Players',
-                ' where PlayerSessions.gameId is NULL and PlayerSessions.playerId = Players.playerId and PlayerSessions.playerId != ' + existing.playerId,
-                ' and PlayerSessions.lastActivity > ' + twoMinutesAgo
-            ].join('');
-
-        var players = SQL.getDataRows(sql);
-
-        this.respond({
-            availablePlayers : players
-        });
-    },
     getMessages          : function() {
         var player = Auth.isAuthenticated(),
             messages = SQL.getDataRows('select messageId, message, messageType from Messages where playerId = ' + player.playerId + ' order by messageDate');

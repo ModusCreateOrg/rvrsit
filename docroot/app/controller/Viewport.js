@@ -1,5 +1,10 @@
 Ext.define('Rvrsit.controller.Viewport', {
     extend : 'Ext.app.Controller',
+
+    requires : [
+        'Ext.MessageBox'
+    ],
+
     tpls   : {
         winner : Ext.create('Ext.Template',
             '<b>{winner}</b> is the winner!<br />',
@@ -148,7 +153,7 @@ Ext.define('Rvrsit.controller.Viewport', {
         Rvrsit.game.iosInitSounds();
 
 //        var user = this.getApplication().getUser(),
-//            controller = ! user ? 'Register' : 'Waiting';
+//            controller = ! user ? 'Register' : 'Authentication';
 //
 //        this.getController(controller).showView();
     },
@@ -185,11 +190,7 @@ Ext.define('Rvrsit.controller.Viewport', {
         });
     },
     onAfterInitDoubleRemoteMode : function(data) {
-        if (! data.success) {
-            this.getApplication().getController('Register').showView();
-            return;
-        }
-
+        this.getApplication().getController('Authentication').showView(data);
         console.log('available users', data);
 
     }

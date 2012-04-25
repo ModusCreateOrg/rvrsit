@@ -12,61 +12,6 @@ rpcMethods = {
     auth : function() {
         this.respond(Auth.auth());
     },
-    registerPlayer : function() {
-        var errors = [];
-        var data = req.data;
-
-        if (data.email.length) {
-            var existing = Schema.findOne('Players', {email : data.email });
-            if (existing.email) {
-                this.auth();
-            }
-        }
-
-        // validate form
-        if (!data.name.length) {
-            errors.push('You must enter a name');
-        }
-
-        if (!data.email.length) {
-            errors.push('You must enter a valid email address');
-        }
-
-        if (errors.length) {
-            console.log('registerPlayer failure' + data.email + ' ' + data.name);
-
-            console.log(errors.join('<br/>\n* '));
-            Json.failure('There are errors in your form: <br/>\n* ' + errors.join('<br/>\n* '));
-        }
-        else {
-            var user = Schema.newRecord('Players');
-            user.name = req.data.name;
-            user.email = req.data.email;
-
-            user = Schema.putOne('Players', user);
-            console.log('registerPlayer Success' + user.email + ' ' + user.name);
-
-            this.auth();
-        }
-    },
-
-    listAvailablePlayers : function() {
-        var existing = Auth.isAuthenticated(),
-            twoMinutesAgo = Auth.getTime() - 560,
-            sql = [
-                'select distinct PlayerSessions.playerId, Players.name',
-                ' from PlayerSessions, Players',
-                ' where PlayerSessions.gameId is NULL and PlayerSessions.playerId = Players.playerId and PlayerSessions.playerId != ' + existing.playerId,
-                ' and PlayerSessions.lastActivity > ' + twoMinutesAgo
-            ].join('');
-
-
-        var players = SQL.getDataRows(sql);
-
-        this.respond({
-            availablePlayers : players
-        });
-    },
 
     listGames : function() {
         if (! Auth.isAuthenticated()) {
@@ -79,7 +24,35 @@ rpcMethods = {
         });
     },
 
+    listAvailablePlayers : function() {
+        var existing = Auth.isAuthenticated(),
+            twoMinutesAgo = Auth.getTime() - 560,
+            sql = [
+                'select distinct PlayerSessions.playerId, Players.name, PlayerSessions.lastActivity',
+                ' from PlayerSessions, Players',
+                ' where PlayerSessions.gameId is NULL and PlayerSessions.playerId = Players.playerId and PlayerSessions.playerId != ' + existing.playerId,
+                ' and PlayerSessions.lastActivity > ' + twoMinutesAgo
+            ].join('');
 
+        var players = SQL.getDataRows(sql),
+            now     = new Date().getTime(),
+            dateObj = new Date(),
+            diff;
+
+
+
+        players.each(function(player) {
+            diff = Math.floor(now - (player.lastActivity * 1000));
+            dateObj.setTime(diff);
+
+            player.lastActivity = dateObj.getSeconds()
+        });
+
+
+        this.respond({
+            availablePlayers : players
+        });
+    },
     challengePlayer : function() {
         var opponentPlayerId = req.data.playerId,
             player           = Schema.findOne('Players', {
