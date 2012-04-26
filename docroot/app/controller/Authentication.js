@@ -44,19 +44,27 @@ Ext.define('Rvrsit.controller.Authentication', {
             authWindow = btn.up('authentication'),
             userCreds = authWindow.down('formpanel').getValues();
 
+        me.doAuthentication(userCreds);
+    },
+
+    doAuthentication : function(creds) {
+        var me = this;
         me.getApplication().rpc({
             method   : 'auth',
-            params   : userCreds,
+            params   : creds,
             scope    : me,
-            callback : me.onAfterSubmit
+            callback : me.onAfterDoAuthentication
         });
     },
 
-    onAfterSubmit : function(data) {
+    onAfterDoAuthentication : function(data) {
         var me = this;
 
-        me.getApplication().setUser(data.user);
-        me.onRefreshList();
+        me.getApplication().fireEvent('userupdate', data.user);
+        if (me.view) {
+            me.onRefreshList();
+        }
+
     },
 
     onPlayUser : function(btn) {
@@ -73,20 +81,22 @@ Ext.define('Rvrsit.controller.Authentication', {
     },
 
     showView : function(data) {
-        var app = this.getApplication();
-        if (! data.success) {
-            app.setUser(null);
+        var me = this,
+            app = this.getApplication(),
+            view = me.view;
+
+        if (!data.success) {
+            app.fireEvent('userupdate', null);
         }
-        var view = this.view;
 
         if (view) {
-            this.onRefreshList();
+            me.onRefreshList();
         }
         else {
-            view = this.view = Ext.Viewport.add({
-                xtype  : 'authentication',
-                user   : app.getUser(),
-                store  : Ext.create('Rvrsit.store.Authentication', {
+            view = me.view = Ext.Viewport.add({
+                xtype : 'authentication',
+                user  : app.getUser(),
+                store : Ext.create('Rvrsit.store.Authentication', {
                     data : data
                 })
             });
@@ -94,7 +104,9 @@ Ext.define('Rvrsit.controller.Authentication', {
 
         view.show();
     },
-
+    hideView: function() {
+        this.view && this.view.hide();
+    },
     onRefreshList : function() {
         var me = this;
 
@@ -105,28 +117,44 @@ Ext.define('Rvrsit.controller.Authentication', {
         });
     },
 
-    onAfterRefreshList : function(data) {
+    onAfterRefreshList     : function(data) {
         var authWindow = this.view;
 
-        authWindow.getStore().setData(data);
-        authWindow.setState('list');
+        if (authWindow) {
+            authWindow.getStore().setData(data);
+            authWindow.setState('list');
+        }
     },
-    onCancel : function() {
-        var view = this.view;
-        view.hide();
+    onCancel               : function() {
+        this.hideView();
 
         // TODO : purge any existing challenges
     },
-    onChallengePlayer : function() {
-        var opponent = this.view.down('list').getSelection()[0];
-        if (! opponent) {
+    onChallengePlayer      : function() {
+        var me = this,
+            list = me.view.down('list'),
+            opponent = list.getSelection()[0];
+
+        if (!opponent || list.getStore().getCount() < 1) {
+            console.info('no opponent!');
             return;
         }
 
+        me.getApplication().rpc({
+            method  : 'challengePlayer',
+            scope   : me,
+            params  : opponent.getData(),
+            success : me.onAfterChallengePlayer
+        });
 
+        me.view.setState('awaitingChallengeResponse');
 
-
-        debugger;
-
+    },
+    onAfterChallengePlayer : function(data) {
+        if (! data.success) {
+            Ext.Msg.alert('Error', data.message);
+            this.view.setState('list');
+        }
+//        debugger;
     }
 });

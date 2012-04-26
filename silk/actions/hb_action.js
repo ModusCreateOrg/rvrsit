@@ -16,7 +16,7 @@ heartbeatMethods = {
     // client side (see heartbeat.js)
 
     getMessages          : function() {
-        var player = Auth.isAuthenticated(),
+        var player = Auth.isAuthenticated('getMessages'),
             messages = SQL.getDataRows('select messageId, message, messageType from Messages where playerId = ' + player.playerId + ' order by messageDate');
 
         messages.each(function(message) {
@@ -73,14 +73,21 @@ heartbeatMethods = {
 function heartbeat_action() {
     var result = { dt : Auth.getTime() };
 
-    var methods = Json.decode(req.data.methods);
-    var params = Json.decode(req.data.params);
-    var keys = Json.decode(req.data.keys);
-    var count = methods.length;
+    var methods = Json.decode(req.data.methods),
+        params = Json.decode(req.data.params),
+        keys = Json.decode(req.data.keys),
+        count = methods.length,
+        i = 0,
+        methodName,
+        method;
 
-    for (var i = 0; i < count; i++) {
-        if (heartbeatMethods[methods[i]]) {
-            result[keys[i]] = heartbeatMethods[methods[i]](params[i]);
+    for (; i < count; i++) {
+        methodName = methods[i];
+        method = heartbeatMethods[methodName];
+        console.log('HB :: ' + methodName);
+
+        if (method) {
+            result[keys[i]] = method(params[i]);
         }
     }
 

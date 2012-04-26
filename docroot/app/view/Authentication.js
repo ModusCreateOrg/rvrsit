@@ -111,8 +111,7 @@ Ext.define('Rvrsit.view.Authentication', {
     buildList : function() {
         return {
             xtype     : 'list',
-            layout    : 'fit',
-            emptyText : '<div style="padding: 20px;">No players to challenge online. Perhaps try single player mode?</div>',
+            emptyText : '<div style="padding: 20px;">No players to challenge online. Perhaps try single player mode? <br/><br /> Press the refresh button above to check again!</div>',
             itemTpl   : '{name}',
             store     : this.getStore()
         }

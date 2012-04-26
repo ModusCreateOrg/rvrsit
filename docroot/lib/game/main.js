@@ -23,6 +23,7 @@ SoundSprite.prototype = {
     setVolume : function(volume) {
         this.audio.volume = volume;
     },
+
     init : function() {
         var me    = this,
             i     = 0,
@@ -101,16 +102,16 @@ MyGame = ig.Game.extend({
         white   : [1.48, 1.6],
         black   : [2.061, 3]
     },
-    music         : [
-        {
-            name : 'Truepianos',
-            song : 'Truepianos.caff'
-        },
-        {
-            name : 'TweakRAM',
-            song : 'SnD_TweakRAM.caff'
-        }
-    ],
+//    music         : [
+//        {
+//            name : 'Truepianos',
+//            song : 'Truepianos.caff'
+//        },
+//        {
+//            name : 'TweakRAM',
+//            song : 'SnD_TweakRAM.caff'
+//        }
+//    ],
     init          : function() {
         var me = this;
 
@@ -161,20 +162,20 @@ MyGame = ig.Game.extend({
             me.fxInitialized = true;
         }
 //
-        if (isDesktop && settings.music > 0 && !me.musicInitialized) {
-            musicRoot = soundRoot + 'music/';
-
-            Ext.each(this.music, function(song) {
-                ig.music.add(new ig.Sound(musicRoot + song.song));
-            });
-
-            ig.music.volume = settings.music || .5;
-            ig.music.random = true;
-
-            ig.music.play();
-
-            me.musicInitialized = true;
-        }
+//        if (isDesktop && settings.music > 0 && !me.musicInitialized) {
+//            musicRoot = soundRoot + 'music/';
+//
+//            Ext.each(this.music, function(song) {
+//                ig.music.add(new ig.Sound(musicRoot + song.song));
+//            });
+//
+//            ig.music.volume = settings.music || .5;
+//            ig.music.random = true;
+//
+//            ig.music.play();
+//
+//            me.musicInitialized = true;
+//        }
     },
 
     iosInitSounds : function() {
@@ -185,6 +186,7 @@ MyGame = ig.Game.extend({
     },
 
     newGame   : function() {
+        console.log('newGame called')
         var me = this,
             myChips = this.allChips;
 

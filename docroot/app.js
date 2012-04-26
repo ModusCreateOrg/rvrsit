@@ -25,14 +25,16 @@ Ext.application({
 
     launch : function() {
         // Destroy the #appLoadingIndicator element
-        var loader = Ext.get('appLoadingIndicator');
+        var me = this,
+            loader = Ext.get('appLoadingIndicator');
         loader && loader.destroy();
         Rvrsit.app = this;
         //            Rvrsit.heartbeat = new silk.Heartbeat();
 
-        this.on({
-            gameinitialized : this.onGameInitialized,
-            scope           : this
+        me.on({
+            gameinitialized : me.onGameInitialized,
+            userupdate      : me.getMessages,
+            scope           : me
         });
     },
 
@@ -40,25 +42,40 @@ Ext.application({
         Rvrsit.game = this.game = game;
         this.getMessages();
     },
+    startHeartbeat : function() {
+        var me = this;
+        if (me.heartbeatStarted) {
+            return;
+        }
+        silk.Heartbeat.enable();
+        silk.Heartbeat.stop();
+        silk.Heartbeat.start(3);
+        me.heartbeatStarted = true;
+    },
+
     getMessages    : function() {
-        silk.heartbeat_enabled = true;
         var me = this,
             game = Rvrsit.game;
 
         me.user = me.getUser();
-//        debugger;
         if (me.user) {
+
+            if (! me.heartbeatStarted) {
+                me.startHeartbeat();
+            }
+
+            silk.Heartbeat.enable();
 
             silk.Heartbeat.addMethod('getMessages', {
                 scope    : this,
                 method   : 'getMessages',
                 params   : function() {
-                    var data = Ext.clone(me.user);
+//                    var data = Ext.clone(me.user);
 //                    data.status = game && game.halt ? 'halt' : 'playing';
                     //                        console.log('params', data);
                     return Ext.clone(me.user);
                 },
-                callback : function(data) {
+                success : function(data) {
 //                    if (me.user.name == 'Slave') {
 //                        console.log('>> getMessages', turns);
 //
@@ -74,10 +91,16 @@ Ext.application({
                     me.processMessages(data);
                     me.getMessages();
 
+                },
+                failure : function(data) {
+//                    debugger;
+                    if (data.errcode == 1)    {
+                        silk.Heartbeat.disable();
+                        me.getController('Authentication').doAuthentication(me.user);
+                    }
                 }
             });
 
-            me.hearbeatInitialized = true;
         }
     },
 
@@ -120,7 +143,7 @@ Ext.application({
                 var data = Ext.decode(response.responseText);
                 console.log('RPC RESPONSE:', response.responseText);
 
-                if (! data.success) {
+                if (data.success) {
                     config.success && config.success.call(config.scope || window, data);
                 }
                 else {

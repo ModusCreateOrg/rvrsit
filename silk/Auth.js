@@ -9,20 +9,29 @@ exports = {
         Schema.putOne('PlayerSessions', userSession);
     },
 
-    isAuthenticated : function() {
-        var cookie;
+    isAuthenticated : function(callerFn) {
+
+        var resp = {
+                errcode : 1,
+                message : 'Need cookie! Om nom nom! (cannot find your session)'
+            },
+            wrapperObj = {},
+            cookie;
+
+        wrapperObj[callerFn] = resp;
+
+        console.log('isAuthenticated ' + callerFn);
 
         if ( ! res.data.player || ! (cookie = res.data.player.cookie) ) {
-            Json.failure('Need cookie! Om nom nom! (cannot find your cookie!)');
+            Json.failure(wrapperObj);
         }
 
         var existing = Schema.findOne('PlayerSessions', {
             cookie : cookie
         });
 
-
         if (! existing) {
-            Json.failure('Need cookie! Om nom nom! (cannot find your session)');
+            Json.failure(wrapperObj);
         }
 
         this.updateSession(existing);

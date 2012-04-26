@@ -9,11 +9,11 @@ Ext.define('Rvrsit.store.Authentication', {
                 direction : 'ASC'
             }
         ],
-        proxy : {
+        proxy   : {
             type   : 'memory',
             reader : {
-                type : 'json',
-                root : 'availablePlayers'
+                type         : 'json',
+                rootProperty : 'availablePlayers'
             }
         }
     }

@@ -14,8 +14,11 @@ rpcMethods = {
     },
 
     listGames : function() {
-        if (! Auth.isAuthenticated()) {
-            Json.failure({msg: 'Need cookie! Om nom nom!'});
+        if (!Auth.isAuthenticated('listGames')) {
+            Json.failure({
+                errcode : 1,
+                msg     : 'Need cookie! Om nom nom!'
+            });
         }
 
         var items = SQL.getDataRows("select * from games where status = 0;");
@@ -25,7 +28,7 @@ rpcMethods = {
     },
 
     listAvailablePlayers : function() {
-        var existing = Auth.isAuthenticated(),
+        var existing = Auth.isAuthenticated('listAvailablePlayers'),
             twoMinutesAgo = Auth.getTime() - 560,
             sql = [
                 'select distinct PlayerSessions.playerId, Players.name, PlayerSessions.lastActivity',
@@ -35,7 +38,7 @@ rpcMethods = {
             ].join('');
 
         var players = SQL.getDataRows(sql),
-            now     = new Date().getTime(),
+            now = new Date().getTime(),
             dateObj = new Date(),
             diff;
 
@@ -50,10 +53,10 @@ rpcMethods = {
             availablePlayers : players
         });
     },
-    challengePlayer : function() {
+    challengePlayer      : function() {
         var opponentPlayerId = req.data.playerId,
-            player           = Schema.findOne('Players', {
-                playerId : Auth.isAuthenticated().playerId
+            player = Schema.findOne('Players', {
+                playerId : Auth.isAuthenticated('challengePlayer').playerId
             }),
             opponent = Schema.findOne('Players', {
                 playerId : opponentPlayerId
@@ -64,7 +67,7 @@ rpcMethods = {
                     playerId : opponent.playerId
                 },
                 secondPlayer : {
-                    name : player.name,
+                    name     : player.name,
                     playerId : player.playerId
                 }
             };
@@ -76,13 +79,13 @@ rpcMethods = {
         }
 
         /*
-            TODO : add checks for
-            - is opponent playing a game already?
-            - is opponent alive
-            - prevent removal of all messages until the recipient ack's
-            - anything else?
+         TODO : add checks for
+         - is opponent playing a game already?
+         - is opponent alive
+         - prevent removal of all messages until the recipient ack's
+         - anything else?
          */
-//        SQL.update('delete from Messages where playerId = ' + opponentPlayerId);
+        //        SQL.update('delete from Messages where playerId = ' + opponentPlayerId);
 
         Schema.putOne('Messages', {
             playerId    : opponentPlayerId,
@@ -97,14 +100,14 @@ rpcMethods = {
         });
     },
 
-    ackMessages : function() {
+    ackMessages     : function() {
         debugger;
-        var player     = Auth.isAuthenticated(),
-            messages   = Json.decode(req.data.messages),
+        var player = Auth.isAuthenticated('ackMessages'),
+            messages = Json.decode(req.data.messages),
             messageSql = ' messageId = ',
-            andSql     = ' and playerId = ' + player.playerId,
-            or         = ' OR ',
-            fullSql    = '';
+            andSql = ' and playerId = ' + player.playerId,
+            or = ' OR ',
+            fullSql = '';
 
         if (messages && Util.isArray(messages) && messages.length > 0) {
             messages.each(function(message) {
@@ -126,35 +129,48 @@ rpcMethods = {
         });
     },
     acceptChallenge : function() {
-        var acceptingPlayer  = Auth.isAuthenticated(),
+        console.log(req.data.challengeMessage);
+        var acceptingPlayer = Auth.isAuthenticated('acceptChallenge'),
             challengeMessageEnvelope = Json.decode(req.data.challengeMessage),
             challengeMessage = challengeMessageEnvelope.message;
 
-//        // TODO : clear all existing challenge Messages
-//        var sql = [
-//                'select messageId, message, messageType ',
-//                ' from Messages ',
-//                ' where playerId = ' + acceptingPlayer.playerId,
-//                ' and messageType = "challenge"',
-//                ' order by messageDate'
-//            ].join(''),
-//            otherChallenges = SQL.getDataRows(sql);
+        //        // TODO : clear all existing challenge Messages
+        //        var sql = [
+        //                'select messageId, message, messageType ',
+        //                ' from Messages ',
+        //                ' where playerId = ' + acceptingPlayer.playerId,
+        //                ' and messageType = "challenge"',
+        //                ' order by messageDate'
+        //            ].join(''),
+        //            otherChallenges = SQL.getDataRows(sql);
 
         debugger;
-        var firstPlayerId  = challengeMessage.firstPlayer.playerId,
+        var firstPlayerId = acceptingPlayer.playerId,
             secondPlayerId = challengeMessage.secondPlayer.playerId,
-            now            = Auth.getTime();
+            now = Auth.getTime();
 
         var game = Schema.putOne('Games', {
             firstPlayerId  : firstPlayerId,
             secondPlayerId : secondPlayerId,
-            gameToken      : Util.md5( firstPlayerId + secondPlayerId + now),
+            gameToken      : Util.md5(firstPlayerId + secondPlayerId + now),
             status         : 0,
             lastUpdate     : now,
             currentPlayer  : firstPlayerId
         });
 
         game.dump();
+
+        game.firstPlayer = Schema.findOne('Players', {
+            playerId  : firstPlayerId
+        });
+
+        delete game.firstPlayer.email;
+
+        game.secondPlayer = Schema.findOne('Players', {
+            playerId : secondPlayerId
+        });
+
+        delete game.secondPlayer.email;
 
         Schema.putOne('Messages', {
             playerId    : challengeMessage.secondPlayer.playerId,
@@ -163,13 +179,44 @@ rpcMethods = {
             messageDate : Auth.getTime()
         });
 
-        this.respond(game)
+        this.respond({
+            game : game
+        });
     },
 
+    declineChallenge : function() {
+        console.log(req.data.challengeMessage);
+        var acceptingPlayer = Auth.isAuthenticated('acceptChallenge'),
+            challengeMessageEnvelope = Json.decode(req.data.challengeMessage),
+            challengeMessage = challengeMessageEnvelope.message;
+
+        //        // TODO : clear all existing challenge Messages
+        //        var sql = [
+        //                'select messageId, message, messageType ',
+        //                ' from Messages ',
+        //                ' where playerId = ' + acceptingPlayer.playerId,
+        //                ' and messageType = "challenge"',
+        //                ' order by messageDate'
+        //            ].join(''),
+        //            otherChallenges = SQL.getDataRows(sql);
+
+
+
+        Schema.putOne('Messages', {
+            playerId    : challengeMessage.secondPlayer.playerId,
+            messageType : 'challengeDeclined',
+            message     : challengeMessage,
+            messageDate : Auth.getTime()
+        });
+
+        this.respond({success : true});
+    },
+
+
     recordMove : function() {
-        var player     = Auth.isAuthenticated(),
-            gameToken  = req.data.gameToken,
-            playerId   = player.playerId,
+        var player = Auth.isAuthenticated(''),
+            gameToken = req.data.gameToken,
+            playerId = player.playerId,
             getGameSql = [
                 'Select *',
                 ' from games where',
@@ -180,7 +227,7 @@ rpcMethods = {
         console.log(getGameSql);
         var game = SQL.getDataRow('Games', getGameSql);
 
-        if (! game) {
+        if (!game) {
             Json.failure({
                 message : 'Error! It\'s not your turn!'
             });
@@ -197,7 +244,7 @@ rpcMethods = {
 };
 
 function rpc_action() {
-//    debugger;
+    //    debugger;
     console.log('RPC :: ' + req.data.method + '();');
     var data = req.data,
         methodName = data.method;

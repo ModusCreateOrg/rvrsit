@@ -44,7 +44,7 @@ Ext.define('Rvrsit.controller.Viewport', {
             nomoves          : 'onAppNoMoves',
             endgame          : 'onAppEndGame',
             winner           : 'onAppWinner',
-            userUpdate       : 'onAppUserUpdate',
+            userupdate       : 'onAppUserUpdate',
             chipFlips        : 'onGameChipFlips',
             messagesreceived : 'onMessagesReceived'
         });
@@ -108,7 +108,6 @@ Ext.define('Rvrsit.controller.Viewport', {
                     game.newGame();
                 }
                 else if (btn == 'cancel') {
-                    game.setMode('double remote');
                     me.initDoubleRemoteMode();
                     //                    game.newGame();
                 }
@@ -145,7 +144,10 @@ Ext.define('Rvrsit.controller.Viewport', {
     },
 
     onAppUserUpdate : function(userObj) {
-        this.getApplication().setUser(userObj);
+       var app = this.getApplication();
+
+        app.setUser(userObj);
+        app.getMessages();
     },
 
     onAppPlay : function() {
@@ -197,19 +199,29 @@ Ext.define('Rvrsit.controller.Viewport', {
 
     onMessagesReceived : function(messages) {
         var me = this,
-            messageType = 'challenge',
-            challenge,
-            opponent;
+            methodMatrix = {
+                challenge : 'handleChallenge',
+                gameStart : 'handleGameStart'
+            },
+            method;
+
+        // TODO : render a list showing all challengers
 
         Ext.each(messages, function(msg) {
-            if (msg.messageType == messageType)  {
-                challenge = msg.message;
-                return false;
+            method = methodMatrix[msg.messageType];
+            if (method) {
+                me[method](msg)
+            }
+            else {
+                console.log(msg.messageType, ' is an unsupported messageType.', msg);
             }
         });
-        // TODO : render a list showing all challengers
-        opponent = challenge.secondPlayer;
 
+    },
+
+    handleChallenge : function(envelope) {
+        var me = this,
+            opponent = envelope.message.secondPlayer;
 
         Ext.Msg.show({
             title   : 'You are being challenged!',
@@ -224,19 +236,60 @@ Ext.define('Rvrsit.controller.Viewport', {
                     text   : 'No way!'
                 }
             ],
-            fn      : function(btn) {
-                console.log('btn pressed', btn);
+
+            fn : function(btn) {
                 if (btn == 'yes') {
-//                    me.initSinglePlayerMode();
+                    me.acceptChallenge(envelope, true);
                 }
                 else {
-//                    game.setMode('double local');
-//                    game.newGame();
+                    me.declineChallenge(envelope);
                 }
             }
         });
+    },
 
+    handleGameStart : function(envelope) {
+        var me = this,
+            myUserId = me.getApplication().getUser().playerId,
+            game = Rvrsit.game;
 
+        me.gameToken = envelope.message || envelope.game;
+        me.getApplication().getController('Authentication').hideView();
+
+        game.setMode('double remote');
+        game.newGame();
+
+        game.myColor = (myUserId == me.gameToken.firstPlayerId) ? 'black' : 'white';
+    },
+    acceptChallenge : function(envelope) {
+//        debugger;
+        var me = this;
+
+        me.getApplication().rpc({
+            method : 'acceptChallenge',
+            params : {
+                challengeMessage : Ext.encode(envelope)
+            },
+            scope : me,
+            success : me.onAfterAcceptChallenge
+        });
+    },
+    onAfterAcceptChallenge : function(gameData) {
+//        debugger;
+        console.log('NEW TWO PLAYER GAME', gameData);
+        this.handleGameStart(gameData);
+    },
+    declineChallenge : function(envelope) {
+        var me = this;
+
+        me.getApplication().rpc({
+            method : 'declineChallenge',
+            params : {
+                challengeMessage : Ext.encode(envelope)
+            }
+        });
+    },
+    reportMoveToServer : function(data) {
 
     }
 });
