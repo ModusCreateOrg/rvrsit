@@ -256,7 +256,6 @@ MyGame = ig.Game.extend({
 
                 chip = ig.game.spawnEntity(EntityChip, x, y, {
                     color  : visible ? color : visible,
-                    //                        color  : color,
                     itemId : itemId,
                     row    : xIndex,
                     col    : yIndex,

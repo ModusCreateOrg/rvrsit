@@ -10,7 +10,7 @@ Ext.define('silk.Heartbeat', {
         'Ext.Ajax'
     ],
     enabled     : true,
-    heartbeatId  : 0,
+    heartbeatId : 0,
     time        : 1,
     url         : '/heartbeat',
     inProgress  : false,
@@ -43,11 +43,10 @@ Ext.define('silk.Heartbeat', {
         };
 
         function doHeartbeat() {
-//            console.log('doHeartbeat called')
             if (me.inProgress || !me.enabled) {
+                //                console.log("HB not enabled!")
                 return;
             }
-            console.log('heartbeat in progress :: ' + me.heartbeatId);
             me.inProgress = true;
             var params = [],
                 keys = [],
@@ -64,7 +63,7 @@ Ext.define('silk.Heartbeat', {
                 keys.push(key);
                 methods.push(queue[key].method);
             }
-
+            console.log('HB :: ' + Math.floor(new Date().getTime() / 1000))
             Ext.Ajax.request({
                 url      : me.url,
                 scope    : me,
@@ -78,18 +77,21 @@ Ext.define('silk.Heartbeat', {
                         key,
                         queueItem;
 
-                    if (! data.success) {
-                        options.failure.apply(me, arguments)
+                    if (!data.success) {
+                        // TODO : merge into this success method & make failure something more general!
+                        options.failure.apply(me, arguments);
+                        return;
                     }
 
                     if (data.data) {
                         data = data.data;
                     }
-                    // why?
+
                     for (key in data) {
+                        //                        debugger;
                         queueItem = queue[key];
-                        if (queueItem && queueItem.callback) {
-                            queueItem.callback.call(queueItem.scope || window, data[key]);
+                        if (queueItem && queueItem.success) {
+                            queueItem.success.call(queueItem.scope || window, data[key]);
                         }
                     }
 
@@ -97,13 +99,29 @@ Ext.define('silk.Heartbeat', {
                         callbacks[key].call(scopes[key] || window, data);
                     }
                 },
-                failure  : function(result) {
-                    var data = Ext.decode(result.responseText);
-                    Ext.Msg.alert('Request failed:', data.message);
+                failure  : function(result, options) {
+                    //                    debugger;
+                    //                    console.log('hb failure');
+                    var data = Ext.decode(result.responseText),
+                        queueItem;
+
+                    if (data.data) {
+                        data = data.data;
+                    }
+
+                    for (key in data) {
+                        //                        debugger;
+                        queueItem = queue[key];
+                        if (queueItem && queueItem.failure) {
+                            queueItem.failure.call(queueItem.scope || window, data[key]);
+                        }
+                    }
+
+                    //                    Ext.Msg.alert('Request failed:', data.message);
                 },
                 callback : function() {
-                    console.log('heartbeat done :: ' + me.heartbeatId);
-//                    console.log(arguments);
+                    //                    console.log('heartbeat done :: ' + me.heartbeatId, arguments);
+                    //                    console.log(arguments);
                     me.heartbeatId++;
                     me.inProgress = false;
                 }
@@ -126,18 +144,22 @@ Ext.define('silk.Heartbeat', {
 
         var hbTask = null;
 
-        me.newHeartbeatTime = function(hbTime) {
-            me.time = hbTime;
+        me.stop = function() {
             if (hbTask) {
-                Ext.TaskMgr.stop(hbTask);
+                Ext.TaskManager.stop(hbTask);
                 hbTask = null;
             }
+        };
+
+        me.start = function(hbTime) {
+            me.time = hbTime || me.time;
+            me.stop();
             doHeartbeat();
 
-            hbTask = Ext.TaskMgr.start({
+            hbTask = Ext.TaskManager.start({
                 interval : me.time * 1000,
                 run      : function() {
-                    if (!this.enabled || this.inProgress) {
+                    if (!me.enabled || me.inProgress) {
                         return;
                     }
                     doHeartbeat();
@@ -145,13 +167,13 @@ Ext.define('silk.Heartbeat', {
             });
         };
 
-        me.newHeartbeatTime(me.time);
+        //        me.start(me.time);
     },
     enable      : function() {
         this.enabled = true;
     },
 
     disable : function() {
-        this.enabled = true;
+        this.enabled = false;
     }
 });
