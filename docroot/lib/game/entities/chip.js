@@ -146,7 +146,8 @@ ig.module(
 
         },
         isItemClicked : function() {
-            // TODO: Add turn checking
+            // TODO: Fix turn checking
+            debugger;
             var me       = this,
                 igInput  = ig.input,
                 igMouse  = igInput.mouse,
@@ -160,9 +161,11 @@ ig.module(
                 sizeY    = thisSize.y,
                 sizeX    = thisSize.x,
                 boundY   = mouseY >= (posY + five) && mouseY <= (sizeY - five) + posY,
-                boundX   = mouseX >= (posX + five) && mouseX <= (sizeX - five) + posX;
+                boundX   = mouseX >= (posX + five) && mouseX <= (sizeX - five) + posX,
+                isValidXY = boundY && boundX,
+                isDoubleRemote = me.game.mode.split(' ')[1] == 'remote';
 
-            return (boundY && boundX);
+            return (isDoubleRemote) ? (Rvrsit.app.isMyTurn() && isValidXY) : isValidXY;
         },
 
         checkAdjacent : function(direction, flipToColor, stackObj) {

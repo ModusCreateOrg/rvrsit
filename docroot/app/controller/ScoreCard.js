@@ -24,7 +24,6 @@ Ext.define('Rvrsit.controller.ScoreCard', {
             scope       : this,
             scoreupdate : this.onAppScoreUpdate
         });
-
     },
 
     onScoreCardPanelPlay : function() {
@@ -36,8 +35,9 @@ Ext.define('Rvrsit.controller.ScoreCard', {
     },
 
     onAppScoreUpdate : function(game, scoreObj) {
-        this.getScorecard().updateScore(scoreObj);
+        var me = this,
+            gameToken = me.getApplication().getController('Viewport').gameToken;
+
+        me.getScorecard().updateScore(scoreObj, gameToken);
     }
-
-
 });

@@ -109,24 +109,31 @@ Ext.define('Rvrsit.view.ScoreCard', {
             this.fireEvent(event, this);
         }
     },
+
     onElementTouchStart : function(evtObj) {
         var target = evtObj.getTarget();
         if (target) {
             Ext.fly(target).replaceCls('button-untouched','button-touched');
         }
     },
+
     onElementTouchEnd : function(evtObj) {
         var target = evtObj.getTarget();
         if (target) {
             Ext.fly(target).replaceCls('button-touched','button-untouched');
         }
     },
-    updateScore : function(scoreObj) {
-        console.log('score update', scoreObj)
+
+    updateScore : function(scoreObj, token) {
+        console.log('score update', scoreObj);
+        debugger;
+
         var me = this,
             turnOpposites = this.getTurnOpposites(),
-            gameMode      = Rvrsit.game.mode.split(' ')[0],
-            turnTitleTexts = this.getTurnTitles()[gameMode];
+            gameModeSplit = Rvrsit.game.mode.split(' ')[0],
+            turnTitleTexts = this.getTurnTitles()[gameModeSplit],
+            turnLabelTxt,
+            turnIndicatorTxt;
 
         if (!me.playerTurnIndicator) {
             var myElement = me.element;
@@ -136,10 +143,22 @@ Ext.define('Rvrsit.view.ScoreCard', {
             me.blackPlayerScoreEl  = myElement.down('.score-keeper-black').dom;
         }
 
-        me.playerTurnIndicator.replaceCls(turnOpposites[scoreObj.turn], 'tile-' + scoreObj.turn);
+        if (! token) {
+            me.playerTurnLabel.innerHTML    = turnTitleTexts[scoreObj.turn];
+            me.playerTurnIndicator.replaceCls(turnOpposites[scoreObj.turn], 'tile-' + scoreObj.turn);
+        }
+        else {
+            var tmpTurn = (token.currentPlayer == 2) ? 'black' : 'white',
+                currentPlayerName = (token.currentPlayer == token.firstPlayer.playerId) ? token.firstPlayer.name : token.secondPlayer.name;
 
-        me.playerTurnLabel.innerHTML    = turnTitleTexts[scoreObj.turn];
+
+            me.playerTurnLabel.innerHTML    = currentPlayerName;
+            me.playerTurnIndicator.replaceCls(turnOpposites[scoreObj.turn], 'tile-' + tmpTurn);
+        }
+
         me.whitePlayerScoreEl.innerHTML = scoreObj.white;
         me.blackPlayerScoreEl.innerHTML = scoreObj.black;
+
+
     }
 });

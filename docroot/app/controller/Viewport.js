@@ -291,5 +291,10 @@ Ext.define('Rvrsit.controller.Viewport', {
     },
     reportMoveToServer : function(data) {
 
+    },
+    isMyTurn : function() {
+        var token = this.gameToken;
+
+
     }
 });

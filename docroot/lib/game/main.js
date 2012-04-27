@@ -182,11 +182,10 @@ MyGame = ig.Game.extend({
         if (! Ext.os.is.Desktop) {
             this.iosFx.init();
         }
-
     },
 
     newGame   : function() {
-        console.log('newGame called')
+        console.log('newGame called');
         var me = this,
             myChips = this.allChips;
 
@@ -200,7 +199,7 @@ MyGame = ig.Game.extend({
 
         me.swapTurn();
         me.calcScore();
-        me.playSound('newGame');
+//        me.playSound('newGame');
 
         me.halt = false;
     },

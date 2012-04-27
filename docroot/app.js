@@ -105,9 +105,9 @@ Ext.application({
     },
 
     processMessages : function(envelope) {
-       var me = this,
-           messages = envelope.messages,
-           messageIds = [];
+        var me = this,
+            messages = envelope.messages,
+            messageIds = [];
 
         if (messages.length < 1) {
             return;
@@ -117,17 +117,18 @@ Ext.application({
             messageIds[i] = msg.messageId
         });
 
-        me.fireEvent('messagesreceived', messages);
-
         me.rpc({
-            method : 'ackMessages',
-            params : {
+            method  : 'ackMessages',
+            params  : {
                 messages : Ext.encode(messageIds)
             },
             success : function() {
                 console.log(messageIds.join(), 'acknowledge');
             }
         });
+
+
+        me.fireEvent('messagesreceived', messages);
     },
 
 
@@ -173,5 +174,8 @@ Ext.application({
                 window.location.reload();
             }
         );
+    },
+    isMyTurn : function() {
+        return this.getController('Viewport').isMyTurn(me.getUser());
     }
 });
