@@ -20,7 +20,6 @@ exports = {
 
         wrapperObj[callerFn] = resp;
 
-        console.log('isAuthenticated ' + callerFn);
 
         if ( ! res.data.player || ! (cookie = res.data.player.cookie) ) {
             Json.failure(wrapperObj);
@@ -33,6 +32,9 @@ exports = {
         if (! existing) {
             Json.failure(wrapperObj);
         }
+
+
+        console.log('isAuthenticated ' + callerFn + ' playerId :: ' + existing.playerId);
 
         this.updateSession(existing);
 

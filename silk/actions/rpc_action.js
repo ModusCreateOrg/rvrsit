@@ -1,10 +1,4 @@
-/**
- * Created by JetBrains WebStorm.
- * Player: mschwartz
- * Date: 2/4/12
- * Time: 8:59 AM
- * To change this template use File | Settings | File Templates.
- */
+
 
 console = require('builtin/console');
 
@@ -155,6 +149,7 @@ rpcMethods = {
             gameToken      : Util.md5(firstPlayerId + secondPlayerId + now),
             status         : 0,
             lastUpdate     : now,
+            data           : Json.encode([]),
             currentPlayer  : firstPlayerId
         });
 
@@ -178,6 +173,8 @@ rpcMethods = {
             message     : Json.encode(game),
             messageDate : Auth.getTime()
         });
+
+        delete game.data;
 
         this.respond({
             game : game
@@ -205,7 +202,7 @@ rpcMethods = {
         Schema.putOne('Messages', {
             playerId    : challengeMessage.secondPlayer.playerId,
             messageType : 'challengeDeclined',
-            message     : challengeMessage,
+            message     : Json.encode(challengeMessage),
             messageDate : Auth.getTime()
         });
 
@@ -213,9 +210,10 @@ rpcMethods = {
     },
 
 
-    recordMove : function() {
+    updateGame : function(endGame) {
         var player = Auth.isAuthenticated(''),
             gameToken = req.data.gameToken,
+            chipData  = Json.decode(req.data.chipData),
             playerId = player.playerId,
             getGameSql = [
                 'Select *',
@@ -224,8 +222,10 @@ rpcMethods = {
                 ' and currentPlayer = ' + playerId
             ].join('');
 
-        console.log(getGameSql);
-        var game = SQL.getDataRow('Games', getGameSql);
+
+        var game = SQL.getDataRow(getGameSql),
+            gameData = game && Json.decode(game.data);
+
 
         if (!game) {
             Json.failure({
@@ -233,9 +233,37 @@ rpcMethods = {
             });
         }
 
+        chipData.playerId = playerId;
+        chipData.turnNumber = gameData.length + 1;
+
+        gameData.push(chipData);
+
+        game.lastUpdate = Auth.getTime();
+        game.currentPlayer = (game.currentPlayer == game.firstPlayerId) ? game.secondPlayerId : game.firstPlayerId;
+        game.data = Json.encode(gameData);
+        game.status = endGame ? 1 : 0;
+
+        Schema.putOne('Games', game);
+
+        delete game.data;
+        var message = {
+            gameToken : game,
+            lastMove  : chipData
+        };
+
+        Schema.putOne('Messages', {
+            playerId    : game.currentPlayer,
+            messageType : 'gameUpdate',
+            message     : Json.encode(message),
+            messageDate : Auth.getTime()
+        });
+
         this.respond(game);
     },
-
+    endGame : function() {
+        req.data.chipData = "{}";
+        this.updateGame(true)
+    },
     respond : function(data) {
         data.dt = Auth.getTime();
 

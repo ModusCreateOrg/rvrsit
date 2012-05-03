@@ -42,11 +42,12 @@ ig.module(
                 }
 
                 if (me.isItemClicked()) {
+//                    debugger;
                     var adjacentChipStacks =  me.getChipStacks();
 
                     if (adjacentChipStacks.length == 0) {
 
-                        game.playSound('badMove');
+//                        game.playSound('badMove');
                         return;
                     }
 
@@ -63,7 +64,7 @@ ig.module(
                     });
 
                     if (window.Rvrsit)  {
-                        Rvrsit.app.fireEvent('chipFlips', {
+                        Rvrsit.app.fireEvent('chipflips', {
                             turnColor   : adjacentChipStacks[0].turnColor,
                             chipItemIds : chipItemIds
                         });
@@ -91,7 +92,7 @@ ig.module(
                 me.wasBlank = true;
             }
 
-            game.playSound(newColor);
+//            game.playSound(newColor);
 
             me.currentAnim = me.anims['flip_' + newColor];
             me.currentAnim.rewind();
@@ -147,7 +148,7 @@ ig.module(
         },
         isItemClicked : function() {
             // TODO: Fix turn checking
-            debugger;
+//            debugger;
             var me       = this,
                 igInput  = ig.input,
                 igMouse  = igInput.mouse,
@@ -219,9 +220,9 @@ ig.module(
 
         processChipStacks : function(color, chipsToFlip) {
 
-            var myItemId    = this.itemId,
-                totalChips  = chipsToFlip.length - 1,
-                duration    = 400;
+            var myItemId   = this.itemId,
+                totalChips = chipsToFlip.length - 1,
+                duration   = 400;
 
             Ext.each(chipsToFlip, function(chip, index) {
                 if (chip.itemId != myItemId) {
@@ -233,7 +234,6 @@ ig.module(
                     duration += 400;
                 }
             });
-
         }
 
     });

@@ -45,7 +45,7 @@ Ext.define('Rvrsit.controller.Viewport', {
             endgame          : 'onAppEndGame',
             winner           : 'onAppWinner',
             userupdate       : 'onAppUserUpdate',
-            chipFlips        : 'onGameChipFlips',
+            chipflips        : 'onGameChipFlips',
             messagesreceived : 'onMessagesReceived'
         });
 
@@ -65,9 +65,32 @@ Ext.define('Rvrsit.controller.Viewport', {
     },
 
     onAppEndGame : function(game, score) {
+        var me = this;
         score.winner = (score.white > score.black) ? 'white' : 'black';
 
-        Ext.Msg.alert('End game!', this.tpls.winner.apply(score));
+        Ext.Msg.alert('End game!', me.tpls.winner.apply(score));
+
+        //TODO : push RPC
+        this.getApplication().rpc({
+            method   : 'endGame',
+            scope    : me,
+            callback : me.onAfterAppEndGame,
+            params   : {
+                gameToken : me.gameToken.gameToken
+            }
+        });
+
+        Rvrsit.game.halt();
+
+    },
+
+    onAfterAppEndGame : function(envelope) {
+        var me = this,
+            myUserId = me.getApplication().getUser().playerId,
+            game = Rvrsit.game;
+
+        //TODO: Finish game
+//        me.gameToken = envelope.message || envelope.game;
     },
 
     onAppNoMoves : function(game, color) {
@@ -77,6 +100,8 @@ Ext.define('Rvrsit.controller.Viewport', {
             this.onAfterNoMovesAlert,
             this
         );
+
+        //TODO : push no moves RPC
     },
 
     onAppSinglePlayer    : function() {
@@ -116,7 +141,7 @@ Ext.define('Rvrsit.controller.Viewport', {
     },
     initSinglePlayerMode : function() {
         var game = Rvrsit.game;
-
+        delete this.gameToken;
         Ext.Msg.alert(
             'Single player mode selected',
             'You will be playing against the computer as the black piece.' +
@@ -153,7 +178,7 @@ Ext.define('Rvrsit.controller.Viewport', {
     onAppPlay : function() {
         // TODO: Get multi-player working!
         this.onAppSinglePlayer();
-        Rvrsit.game.iosInitSounds();
+//        Rvrsit.game.iosInitSounds();
 
         //        var user = this.getApplication().getUser(),
         //            controller = ! user ? 'Register' : 'Authentication';
@@ -170,20 +195,22 @@ Ext.define('Rvrsit.controller.Viewport', {
         Rvrsit.game.forceFlipChips(data);
     },
 
-    onGameChipFlips             : function(data) {
-        // TODO: Get multi-player working!
+    onGameChipFlips : function(data) {
+        console.log('onGameChipFlips', data);
+        var me = this;
 
-        //        if (this.getApplication().user.name == 'Slave') {
-        //            return;
-        //        }
-        //        console.log('onGameChipFlips', data);
-        //        this.getApplication().rpc('updateGame', {
-        //            params : {
-        //                id       : 1,
-        //                user     : Ext.encode(this.user),
-        //                chipData : Ext.encode(data)
-        //            }
-        //        })
+        me.getApplication().rpc({
+            method : 'updateGame',
+            params : {
+                chipData  : Ext.encode(data),
+                gameToken : me.gameToken && me.gameToken.gameToken
+            },
+            scope : me,
+            success : me.onAfterUpdateGame
+        });
+    },
+    onAfterUpdateGame : function(gameToken) {
+        Ext.apply(this.gameToken, gameToken);
     },
     initDoubleRemoteMode        : function() {
         this.getApplication().rpc({
@@ -200,8 +227,10 @@ Ext.define('Rvrsit.controller.Viewport', {
     onMessagesReceived : function(messages) {
         var me = this,
             methodMatrix = {
-                challenge : 'handleChallenge',
-                gameStart : 'handleGameStart'
+                challenge        : 'handleChallenge',
+                gameStart        : 'handleGameStart',
+                gameUpdate       : 'handleGameUpdate',
+                declineChallenge : 'handleDeclineChallenge'
             },
             method;
 
@@ -238,12 +267,14 @@ Ext.define('Rvrsit.controller.Viewport', {
             ],
 
             fn : function(btn) {
-                if (btn == 'yes') {
-                    me.acceptChallenge(envelope, true);
-                }
-                else {
-                    me.declineChallenge(envelope);
-                }
+                Ext.Function.defer(function() {
+                    if (btn == 'yes') {
+                        me.acceptChallenge(envelope, true);
+                    }
+                    else {
+                        me.declineChallenge(envelope);
+                    }
+                }, 500);
             }
         });
     },
@@ -264,6 +295,9 @@ Ext.define('Rvrsit.controller.Viewport', {
     acceptChallenge : function(envelope) {
 //        debugger;
         var me = this;
+        if (me.gameToken) {
+            return;
+        }
 
         me.getApplication().rpc({
             method : 'acceptChallenge',
@@ -289,12 +323,33 @@ Ext.define('Rvrsit.controller.Viewport', {
             }
         });
     },
-    reportMoveToServer : function(data) {
 
+    isMyTurn : function(myUser) {
+       return myUser.playerId == this.gameToken.currentPlayer;
     },
-    isMyTurn : function() {
-        var token = this.gameToken;
 
+    handleGameUpdate : function(envelope) {
+//        debugger;
+        var me = this,
+            message = envelope.message,
+            lastMove = message.lastMove;
+
+        if (message.gameToken.status === 1) {
+            Rvrsit.game.halt();
+            delete me.gameToken;
+            return;
+        }
+
+        Ext.apply(me.gameToken, message.gameToken);
+
+        console.log('>> getMessages', lastMove);
+
+        var game = Rvrsit.game;
+
+        Ext.each(lastMove, function(move) {
+            console.log(move.turnColor, move.chipItemIds);
+            game.forceFlipChips(move);
+        });
 
     }
 });

@@ -63,7 +63,7 @@ Ext.define('silk.Heartbeat', {
                 keys.push(key);
                 methods.push(queue[key].method);
             }
-            console.log('HB :: ' + Math.floor(new Date().getTime() / 1000))
+//            console.log('HB :: ' + Math.floor(new Date().getTime() / 1000))
             Ext.Ajax.request({
                 url      : me.url,
                 scope    : me,

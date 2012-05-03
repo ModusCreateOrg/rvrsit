@@ -35,9 +35,18 @@ Ext.define('Rvrsit.controller.ScoreCard', {
     },
 
     onAppScoreUpdate : function(game, scoreObj) {
+
         var me = this,
             gameToken = me.getApplication().getController('Viewport').gameToken;
 
+        //override the score object from the game
+        if (gameToken) {
+            Rvrsit.game.turn = (gameToken.currentPlayer == gameToken.firstPlayer.playerId)  ? 'black' : 'white';
+        }
+
         me.getScorecard().updateScore(scoreObj, gameToken);
+        if (scoreObj.total == 100) {
+            me.getApplication().fireEvent('endgame', scoreObj);
+        }
     }
 });

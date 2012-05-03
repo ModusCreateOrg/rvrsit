@@ -125,8 +125,7 @@ Ext.define('Rvrsit.view.ScoreCard', {
     },
 
     updateScore : function(scoreObj, token) {
-        console.log('score update', scoreObj);
-        debugger;
+//        console.log('score update', scoreObj, token);
 
         var me = this,
             turnOpposites = this.getTurnOpposites(),
@@ -148,17 +147,23 @@ Ext.define('Rvrsit.view.ScoreCard', {
             me.playerTurnIndicator.replaceCls(turnOpposites[scoreObj.turn], 'tile-' + scoreObj.turn);
         }
         else {
-            var tmpTurn = (token.currentPlayer == 2) ? 'black' : 'white',
-                currentPlayerName = (token.currentPlayer == token.firstPlayer.playerId) ? token.firstPlayer.name : token.secondPlayer.name;
-
-
-            me.playerTurnLabel.innerHTML    = currentPlayerName;
-            me.playerTurnIndicator.replaceCls(turnOpposites[scoreObj.turn], 'tile-' + tmpTurn);
+            me.forceTitleUpdate(token)
         }
 
         me.whitePlayerScoreEl.innerHTML = scoreObj.white;
         me.blackPlayerScoreEl.innerHTML = scoreObj.black;
+    },
+    forceTitleUpdate : function(token) {
+//        debugger;
 
+        var me = this,
+            turnOpposites = this.getTurnOpposites(),
+            isFirstPlayer = (token.currentPlayer == token.firstPlayer.playerId),
+            turnColor = isFirstPlayer ? 'black' : 'white',
+            currentPlayerName = isFirstPlayer ? token.firstPlayer.name : token.secondPlayer.name;
+
+        me.playerTurnLabel.innerHTML = currentPlayerName;
+        me.playerTurnIndicator.replaceCls(turnOpposites[turnColor], 'tile-' + turnColor);
 
     }
 });

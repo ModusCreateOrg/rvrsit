@@ -115,7 +115,7 @@ MyGame = ig.Game.extend({
     init          : function() {
         var me = this;
 
-        me.initSound();
+//        me.initSound();
         me.initSettings();
 
         me.loadLevel(LevelMain);
@@ -201,7 +201,7 @@ MyGame = ig.Game.extend({
         me.calcScore();
 //        me.playSound('newGame');
 
-        me.halt = false;
+        me.halted = false;
     },
 
     update    : function() {
@@ -251,7 +251,7 @@ MyGame = ig.Game.extend({
 
                 color = ((xIndex + yIndex) % 2) ? black : white;
                 visible = ((xIndex == 4 || xIndex == 5) && (yIndex == 4 || yIndex == 5));
-                itemId = 'ogp-' + xIndex + '-' + yIndex;
+                itemId =  xIndex + '-' + yIndex;
 
                 chip = ig.game.spawnEntity(EntityChip, x, y, {
                     color  : visible ? color : visible,
@@ -369,32 +369,31 @@ MyGame = ig.Game.extend({
         }
     },
     setConnections          : function(chip, position, x, y) {
-        var itemId,
-            ogp = 'ogp-';
+        var itemId;;
 
         if (position === 'e') {
-            itemId = ogp + (x + 1 ) + '-' + y;
+            itemId = (x + 1 ) + '-' + y;
         }
         else if (position == 'se') {
-            itemId = ogp + (x + 1) + '-' + (y + 1);
+            itemId = (x + 1) + '-' + (y + 1);
         }
         else if (position == 's') {
-            itemId = ogp + x + '-' + (y + 1);
+            itemId = x + '-' + (y + 1);
         }
         else if (position == 'sw') {
-            itemId = ogp + (x - 1) + '-' + (y + 1);
+            itemId = (x - 1) + '-' + (y + 1);
         }
         else if (position == 'w') {
-            itemId = ogp + (x - 1) + '-' + y;
+            itemId = (x - 1) + '-' + y;
         }
         else if (position == 'nw') {
-            itemId = ogp + (x - 1) + '-' + (y - 1);
+            itemId = (x - 1) + '-' + (y - 1);
         }
         else if (position == 'ne') {
-            itemId = ogp + (x + 1) + '-' + (y - 1);
+            itemId = (x + 1) + '-' + (y - 1);
         }
         else if (position == 'n') {
-            itemId = ogp + x + '-' + (y - 1);
+            itemId = x + '-' + (y - 1);
         }
 
         chip.connections[position] = this.allChips[itemId];
@@ -431,7 +430,8 @@ MyGame = ig.Game.extend({
         return {
             turn  : this.turn,
             white : whiteScore,
-            black : blackScore
+            black : blackScore,
+            total : whiteScore + blackScore
         }
     },
     calcScore               : function() {
@@ -441,6 +441,7 @@ MyGame = ig.Game.extend({
     },
 
     playSound : function(sound) {
+        return;
         var me         = this,
             soundToPlay = Ext.os.is.Desktop ? me.sounds[sound] : me.iosFx;
 
@@ -546,7 +547,7 @@ MyGame = ig.Game.extend({
             // are all chips visible?
             if (numVisibleChips == me.boardSize) {
                 // if so, calc score  & end game!
-                me.halt = true;
+                me.halted = true;
                 window.Rvrsit && Rvrsit.app.fireEvent('endgame', this, this.getScore());
                 return;
             }
@@ -556,7 +557,7 @@ MyGame = ig.Game.extend({
                 // if so, end game
                 if (score.white == 0 || score.black == 0) {
                     app.fireEvent('winner', this, currentTurn, score[currentTurn]);
-                    me.halt = true;
+                    me.halted = true;
                     return;
                 }
                 app.fireEvent('nomoves', this, currentTurn);
@@ -564,11 +565,10 @@ MyGame = ig.Game.extend({
 
         }
 
-        if (me.halt) {
+        if (me.halted) {
             return;
         }
 
-        console.log(computerColor);
         if (currentTurn != computerColor || this.mode != 'single') {
             return;
         }
@@ -626,7 +626,8 @@ MyGame = ig.Game.extend({
             stacks;
 
         color = me.turn;
-
+        // Yes this code stack is not pretty!
+        // TODO : optimize!
         for (itemId in visChips) {
             visibleChip = visChips[itemId];
             if (visibleChip.color != color) {
@@ -651,10 +652,13 @@ MyGame = ig.Game.extend({
         return nextMoves;
 
     },
+    halt : function() {
+        this.halted = true;
+    },
     playSelf      : function() {
-        //            if (this.halt) {
-        //                return;
-        //            }
+        if (this.halted) {
+            return;
+        }
         var fn = Ext.Function.bind(function() {
             this.nextMove();
             setTimeout(fn, 1500);
@@ -663,18 +667,18 @@ MyGame = ig.Game.extend({
     },
     forceFlipChips : function(data) {
 //        console.log('forceFlipChips', data);
-        var me         = this,
-            totalChips = data.chipItemIds.length,
-            duration   = 400,
-            color      = data.turnColor,
-            allChips   = me.allChips,
-            itemIds    = data.chipItemIds,
+        var me          = this,
+            chipItemIds = data.chipItemIds,
+            totalChips  = chipItemIds.length,
+            duration    = 5,
+            color       = data.turnColor,
+            allChips    = me.allChips,
             chip;
 
         me.wasClicked = true;
 //        this.isFlipping = true;
 
-        Ext.each(itemIds, function(itemId, index) {
+        Ext.each(chipItemIds, function(itemId, index) {
             chip = allChips[itemId];
 //            console.log('chip', chip);
             if (index == totalChips) {
@@ -683,7 +687,7 @@ MyGame = ig.Game.extend({
 
             var fn = Ext.Function.bind(chip.startFlip, chip, [color]);
             setTimeout(fn, duration);
-            duration += 400;
+            duration += 5;
         });
 
     }

@@ -22,7 +22,7 @@ Schema.add({
         { name : 'gameToken', type : 'varchar', size : 128 },
         { name : 'lastUpdate', type : 'int'},
         { name : 'currentPlayer', type : 'int' },
-        { name : 'data', type : 'varchar', size : 1024 },
+        { name : 'data', type : 'longtext'},
         { name : 'status', type : 'int' },
         { name : 'firstPlayerId', type : 'int' },
         { name : 'secondPlayerId', type : 'int' },
@@ -53,7 +53,7 @@ Schema.add({
 Schema.add({
     name       : 'Messages',
     primaryKey : 'messageId',
-    //    engine : 'memory',
+    engine     : 'memory',
     fields     : [
         {
             name          : 'messageId',
@@ -66,8 +66,7 @@ Schema.add({
         },
         {
             name : 'message',
-            type : 'varchar',
-            size : 1024
+            type : 'longtext'
         },
         {
             name : 'messageDate',
