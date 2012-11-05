@@ -136,7 +136,7 @@ Ext.define('Rvrsit.controller.Authentication', {
             opponent = list.getSelection()[0];
 
         if (!opponent || list.getStore().getCount() < 1) {
-            console.info('no opponent!');
+//            console.info('no opponent!');
             return;
         }
 

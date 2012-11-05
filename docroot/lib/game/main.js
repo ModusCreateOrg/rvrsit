@@ -7,10 +7,12 @@ ig.module(
 
     'game.entities.chip',
     'game.levels.main'
+//    'impact.debug.debug'
+
 )
 .defines(function() {
 
-var SoundSprite = function(src, schedule) {
+SoundSprite = function(src, schedule) {
     var me = this;
     me.src = src;
     me.schedule = schedule;
@@ -19,7 +21,6 @@ var SoundSprite = function(src, schedule) {
 
 SoundSprite.prototype = {
     currentIndex : 0,
-    numSounds : 2,
     setVolume : function(volume) {
         this.audio.volume = volume;
     },
@@ -47,26 +48,36 @@ SoundSprite.prototype = {
         src = me.src.match(/^(.*)\.[^\.]+$/)[1] + '.' + this.format.ext + ig.nocache;
 
         me.audio = audio;
+        audio.volume = 0;
         audio.src = src;
 
         audio.volume = 0;
         audio.play();
-        audio.addEventListener('timeupdate', Ext.Function.bind(me.onAudioTimeUpdate, me));
-
         Ext.Function.defer(function() {
+//            console.log('pausing');
             audio.pause();
             audio.volume = .5;
-        },250);
+        },1);
+        audio.volume = 0;
+
+        audio.addEventListener('timeupdate', Ext.Function.bind(me.onAudioTimeUpdate, me));
+
+
+
+
     },
 
-    play : function(sound) {
+    playSound : function(sound) {
+//        return;
         var me     = this,
             region = me.schedule[sound],
             audio  = me.audio;
 
-        if (audio.currentTime > 0) {
-            audio.pause();
-        }
+        console.log('playing', sound, region);
+
+        audio.pause();
+        audio.currentTime = 0;
+
         audio.currentTime = region[0];
         me.endTime = region[1];
 
@@ -76,9 +87,11 @@ SoundSprite.prototype = {
         var me = this,
             audio = me.audio;
 
+        console.log(evt);
+        console.log(audio.currentTime, me.endTime);
         if (me.endTime && audio.currentTime > me.endTime) {
             audio.pause();
-            delete me.endTime;
+            audio.currentTime = 0;
         }
     }
 };
@@ -88,30 +101,30 @@ MyGame = ig.Game.extend({
     soundRoot     : 'media/',
     computerColor : 'white',
     turn          : 'black',
+    isDesktop     : Ext.os.is.Desktop,
     mode          : 'double', // two player
     sounds        : {
         badMove : 'bad_move.mp3',
         newGame : 'new_game.mp3',
         white   : 'chip_flip_white.mp3',
         black   : 'chip_flip_black.mp3'
-
     },
     iosFx : {
-        newGame : [0, .324],
+        newGame : [0, .422],
         badMove : [.751, .980],
         white   : [1.48, 1.6],
         black   : [2.061, 3]
     },
-//    music         : [
-//        {
-//            name : 'Truepianos',
-//            song : 'Truepianos.caff'
-//        },
-//        {
-//            name : 'TweakRAM',
-//            song : 'SnD_TweakRAM.caff'
-//        }
-//    ],
+    music         : [
+        {
+            name : 'Truepianos',
+            song : 'Truepianos.caff'
+        },
+        {
+            name : 'TweakRAM',
+            song : 'SnD_TweakRAM.caff'
+        }
+    ],
     init          : function() {
         var me = this;
 
@@ -135,7 +148,7 @@ MyGame = ig.Game.extend({
         var me = this,
             soundRoot = me.soundRoot,
             settings = me.getSettings(),
-            isDesktop = Ext.os.is.Desktop,
+            isDesktop = me.isDesktop,
             fxRoot,
             musicRoot;
 
@@ -148,6 +161,7 @@ MyGame = ig.Game.extend({
                 name;
 
             if ( isDesktop ) {
+                console.log('initialized desktkop sounds!');
                 for (name in this.sounds) {
                     sound = new ig.Sound(fxRoot + sounds[name], true);
                     sound.volume = settings.fx;
@@ -162,27 +176,30 @@ MyGame = ig.Game.extend({
             me.fxInitialized = true;
         }
 //
-//        if (isDesktop && settings.music > 0 && !me.musicInitialized) {
-//            musicRoot = soundRoot + 'music/';
-//
-//            Ext.each(this.music, function(song) {
-//                ig.music.add(new ig.Sound(musicRoot + song.song));
-//            });
-//
-//            ig.music.volume = settings.music || .5;
-//            ig.music.random = true;
-//
-//            ig.music.play();
-//
-//            me.musicInitialized = true;
-//        }
+        if (isDesktop && settings.music > 0 && !me.musicInitialized) {
+            musicRoot = soundRoot + 'music/';
+
+            Ext.each(this.music, function(song) {
+                ig.music.add(new ig.Sound(musicRoot + song.song));
+            });
+
+            ig.music.volume = settings.music || .5;
+            ig.music.random = true;
+
+            ig.music.play();
+
+            me.musicInitialized = true;
+        }
     },
 
-    iosInitSounds : function() {
-        if (! Ext.os.is.Desktop) {
+    initIosSounds : function() {
+        var me = this;
+        if (! me.isDesktop) {
+            this.initSound();
             this.iosFx.init();
         }
     },
+
 
     newGame   : function() {
         console.log('newGame called');
@@ -199,8 +216,11 @@ MyGame = ig.Game.extend({
 
         me.swapTurn();
         me.calcScore();
-//        me.playSound('newGame');
 
+        if (me.isDesktop) {
+            me.playSound('newGame');
+
+        }
         me.halted = false;
     },
 
@@ -441,17 +461,23 @@ MyGame = ig.Game.extend({
     },
 
     playSound : function(sound) {
-        return;
-        var me         = this,
-            soundToPlay = Ext.os.is.Desktop ? me.sounds[sound] : me.iosFx;
+        var me = this,
+            soundToPlay;
+
+        if (! me.isDesktop) {
+            return;
+        }
 
         if (me.getSetting('fx')) {
-
             if (!me.fxInitialized) {
                 this.initSound();
             }
-//            console.log('playing sound: ' + sound);
-            soundToPlay.play(sound);
+            if (me.isDesktop) {
+                me.sounds[sound].play(sound);
+            }
+            else {
+                me.iosFx.playSound(sound);
+            }
         }
     },
 
@@ -692,4 +718,12 @@ MyGame = ig.Game.extend({
 
     }
 });
+
+    if (window.debug) {
+        ig.main('#canvas', MyGame, 30, 548, 548, 1);
+
+        setTimeout(function() {
+            window.game.newGame();
+        }, 500)
+    }
 });

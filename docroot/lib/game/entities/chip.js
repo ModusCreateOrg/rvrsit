@@ -47,7 +47,7 @@ ig.module(
 
                     if (adjacentChipStacks.length == 0) {
 
-//                        game.playSound('badMove');
+                        game.playSound('badMove');
                         return;
                     }
 
@@ -92,7 +92,7 @@ ig.module(
                 me.wasBlank = true;
             }
 
-//            game.playSound(newColor);
+            game.playSound(newColor);
 
             me.currentAnim = me.anims['flip_' + newColor];
             me.currentAnim.rewind();

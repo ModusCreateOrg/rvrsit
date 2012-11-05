@@ -40,6 +40,9 @@ Ext.application({
 
     onGameInitialized : function(game) {
         Rvrsit.game = this.game = game;
+//        if (Ext.os.isDesktop) {
+//            Ext.Msg.alert('', 'Welcome to Rvrsit!', game.initIosSounds, game);
+//        }
         this.getMessages();
     },
     startHeartbeat : function() {
@@ -70,27 +73,11 @@ Ext.application({
                 scope    : this,
                 method   : 'getMessages',
                 params   : function() {
-//                    var data = Ext.clone(me.user);
-//                    data.status = game && game.halt ? 'halt' : 'playing';
-                    //                        console.log('params', data);
                     return Ext.clone(me.user);
                 },
                 success : function(data) {
-//                    if (me.user.name == 'Slave') {
-//                        console.log('>> getMessages', turns);
-//
-//                        var game = Rvrsit.game;
-//                        if (!game) {
-//                            return;
-//                        }
-//                        Ext.each(turns, function(turn) {
-//                            console.log(turn.turnColor, turn.chipItemIds);
-//                            game.forceFlipChips(turn);
-//                        });
-//                    }
                     me.processMessages(data);
                     me.getMessages();
-
                 },
                 failure : function(data) {
 //                    debugger;
@@ -100,7 +87,6 @@ Ext.application({
                     }
                 }
             });
-
         }
     },
 
@@ -108,6 +94,11 @@ Ext.application({
         var me = this,
             messages = envelope.messages,
             messageIds = [];
+
+//        debugger;
+        if (envelope.you) {
+            me.setUser(Ext.decode(envelope.you));
+        }
 
         if (messages.length < 1) {
             return;
