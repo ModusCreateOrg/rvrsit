@@ -19,7 +19,7 @@
      */
     "js": [
         {
-            "path": "impactjs/game.min.js",
+            "path": "game.min.js",
             "update": "delta"
         },
         {
