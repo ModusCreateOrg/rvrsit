@@ -1,3 +1,4 @@
+//
 Ext.define('Rvrsit.controller.ScoreCard', {
     extend : 'Ext.app.Controller',
 
@@ -13,8 +14,10 @@ Ext.define('Rvrsit.controller.ScoreCard', {
         },
         control : {
             'scorecard' : {
-                play     : 'onScoreCardPanelPlay',
-                settings : 'onScoreCardPanelSettings'
+                solo     : 'onScoreCardPanelSolo',
+                online   : 'onScoreCardPanelOnline',
+                settings : 'onScoreCardPanelSettings',
+                login    : 'onLogin'
             }
         }
     },
@@ -26,12 +29,42 @@ Ext.define('Rvrsit.controller.ScoreCard', {
         });
     },
 
-    onScoreCardPanelPlay : function() {
-        this.getApplication().fireEvent('play');
+    onScoreCardPanelSolo : function() {
+        this.getApplication().fireEvent('singleplayer');
+    },
+
+    onScoreCardPanelOnline : function() {
+        this.getApplication().fireEvent('online');
     },
 
     onScoreCardPanelSettings : function() {
         this.getApplication().fireEvent('settings');
+    },
+
+    onLogin : function() {
+        var app = this.getApplication();
+        if (app.user) {
+            // do logout
+            app.user = null;
+            Ext.get('login-button').setHtml('Log In');
+            Ext.get('register-button-wrap').setVisibility(true);
+        }
+        else {
+            app.getController('Authentication').showView();
+        }
+
+        return;
+        var el = Ext.get('login-button');
+        if (el) {
+            if (el.getHtml() === 'Log In') {
+                el.setHtml('Log Out');
+            }
+            else {
+                el.setHtml('Log In');
+            }
+        }
+//        console.log(Ext.get('login-button').getHtml());
+//        Ext.get('login-button').setHtml('Log Out');
     },
 
     onAppScoreUpdate : function(game, scoreObj) {

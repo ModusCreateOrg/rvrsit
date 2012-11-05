@@ -53,7 +53,7 @@ Schema.add({
 Schema.add({
     name       : 'Messages',
     primaryKey : 'messageId',
-    engine     : 'memory',
+//    engine     : 'memory',
     fields     : [
         {
             name          : 'messageId',

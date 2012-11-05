@@ -10,7 +10,7 @@ Ext.define('Rvrsit.view.Authentication', {
         centered      : true,
         hideOnMaskTap : false,
         user          : false,
-        height        : 185,
+        height        : 225, // 185,
         width         : 400,
         layout        : 'card',
         showAnimation : {
@@ -78,7 +78,8 @@ Ext.define('Rvrsit.view.Authentication', {
     buildForm : function() {
         return {
             xtype  : 'formpanel',
-            layout : 'fit',
+//            layout : 'fit',
+//            height: 185,
             items  : {
                 xtype : 'fieldset',
                 items : [

@@ -3,12 +3,13 @@ Config.numChildren = 20;
 Config.port = 9090;
 Config.mysql = {
 	host: 'localhost',
-	user: 'root',
+	user: 'mschwartz',
 	passwd: '',
 	db: 'othello'
 };
 
 
+MySQL = require('MySQL').MySQL;
 Server = require('Server');
 Schema = require('Schema');
 

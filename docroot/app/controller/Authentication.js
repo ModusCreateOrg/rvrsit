@@ -85,11 +85,11 @@ Ext.define('Rvrsit.controller.Authentication', {
             app = this.getApplication(),
             view = me.view;
 
-        if (!data.success) {
-            app.fireEvent('userupdate', null);
-        }
+//        if (!data.success) {
+//            app.fireEvent('userupdate', null);
+//        }
 
-        if (view) {
+        if (app.user) {
             me.onRefreshList();
         }
         else {

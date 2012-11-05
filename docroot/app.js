@@ -2,6 +2,7 @@
 Ext.Loader.setPath({
     'Ext' : 'sdk/src'
 });
+Ext.Loader.setConfig({ disableCaching: false });
 //</debug>
 
 Ext.application({
@@ -61,6 +62,10 @@ Ext.application({
             game = Rvrsit.game;
 
         me.user = me.getUser();
+        if (me.user) {
+            Ext.get('login-button').setHtml('Log Out');
+            Ext.get('register-button-wrap').setVisibility(false);
+        }
         if (me.user && ! game.halted) {
 
             if (! me.heartbeatStarted) {

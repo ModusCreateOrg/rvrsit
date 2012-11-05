@@ -36,67 +36,28 @@ Ext.define('Rvrsit.controller.Viewport', {
         });
 
         me.getApplication().on({
-            scope            : me,
-            play             : 'onAppPlay',
-            settings         : 'onAppSettings',
-            singleplayer     : 'onAppSinglePlayer',
-            setting          : 'onAppSettingsChange',
-            nomoves          : 'onAppNoMoves',
-            endgame          : 'onAppEndGame',
-            winner           : 'onAppWinner',
-            userupdate       : 'onAppUserUpdate',
-            chipflips        : 'onGameChipFlips',
-            messagesreceived : 'onMessagesReceived'
+            scope: me,
+            login: 'onLogin',
+            online: 'onAppOnlinePlay',
+            settings: 'onAppSettings',
+            singleplayer: 'onAppSinglePlayer',
+            setting: 'onAppSettingsChange',
+            nomoves: 'onAppNoMoves',
+            endgame: 'onAppEndGame',
+            winner: 'onAppWinner',
+            userupdate: 'onAppUserUpdate',
+            chipflips: 'onGameChipFlips',
+            messagesreceived: 'onMessagesReceived'
         });
 
         me.callParent();
-//
-//        Ext.Viewport.add({
-//            xtype  : 'panel',
-//            centered : true,
-//            modal : true,
-//            height : 300,
-//            width  : 300,
-//            items  : [
-//                {
-//                    xtype   : 'button',
-//                    text    : 'init',
-//                    handler : function() {
-//                        Rvrsit.game.initIosSounds();
-//                    }
-//                },
-//                {
-//                    xtype   : 'button',
-//                    text    : 'newGame',
-//                    handler : function() {
-//                        Rvrsit.game.playSound('newGame');
-//                    }
-//                },
-//                {
-//                    xtype   : 'button',
-//                    text    : 'black',
-//                    handler : function() {
-//                        Rvrsit.game.playSound('black');
-//                    }
-//                },
-//                {
-//                    xtype   : 'button',
-//                    text    : 'white',
-//                    handler : function() {
-//                        Rvrsit.game.playSound('white');
-//
-//                    }
-//                },
-//                {
-//                    xtype   : 'button',
-//                    text    : 'badMove',
-//                    handler : function() {
-//                        Rvrsit.game.playSound('badMove');
-//
-//                    }
-//                }
-//            ]
-//        }).show();
+    },
+
+    onLogin: function() {
+        this.getApplication().getController('scoreCard').hideLogin();
+    },
+    onLogout: function() {
+        this.getApplication().getController('scoreCard').showLogin();
     },
 
     onAppSettingsChange : function(field, setting, value) {
@@ -155,39 +116,6 @@ Ext.define('Rvrsit.controller.Viewport', {
         var me = this,
             game = Rvrsit.game;
 
-        Ext.Msg.show({
-            title   : 'Choose game mode:',
-            buttons : [
-                {
-                    itemId : 'yes',
-                    text   : '1 Player'
-                },
-                {
-                    itemId : 'no',
-                    text   : '2 Player (local)'
-                },
-                {
-                    itemId : 'cancel',
-                    text   : '2 Player (internet)'
-                }
-            ],
-            fn      : function(btn) {
-                if (btn == 'yes') {
-                    me.initSinglePlayerMode();
-                }
-                else if (btn == 'no') {
-                    game.setMode('double local');
-                    game.newGame();
-                }
-                else if (btn == 'cancel') {
-                    me.initDoubleRemoteMode();
-                    //                    game.newGame();
-                }
-            }
-        });
-    },
-    initSinglePlayerMode : function() {
-        var game = Rvrsit.game;
         delete this.gameToken;
         Ext.Msg.alert(
             'Single player mode selected',
@@ -221,11 +149,6 @@ Ext.define('Rvrsit.controller.Viewport', {
         app.getMessages();
     },
 
-    onAppPlay : function() {
-        // TODO: Get multi-player working!
-        this.onAppSinglePlayer();
-    },
-
     onSoundCycle : function(btn) {
         ig.music.stop();
         localStorage.setItem('music', 'off');
@@ -257,16 +180,17 @@ Ext.define('Rvrsit.controller.Viewport', {
     onAfterUpdateGame           : function(gameToken) {
         Ext.apply(this.gameToken, gameToken);
     },
-    initDoubleRemoteMode        : function() {
-        this.getApplication().rpc({
-            method   : 'listAvailablePlayers',
-            scope    : this,
-            callback : this.onAfterInitDoubleRemoteMode
-        });
-    },
-    onAfterInitDoubleRemoteMode : function(data) {
-        this.getApplication().getController('Authentication').showView(data);
-        //        console.log('available users', data);
+
+
+
+    onAppOnlinePlay : function() {
+        var app = this.getApplication();
+        if (!app.user) {
+            Ext.Msg.alert('Info', 'Log In first.');
+//            app.getController('Authentication').showView();
+        }
+
+//        this.getApplication().getController('Authentication').showView();
     },
 
     onMessagesReceived : function(messages) {
