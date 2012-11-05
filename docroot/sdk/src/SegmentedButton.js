@@ -29,7 +29,7 @@
  *             }
  *         }
  *     });
- *     Ext.Viewport.add(segmentedButton);
+ *     Ext.Viewport.add({ xtype: 'container', padding: 10, items: [segmentedButton] });
  *
  */
 Ext.define('Ext.SegmentedButton', {

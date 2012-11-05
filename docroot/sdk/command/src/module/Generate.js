@@ -31,12 +31,12 @@ Ext.define('Command.module.Generate', {
         profile: [
             "Generate a Profile for an existing project",
             ['name', 'n', 'The name of the Profile to create', 'string', null, 'Phone']
-        ],
-        form: [
-            "Generate a Form for an existing project",
-            ['name', 'n', 'The name of the Form to create', 'string', null, 'User'],
-            ['fields', 'f', 'The set of fields to add to the Form', 'string', null, 'name:string,email:email,message:string']
         ]
+        // form: [
+        //     "Generate a Form for an existing project",
+        //     ['name', 'n', 'The name of the Form to create', 'string', null, 'User'],
+        //     ['fields', 'f', 'The set of fields to add to the Form', 'string', null, 'name:string,email:email,message:string']
+        // ]
     },
 
     /**

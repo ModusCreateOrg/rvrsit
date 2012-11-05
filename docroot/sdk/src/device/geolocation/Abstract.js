@@ -2,8 +2,6 @@
  * @private
  */
 Ext.define('Ext.device.geolocation.Abstract', {
-    extend: 'Ext.Evented',
-
     config: {
         /**
          * @cfg {Number} maximumAge
@@ -14,7 +12,7 @@ Ext.define('Ext.device.geolocation.Abstract', {
         maximumAge: 0,
 
         /**
-         * @cfg {Number} frequency The default frequency to get the current position when using {@link #watchPosition}.
+         * @cfg {Number} frequency The default frequency to get the current position when using {@link Ext.device.Geolocation#watchPosition}.
          */
         frequency: 10000,
 
@@ -33,51 +31,50 @@ Ext.define('Ext.device.geolocation.Abstract', {
     /**
      * Attempts to get the current position of this device.
      *
-     * Ext.device.Geolocation.getCurrentPosition({
-     *     success: function(position) {
-     *         console.log(position);
-     *     },
-     *     failure: function() {
-     *         Ext.Msg.alert('Geolocation', 'Something went wrong!');
-     *     }
-     *  });
+     *     Ext.device.Geolocation.getCurrentPosition({
+     *         success: function(position) {
+     *             console.log(position);
+     *         },
+     *         failure: function() {
+     *             Ext.Msg.alert('Geolocation', 'Something went wrong!');
+     *         }
+     *     });
      *
-     * *Note:* If you want to watch the current position, you could use {@link #watch} instead.
+     * *Note:* If you want to watch the current position, you could use {@link Ext.device.Geolocation#watchPosition} instead.
      *
-     * @cfg {Object} config
+     * @param {Object} config An object which contains the following config options:
      *
-     * @cfg {Function} config.success
+     * @param {Function} config.success
      * The function to call when the location of the current device has been received.
      *
-     * @cfg {Object} config.success.position
+     * @param {Object} config.success.position
      *
-     * @cfg {Function} config.failure
+     * @param {Function} config.failure
      * The function that is called when something goes wrong.
      *
-     * @cfg {Object} config.scope
+     * @param {Object} config.scope
      * The scope of the `success` and `failure` functions.
      *
-     * @cfg {Number} config.maximumAge
+     * @param {Number} config.maximumAge
      * The maximum age of a cached location. If you do not enter a value for this, the value of {@link #maximumAge}
      * will be used.
      *
-     * @cfg {Number} config.timeout
+     * @param {Number} config.timeout
      * The timeout for this request. If you do not specify a value, it will default to {@link #timeout}.
      *
-     * @cfg {Boolean} config.allowHighAccuracy
+     * @param {Boolean} config.allowHighAccuracy
      * True to enable allow accuracy detection of the location of the current device. If you do not specify a value, it will
      * default to {@link #allowHighAccuracy}.
-     *
      */
     getCurrentPosition: function(config) {
         var defaultConfig = Ext.device.geolocation.Abstract.prototype.config;
 
-        config = Ext.applyIf({
+        config = Ext.applyIf(config, {
             maximumAge: defaultConfig.maximumAge,
             frequency: defaultConfig.frequency,
             allowHighAccuracy: defaultConfig.allowHighAccuracy,
             timeout: defaultConfig.timeout
-        }, config);
+        });
 
         // <debug>
         if (!config.success) {
@@ -89,35 +86,44 @@ Ext.define('Ext.device.geolocation.Abstract', {
     },
 
     /**
-     * Watches for the current position and calls the callback when successful depending on the specified frequency.
+     * Watches for the current position and calls the callback when successful depending on the specified {@link #frequency}.
      *
-     * @cfg {Object} config
+     *     Ext.device.Geolocation.watchPosition({
+     *         callback: function(position) {
+     *             console.log(position);
+     *         },
+     *         failure: function() {
+     *             Ext.Msg.alert('Geolocation', 'Something went wrong!');
+     *         }
+     *     });
      *
-     * @cfg {Function} config.callback
+     * @param {Object} config An object which contains the following config options:
+     *
+     * @param {Function} config.callback
      * The function to be called when the position has been updated.
      *
-     * @cfg {Function} config.failure
+     * @param {Function} config.failure
      * The function that is called when something goes wrong.
      *
-     * @cfg {Object} config.scope
+     * @param {Object} config.scope
      * The scope of the `success` and `failure` functions.
      *
-     * @cfg {Boolean} config.frequency
+     * @param {Boolean} config.frequency
      * The frequency in which to call the supplied callback. Defaults to {@link #frequency} if you do not specify a value.
      *
-     * @cfg {Boolean} config.allowHighAccuracy
+     * @param {Boolean} config.allowHighAccuracy
      * True to enable allow accuracy detection of the location of the current device. If you do not specify a value, it will
      * default to {@link #allowHighAccuracy}.
      */
     watchPosition: function(config) {
         var defaultConfig = Ext.device.geolocation.Abstract.prototype.config;
 
-        config = Ext.applyIf({
+        config = Ext.applyIf(config, {
             maximumAge: defaultConfig.maximumAge,
             frequency: defaultConfig.frequency,
             allowHighAccuracy: defaultConfig.allowHighAccuracy,
             timeout: defaultConfig.timeout
-        }, config);
+        });
 
         // <debug>
         if (!config.callback) {
@@ -129,7 +135,7 @@ Ext.define('Ext.device.geolocation.Abstract', {
     },
 
     /**
-     * If you are currently watching for the current position, this will stop that.
+     * If you are currently watching for the current position, this will stop that task.
      */
-    clearWatch: Ext.emptyFn
+    clearWatch: function() {}
 });

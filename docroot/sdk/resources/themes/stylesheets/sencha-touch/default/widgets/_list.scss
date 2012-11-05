@@ -56,8 +56,6 @@ $list-header-bg-color: lighten(saturate($base-color, 10%), 20%) !default;
 /**
  * @var {string} $list-header-gradient
  * Gradient style for list header rows (in grouped lists).
- *
- * See {@link Global_CSS#background-gradient background-gradient}.
  */
 $list-header-gradient: $base-gradient !default;
 
@@ -209,7 +207,7 @@ $list-disclosure-round-size: 1.5em;
     }
 
     .x-list-disclosure {
-      overflow: visible;
+      overflow: hidden;
       -webkit-mask: 0 0 theme_image($theme-name, "disclosure2.png") no-repeat;
       -webkit-mask-size: $list-disclosure-round-size;
       @include background-gradient(lighten(desaturate($base-color, 10), 10));
@@ -323,6 +321,7 @@ $list-disclosure-round-size: 1.5em;
       text-align: center;
       color: $active-color;
       padding-top: 10px;
+      clear: both;
       @if $include-border-radius { @include border-radius(6px); }
     }
 

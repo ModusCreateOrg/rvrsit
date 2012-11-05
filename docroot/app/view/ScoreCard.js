@@ -2,7 +2,7 @@ Ext.define('Rvrsit.view.ScoreCard', {
     extend : 'Ext.Component',
     xtype  : 'scorecard',
     config : {
-        style  : 'background-image: url(impactjs/media/images/new/sidebar_bg.png); background-repeat: no-repeat;',
+        style  : 'background-image: url(media/images/new/sidebar_bg.png); background-repeat: no-repeat;',
 
         turnOpposites : {
             black : 'tile-white',
@@ -58,17 +58,17 @@ Ext.define('Rvrsit.view.ScoreCard', {
                         '</tr>',
                     '</table>',
                 '</div>',
-
-                '<div class="about-pane animated fade-in">',
-                    '<p><strong>This game was designed and built by the team at <a href="http://www.moduscreate.com">Modus Create</a>.</strong></p>',
-                    '<p>We are a highly motivated, interdisciplinary team that believes in lean development, design strategy, and user experience to develop stunning applications with emerging technology.</p>',
-                '</div>',
+//
+//                '<div class="about-pane animated fade-in">',
+//                    '<p><strong>This game was designed and built by the team at <a href="http://www.moduscreate.com">Modus Create</a>.</strong></p>',
+//                    '<p>We are a highly motivated, interdisciplinary team that believes in lean development, design strategy, and user experience to develop stunning applications with emerging technology.</p>',
+//                '</div>',
                 '<div class="button button-touched animated fade-in">',
                     '<div class="btn-title play">Play</div>',
                 '</div>',
-//                '<div class="button button-touched">',
-//                    '<div class="btn-title settings">Settings</div>',
-//                '</div>',
+                '<div class="button button-untouched fade-in">',
+                    '<div class="btn-title settings">Settings</div>',
+                '</div>',
             '</div>'
         ].join('')
     },
@@ -76,7 +76,6 @@ Ext.define('Rvrsit.view.ScoreCard', {
     initialize : function() {
 
         this.callParent();
-
 
         this.element.on({
             tap      : this.onElementTap,
@@ -110,22 +109,30 @@ Ext.define('Rvrsit.view.ScoreCard', {
             this.fireEvent(event, this);
         }
     },
+
     onElementTouchStart : function(evtObj) {
         var target = evtObj.getTarget();
         if (target) {
             Ext.fly(target).replaceCls('button-untouched','button-touched');
         }
     },
+
     onElementTouchEnd : function(evtObj) {
         var target = evtObj.getTarget();
         if (target) {
             Ext.fly(target).replaceCls('button-touched','button-untouched');
         }
     },
-    updateScore : function(scoreObj) {
+
+    updateScore : function(scoreObj, token) {
+//        console.log('score update', scoreObj, token);
+
         var me = this,
             turnOpposites = this.getTurnOpposites(),
-            turnTitleTexts = this.getTurnTitles()[Rvrsit.game.mode];
+            gameModeSplit = Rvrsit.game.mode.split(' ')[0],
+            turnTitleTexts = this.getTurnTitles()[gameModeSplit],
+            turnLabelTxt,
+            turnIndicatorTxt;
 
         if (!me.playerTurnIndicator) {
             var myElement = me.element;
@@ -135,10 +142,28 @@ Ext.define('Rvrsit.view.ScoreCard', {
             me.blackPlayerScoreEl  = myElement.down('.score-keeper-black').dom;
         }
 
-        me.playerTurnIndicator.replaceCls(turnOpposites[scoreObj.turn], 'tile-' + scoreObj.turn);
+        if (! token) {
+            me.playerTurnLabel.innerHTML    = turnTitleTexts[scoreObj.turn];
+            me.playerTurnIndicator.replaceCls(turnOpposites[scoreObj.turn], 'tile-' + scoreObj.turn);
+        }
+        else {
+            me.forceTitleUpdate(token)
+        }
 
-        me.playerTurnLabel.innerHTML    = turnTitleTexts[scoreObj.turn];
         me.whitePlayerScoreEl.innerHTML = scoreObj.white;
         me.blackPlayerScoreEl.innerHTML = scoreObj.black;
+    },
+    forceTitleUpdate : function(token) {
+//        debugger;
+
+        var me = this,
+            turnOpposites = this.getTurnOpposites(),
+            isFirstPlayer = (token.currentPlayer == token.firstPlayer.playerId),
+            turnColor = isFirstPlayer ? 'black' : 'white',
+            currentPlayerName = isFirstPlayer ? token.firstPlayer.name : token.secondPlayer.name;
+
+        me.playerTurnLabel.innerHTML = currentPlayerName;
+        me.playerTurnIndicator.replaceCls(turnOpposites[turnColor], 'tile-' + turnColor);
+
     }
 });

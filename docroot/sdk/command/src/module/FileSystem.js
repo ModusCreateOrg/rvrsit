@@ -57,7 +57,7 @@ Ext.define('Command.module.FileSystem', {
      * @param toFile
      */
     minify: function(fromFile, toFile, compressor, callback) {
-        var command, jarPath;
+        var command, jarPath, toArg, content;
 
         callback = callback || Ext.emptyFn;
 
@@ -69,28 +69,34 @@ Ext.define('Command.module.FileSystem', {
 
             ast = pro.ast_mangle(ast); // get a new AST with mangled names
             ast = pro.ast_squeeze(ast); // get an AST with compression optimizations
+            content = pro.gen_code(ast);
 
-            this.write(toFile, pro.gen_code(ast));
-            callback();
+            if (toFile) {
+                this.write(toFile, content);
+                callback();
+            }
+            else {
+                callback(content);
+            }
         }
         else {
             if (compressor === 'closurecompiler') {
-                command = 'java -jar %s --js_output_file %s --js %s';
-                jarPath = this.getVendorPath('closurecompiler/compiler.jar');
+                command = 'java -jar %s ' + (toFile ? '--js_output_file %s' : '%s') + ' --js %s';
+                jarPath = this.getBinaryPath('closurecompiler.jar');
             }
             else {
-                command = 'java -jar %s -o %s %s';
-                jarPath = this.getVendorPath('yuicompressor/yuicompressor.jar');
+                command = 'java -jar %s ' + (toFile ? '-o %s' : '%s') + ' %s';
+                jarPath = this.getBinaryPath('yuicompressor.jar');
             }
 
-            command = require('util').format(command,
-                this.escapeShell(jarPath), this.escapeShell(toFile), this.escapeShell(fromFile));
-
-            require('child_process').exec(command,
-                function(error, stdout, stderr) {
-                    if (error) {
-                        this.error(error);
-                        this.error(stderr);
+            this.exec(command, [jarPath, toFile, fromFile], function(error, stdout, stderr) {
+                if (error) {
+                    this.error(error);
+                    this.error(stderr);
+                }
+                else {
+                    if (!toFile) {
+                        callback(stdout);
                     }
                     else {
                         if (stdout) {
@@ -98,8 +104,8 @@ Ext.define('Command.module.FileSystem', {
                         }
                         callback();
                     }
-                }.bind(this)
-            );
+                }
+            });
         }
     },
 
@@ -110,16 +116,12 @@ Ext.define('Command.module.FileSystem', {
      * @param delta
      */
     delta: function(fromFile, toFile, delta, callback) {
-        var command = '%s encode -json -dictionary %s -target %s -delta %s --stats';
-
-        command = require('util').format(command,
-            this.getVendorPath('vcdiff/' + this.cli.platformName + '/vcdiff'),
-            this.escapeShell(fromFile),
-            this.escapeShell(toFile),
-            this.escapeShell(delta)
-        );
-
-        require('child_process').exec(command, function(error, stdout, stderr) {
+        this.exec('%s encode -json -dictionary %s -target %s -delta %s --stats', [
+            this.getBinaryPath('vcdiff'),
+            fromFile,
+            toFile,
+            delta
+        ], function(error, stdout, stderr) {
             if (error) {
                 this.error(stderr);
             }
@@ -133,7 +135,7 @@ Ext.define('Command.module.FileSystem', {
                 this.write(delta, content.substring(0, content.length - 2) + ']');
                 callback();
             }
-        }.bind(this));
+        });
     },
 
     mkdir: function() {
@@ -183,11 +185,23 @@ Ext.define('Command.module.FileSystem', {
         require('fs').writeFileSync(file, content, 'utf8');
     },
 
+    rename: function(from, to) {
+        return require('fs').renameSync(from, to);
+    },
+
+    removeFile: function(path) {
+        return require('fs').unlinkSync(path);
+    },
+
     writeJson: function(file, object, beautify) {
         return this.write(file, beautify ? JSON.stringify(object, null, 4) : JSON.stringify(object));
     },
 
-    append: function(file, content) {
+    prependFile: function(file, content) {
+        this.write(file, content + this.read(file));
+    },
+
+    appendFile: function(file, content) {
         var fs = require('fs'),
             fd = fs.openSync(file, 'a');
 
@@ -195,7 +209,11 @@ Ext.define('Command.module.FileSystem', {
         fs.closeSync(fd);
     },
 
-    copyFile: function(src, destination) {
+    copyFile: function(src, destination, filterFn) {
+        if (typeof filterFn == 'function' && filterFn(src, destination) === false) {
+            return false;
+        }
+
         var fs = require('fs'),
             path = require('path');
 
@@ -205,6 +223,8 @@ Ext.define('Command.module.FileSystem', {
 
         fs.writeFileSync(destination, fs.readFileSync(src));
         fs.chmodSync(destination, fs.statSync(src).mode.toString(8).substr(-3));
+
+        return true;
     },
 
     removeDirectory: function(directory) {
@@ -233,17 +253,14 @@ Ext.define('Command.module.FileSystem', {
         fs.rmdirSync(directory);
     },
 
-    copyDirectory: function(src, destination) {
+    copyDirectory: function(src, destination, filterFn) {
+        if (typeof filterFn == 'function' && filterFn(src, destination) === false) {
+            return false;
+        }
+
         var fs = require('fs'),
             path = require('path'),
             files, file, stats, i, ln, link, srcFile, destinationFile;
-//
-//        try {
-//            if (fs.statSync(destination).isDirectory()) {
-//                this.removeDirectory(destination);
-//            }
-//        }
-//        catch (e) {}
 
         this.mkdir(destination);
 
@@ -257,19 +274,27 @@ Ext.define('Command.module.FileSystem', {
             stats = fs.lstatSync(srcFile);
 
             if (stats.isDirectory()) {
-                this.copyDirectory(srcFile, destinationFile);
-            }
-            else if (stats.isSymbolicLink()) {
-                try {
-                    link = fs.readlinkSync(srcFile);
-                    fs.symlinkSync(link, destinationFile);
-                }
-                catch (e) {}
+                this.copyDirectory(srcFile, destinationFile, filterFn);
             }
             else {
-                this.copyFile(srcFile, destinationFile);
+                if (typeof filterFn == 'function' && filterFn(src, destination) === false) {
+                    return false;
+                }
+
+                if (stats.isSymbolicLink()) {
+                    try {
+                        link = fs.readlinkSync(srcFile);
+                        fs.symlinkSync(link, destinationFile);
+                    }
+                    catch (e) {}
+                }
+                else {
+                    this.copyFile(srcFile, destinationFile);
+                }
             }
         }
+
+        return true;
     },
 
     checksum: function(file) {
@@ -280,12 +305,12 @@ Ext.define('Command.module.FileSystem', {
         return hash.digest('hex');
     },
 
-    copy: function(src, destination) {
+    copy: function(src, destination, filterFn) {
         if (require('fs').statSync(src).isDirectory()) {
-            return this.copyDirectory(src, destination);
+            return this.copyDirectory(src, destination, filterFn);
         }
         else {
-            return this.copyFile(src, destination);
+            return this.copyFile(src, destination, filterFn);
         }
     }
 });

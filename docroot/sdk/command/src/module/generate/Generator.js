@@ -59,13 +59,13 @@ Ext.define('Command.module.generate.Generator', {
 
     getProjectDetails: function() {
         var details = {};
-        
+
         try {
-            details = JSON.parse(require('fs').readFileSync('app.json'));
+            details = Ext.JSON.decode(require('fs').readFileSync('app.json'));
         } catch(e) {}
-        
+
         details.appName = details.name;
-        
+
         return details;
     },
 

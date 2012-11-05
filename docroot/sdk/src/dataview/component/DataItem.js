@@ -101,6 +101,7 @@ Ext.define('Ext.dataview.component.DataItem', {
         if (!newRecord) {
             return;
         }
+        this._record = newRecord;
 
         var me = this,
             dataview = me.config.dataview,

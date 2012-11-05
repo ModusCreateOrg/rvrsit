@@ -25,12 +25,39 @@ Ext.define('Command.module.Abstract', {
         return this.actions[action];
     },
 
+    getBinaryPath: function(binary) {
+        return require('path').join(this.cli.getBinPath(), binary);
+    },
+
     getVendorPath: function(name) {
         return require('path').resolve(this.cli.getCurrentPath(), 'vendor/' + name);
     },
 
     escapeShell: function(cmd) {
-        return '"'+cmd+'"';
+        if (!cmd) {
+            return '';
+        }
+
+        return '"' + cmd + '"';
+    },
+
+    exec: function(command, args, callback) {
+        var util = require('util');
+
+        if (typeof args == 'function') {
+            callback = args;
+            args = [];
+        }
+
+        args = args.map(function(arg) {
+            return this.escapeShell(arg);
+        }, this);
+        args.unshift(command);
+
+        command = util.format.apply(util, args);
+        callback = callback.bind(this);
+
+        require('child_process').exec(command, callback);
     }
 
 }, function() {

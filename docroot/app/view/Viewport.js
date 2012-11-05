@@ -8,7 +8,7 @@ Ext.define('Rvrsit.view.Viewport', {
 
     config     : {
         fullscreen : true,
-        style      : 'background-image: url(impactjs/media/images/new/bg.jpg); background-repeat: no-repeat;',
+        style      : 'background-image: url(media/images/new/bg.jpg); background-repeat: no-repeat;',
         //        bodyStyle  : 'padding: 10px; background-color: #FEFEFE',
         layout     : {
             type  : 'hbox',
@@ -28,8 +28,10 @@ Ext.define('Rvrsit.view.Viewport', {
             painted : function() {
                 //TODO: push to controller
                 ig.main('#canvas', MyGame, 30, 548, 548, 1);
+//                Ext.Msg.alert('', 'Welcome to Rvrsit!', game.iosInitSounds, game)
+
             }
-        })
+        });
     },
 
     buildGameBoard : function() {
