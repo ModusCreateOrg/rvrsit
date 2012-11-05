@@ -42,7 +42,7 @@ exports = {
     },
 
     auth : function() {
-
+        debugger;
         if (! req.data.name || ! req.data.email) {
              Json.failure('user name and email are required!');
         }
@@ -64,7 +64,7 @@ exports = {
             SQL.update('delete from PlayerSessions where playerId = ' + user.playerId);
 
             Schema.putOne('PlayerSessions', {
-                playerId       : user.playerId,
+                playerId     : user.playerId,
                 cookie       : cookie,
                 loginTime    : now,
                 gameId       : null,
@@ -76,10 +76,41 @@ exports = {
             };
         }
         else {
-            Json.failure('Either the email address or password you entered are not found in the database');
+            return this.registerPlayer();
+        }
+
+    },
+    registerPlayer : function() {
+        var errors = [];
+        var data = req.data;
+
+        // validate form
+        if (!data.name.length) {
+            errors.push('You must enter a name');
+        }
+
+        if (!data.email.length) {
+            errors.push('You must enter a valid email address');
+        }
+
+        if (errors.length) {
+            console.log('registerPlayer failure' + data.email + ' ' + data.name);
+
+            console.log(errors.join('<br/>\n* '));
+            Json.failure('There are errors in your form: <br/>\n* ' + errors.join('<br/>\n* '));
+        }
+
+        else {
+            var user = Schema.newRecord('Players');
+            user.name = req.data.name;
+            user.email = req.data.email;
+
+            user = Schema.putOne('Players', user);
+            console.log('registerPlayer Success' + user.email + ' ' + user.name);
+
+            return this.auth();
         }
     },
-
     getTime : function() {
         return Math.floor(new Date().getTime() / 1000)
     }

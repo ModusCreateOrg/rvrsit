@@ -6,9 +6,47 @@ rpcMethods = {
     auth : function() {
         this.respond(Auth.auth());
     },
+    registerPlayer : function() {
+        var errors = [];
+        var data = req.data;
+
+        if (data.email.length) {
+            var existing = Schema.findOne('Players', {email : data.email });
+            if (existing.email) {
+                this.auth();
+            }
+        }
+
+        // validate form
+        if (!data.name.length) {
+            errors.push('You must enter a name');
+        }
+
+        if (!data.email.length) {
+            errors.push('You must enter a valid email address');
+        }
+
+        if (errors.length) {
+            console.log('registerPlayer failure' + data.email + ' ' + data.name);
+
+            console.log(errors.join('<br/>\n* '));
+            Json.failure('There are errors in your form: <br/>\n* ' + errors.join('<br/>\n* '));
+        }
+        else {
+            var user = Schema.newRecord('Players');
+            user.name = req.data.name;
+            user.email = req.data.email;
+
+            user = Schema.putOne('Players', user);
+            console.log('registerPlayer Success' + user.email + ' ' + user.name);
+
+            this.auth();
+        }
+    },
 
     listGames : function() {
-        if (!Auth.isAuthenticated('listGames')) {
+        var player = Auth.isAuthenticated('listGames');
+        if (! player) {
             Json.failure({
                 errcode : 1,
                 msg     : 'Need cookie! Om nom nom!'
@@ -19,6 +57,7 @@ rpcMethods = {
         this.respond({
             games : items
         });
+
     },
 
     listAvailablePlayers : function() {
@@ -122,6 +161,7 @@ rpcMethods = {
             deletedMessages : messages
         });
     },
+
     acceptChallenge : function() {
         console.log(req.data.challengeMessage);
         var acceptingPlayer = Auth.isAuthenticated('acceptChallenge'),
@@ -138,7 +178,6 @@ rpcMethods = {
         //            ].join(''),
         //            otherChallenges = SQL.getDataRows(sql);
 
-        debugger;
         var firstPlayerId = acceptingPlayer.playerId,
             secondPlayerId = challengeMessage.secondPlayer.playerId,
             now = Auth.getTime();
@@ -153,7 +192,8 @@ rpcMethods = {
             currentPlayer  : firstPlayerId
         });
 
-        game.dump();
+        console.log('game');
+        console.log(game);
 
         game.firstPlayer = Schema.findOne('Players', {
             playerId  : firstPlayerId
@@ -255,11 +295,13 @@ rpcMethods = {
             playerId    : game.currentPlayer,
             messageType : 'gameUpdate',
             message     : Json.encode(message),
-            messageDate : Auth.getTime()
+            messageDate : Auth.getTime(),
+            you         : Json.encode(player)
         });
 
         this.respond(game);
     },
+
     endGame : function() {
         req.data.chipData = "{}";
         this.updateGame(true)

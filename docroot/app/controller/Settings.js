@@ -20,7 +20,6 @@ Ext.define('Rvrsit.controller.Settings', {
         }).show();
     },
     onFieldChange : function(field, value) {
-
-        this.getApplication().fireEvent('setting', this, field.setting, value[0] / 100);
+        this.getApplication().fireEvent('setting', this, field.setting, field.getValue()[0] / 100);
     }
 });
