@@ -100,21 +100,26 @@ Ext.define('silk.Heartbeat', {
                     }
                 },
                 failure  : function(result, options) {
-                    //                    debugger;
-                    //                    console.log('hb failure');
-                    var data = Ext.decode(result.responseText),
-                        queueItem;
+                    try {
+                        //                    debugger;
+                        //                    console.log('hb failure');
+                        var data = Ext.decode(result.responseText),
+                            queueItem;
 
-                    if (data.data) {
-                        data = data.data;
-                    }
-
-                    for (key in data) {
-                        //                        debugger;
-                        queueItem = queue[key];
-                        if (queueItem && queueItem.failure) {
-                            queueItem.failure.call(queueItem.scope || window, data[key]);
+                        if (data.data) {
+                            data = data.data;
                         }
+
+                        for (key in data) {
+                            //                        debugger;
+                            queueItem = queue[key];
+                            if (queueItem && queueItem.failure) {
+                                queueItem.failure.call(queueItem.scope || window, data[key]);
+                            }
+                        }
+                    }
+                    catch (e) {
+
                     }
 
                     //                    Ext.Msg.alert('Request failed:', data.message);
